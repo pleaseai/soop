@@ -15798,6 +15798,128 @@
       "createdAt": 1770142190820,
       "hash": "acffbb050caf8b6e"
     },
+    "src/encoder/embedding.ts:file:embedding": {
+      "feature": {
+        "description": "embedding module in encoder",
+        "keywords": [
+          "embedding",
+          "file",
+          "src",
+          "encoder"
+        ]
+      },
+      "createdAt": 1770142433466,
+      "hash": "304a329bc0e56c80"
+    },
+    "src/encoder/embedding.ts:method:preprocessText": {
+      "feature": {
+        "description": "method to preprocess text",
+        "keywords": [
+          "preprocess",
+          "text",
+          "method",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142433466,
+      "hash": "cb4c98227c1ae127"
+    },
+    "src/encoder/embedding.ts:method:preprocessTexts": {
+      "feature": {
+        "description": "method to preprocess texts",
+        "keywords": [
+          "preprocess",
+          "texts",
+          "method",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142433466,
+      "hash": "f172b2f4a0bf2aa5"
+    },
+    "src/encoder/embedding.ts:method:getModel": {
+      "feature": {
+        "description": "method to get model in OpenAIEmbedding",
+        "keywords": [
+          "get",
+          "model",
+          "method",
+          "openaiembedding",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142433466,
+      "hash": "9746196c9c75ea19"
+    },
+    "src/encoder/embedding.ts:method:getSupportedModels": {
+      "feature": {
+        "description": "method to get supported models in OpenAIEmbedding",
+        "keywords": [
+          "get",
+          "supported",
+          "models",
+          "method",
+          "openaiembedding",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142433466,
+      "hash": "b6cd0fd432e4ad7a"
+    },
+    "src/encoder/embedding.ts:class:OpenAIEmbedding": {
+      "feature": {
+        "description": "class representing open aiembedding",
+        "keywords": [
+          "open",
+          "aiembedding",
+          "class",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142489724,
+      "hash": "d0bb2da3a50a6f2d"
+    },
+    "src/encoder/embedding.ts:class:MockEmbedding": {
+      "feature": {
+        "description": "class representing mock embedding",
+        "keywords": [
+          "mock",
+          "embedding",
+          "class",
+          "src",
+          "encoder"
+        ]
+      },
+      "createdAt": 1770142489725,
+      "hash": "649443753b10ea98"
+    },
+    "src/encoder/embedding.ts:method:generateDeterministicVector": {
+      "feature": {
+        "description": "method to generate deterministic vector in MockEmbedding",
+        "keywords": [
+          "generate",
+          "deterministic",
+          "vector",
+          "method",
+          "mockembedding",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142489726,
+      "hash": "c764bd2ee792344b"
+    },
     "vendor/context-please/packages/core/test/integration/incremental-reindex.integration.test.ts:function:progressCallback": {
       "feature": {
         "description": "function that progress callback",
@@ -15814,7 +15936,7 @@
           "incremental-reindex.integration.test"
         ]
       },
-      "createdAt": 1770142192316,
+      "createdAt": 1770142491141,
       "hash": "962a819d7cdb8a60"
     },
     "vendor/context-please/packages/core/test/integration/indexing-workflow.integration.test.ts:function:progressCallback": {
@@ -15833,7 +15955,7 @@
           "indexing-workflow.integration.test"
         ]
       },
-      "createdAt": 1770142192324,
+      "createdAt": 1770142491149,
       "hash": "a578faabf1063c13"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:initialize": {
@@ -15852,7 +15974,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192402,
+      "createdAt": 1770142491217,
       "hash": "f37148be66f32939"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:ensureLoaded": {
@@ -15872,7 +15994,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192402,
+      "createdAt": 1770142491217,
       "hash": "049973ab083c5d39"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:createCollection": {
@@ -15892,7 +16014,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192402,
+      "createdAt": 1770142491217,
       "hash": "67b0dc54b935d2d2"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:createHybridCollection": {
@@ -15913,7 +16035,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192402,
+      "createdAt": 1770142491217,
       "hash": "d2490434d420947d"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:dropCollection": {
@@ -15933,7 +16055,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192402,
+      "createdAt": 1770142491217,
       "hash": "3c644a6104cd00ce"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:hasCollection": {
@@ -15953,7 +16075,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192403,
+      "createdAt": 1770142491217,
       "hash": "623769c8d9c897ba"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:listCollections": {
@@ -15973,7 +16095,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192403,
+      "createdAt": 1770142491217,
       "hash": "c64522cc185f566d"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:insert": {
@@ -15992,7 +16114,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192403,
+      "createdAt": 1770142491217,
       "hash": "47a3058cac46fc6c"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:insertHybrid": {
@@ -16012,7 +16134,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192403,
+      "createdAt": 1770142491217,
       "hash": "f7742ff760d3c19d"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:search": {
@@ -16031,7 +16153,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192403,
+      "createdAt": 1770142491217,
       "hash": "858f42019ffbadf3"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:hybridSearch": {
@@ -16051,7 +16173,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192403,
+      "createdAt": 1770142491217,
       "hash": "3dbf5adb5cebcce7"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:delete": {
@@ -16070,7 +16192,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192403,
+      "createdAt": 1770142491217,
       "hash": "7939148157b5900b"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:query": {
@@ -16089,7 +16211,7 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192403,
+      "createdAt": 1770142491217,
       "hash": "9b4e5c2308b16dc0"
     },
     "vendor/context-please/packages/core/test/vectordb/base-vector-database.test.ts:method:checkCollectionLimit": {
@@ -16110,8 +16232,86 @@
           "base-vector-database.test"
         ]
       },
-      "createdAt": 1770142192403,
+      "createdAt": 1770142491217,
       "hash": "456c5e8af174840a"
+    },
+    "src/encoder/embedding.ts:method:constructor": {
+      "feature": {
+        "description": "method to constructor in MockEmbedding",
+        "keywords": [
+          "constructor",
+          "method",
+          "mockembedding",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142496861,
+      "hash": "14ec615b0d28cc73"
+    },
+    "src/encoder/embedding.ts:method:embed": {
+      "feature": {
+        "description": "method to embed in MockEmbedding",
+        "keywords": [
+          "embed",
+          "method",
+          "mockembedding",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142496861,
+      "hash": "6131e89dfa274f10"
+    },
+    "src/encoder/embedding.ts:method:embedBatch": {
+      "feature": {
+        "description": "method to embed batch in MockEmbedding",
+        "keywords": [
+          "embed",
+          "batch",
+          "method",
+          "mockembedding",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142496861,
+      "hash": "0fa5ad5553f3ca96"
+    },
+    "src/encoder/embedding.ts:method:getDimension": {
+      "feature": {
+        "description": "method to get dimension in MockEmbedding",
+        "keywords": [
+          "get",
+          "dimension",
+          "method",
+          "mockembedding",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142496861,
+      "hash": "a885b2d1b91bb115"
+    },
+    "src/encoder/embedding.ts:method:getProvider": {
+      "feature": {
+        "description": "method to get provider in MockEmbedding",
+        "keywords": [
+          "get",
+          "provider",
+          "method",
+          "mockembedding",
+          "src",
+          "encoder",
+          "embedding"
+        ]
+      },
+      "createdAt": 1770142496861,
+      "hash": "09d9b68181a25ce8"
     }
   }
 }
