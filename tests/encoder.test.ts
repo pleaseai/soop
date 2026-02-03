@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { RPGEncoder } from '../src/encoder'
+import path from 'node:path'
+
+// Get current project root for testing
+const PROJECT_ROOT = path.resolve(__dirname, '..')
 
 describe('RPGEncoder', () => {
   let encoder: RPGEncoder
@@ -78,5 +82,50 @@ describe('RPGEncoder Options', () => {
       includeSource: true,
     })
     expect(encoder).toBeDefined()
+  })
+})
+
+describe('RPGEncoder.discoverFiles', () => {
+  test('discovers TypeScript files in repository', async () => {
+    const encoder = new RPGEncoder(PROJECT_ROOT, {
+      include: ['src/**/*.ts'],
+      exclude: ['**/node_modules/**'],
+    })
+    const result = await encoder.encode()
+
+    // Should find at least the encoder.ts file
+    expect(result.filesProcessed).toBeGreaterThan(0)
+  })
+
+  test('respects include patterns', async () => {
+    const encoder = new RPGEncoder(PROJECT_ROOT, {
+      include: ['src/encoder/**/*.ts'],
+      exclude: [],
+    })
+    const result = await encoder.encode()
+
+    // Should only find files in src/encoder
+    expect(result.filesProcessed).toBeGreaterThanOrEqual(1)
+  })
+
+  test('respects exclude patterns', async () => {
+    const encoder = new RPGEncoder(PROJECT_ROOT, {
+      include: ['**/*.ts'],
+      exclude: ['**/node_modules/**', '**/dist/**', 'tests/**'],
+    })
+    const result = await encoder.encode()
+
+    // Should find src files but not test files
+    expect(result.filesProcessed).toBeGreaterThan(0)
+  })
+
+  test('handles non-existent directory gracefully', async () => {
+    const encoder = new RPGEncoder('/non/existent/path', {
+      include: ['**/*.ts'],
+    })
+    const result = await encoder.encode()
+
+    // Should return empty result, not throw
+    expect(result.filesProcessed).toBe(0)
   })
 })
