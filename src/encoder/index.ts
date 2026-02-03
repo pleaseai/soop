@@ -1,2 +1,4 @@
 export { RPGEncoder } from './encoder'
 export type { EncoderOptions, EncodingResult } from './encoder'
+export { SemanticExtractor } from './semantic'
+export type { SemanticOptions, SemanticFeature, EntityInput } from './semantic'
