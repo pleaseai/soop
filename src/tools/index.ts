@@ -1,5 +1,5 @@
 export { SearchNode } from './search'
-export type { SearchOptions, SearchResult } from './search'
+export type { SearchOptions, SearchResult, SearchStrategy } from './search'
 
 export { FetchNode } from './fetch'
 export type { FetchOptions, FetchResult } from './fetch'

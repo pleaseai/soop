@@ -1,10 +1,11 @@
 import { writeFile } from 'node:fs/promises'
 import { z } from 'zod'
 import { RPGEncoder } from '../encoder/encoder'
+import type { SemanticSearch } from '../encoder/semantic-search'
 import type { RepositoryPlanningGraph } from '../graph'
 import { type ExploreEdgeType, ExploreRPG } from '../tools/explore'
 import { FetchNode } from '../tools/fetch'
-import { type SearchMode, SearchNode } from '../tools/search'
+import { type SearchMode, SearchNode, type SearchStrategy } from '../tools/search'
 import { encodeFailedError, nodeNotFoundError, rpgNotLoadedError } from './errors'
 
 /**
@@ -14,6 +15,12 @@ export const SearchInputSchema = z.object({
   mode: z.enum(['features', 'snippets', 'auto']).default('auto'),
   featureTerms: z.array(z.string()).optional(),
   filePattern: z.string().optional(),
+  searchStrategy: z
+    .enum(['hybrid', 'vector', 'fts', 'string'])
+    .optional()
+    .describe(
+      'Search strategy for feature search. Defaults to hybrid when semantic search is available.'
+    ),
 })
 
 export type SearchInput = z.infer<typeof SearchInputSchema>
@@ -107,16 +114,21 @@ export const RPG_TOOLS = {
 /**
  * Execute rpg_search tool
  */
-export async function executeSearch(rpg: RepositoryPlanningGraph | null, input: SearchInput) {
+export async function executeSearch(
+  rpg: RepositoryPlanningGraph | null,
+  input: SearchInput,
+  semanticSearch?: SemanticSearch | null
+) {
   if (!rpg) {
     throw rpgNotLoadedError()
   }
 
-  const searchNode = new SearchNode(rpg)
+  const searchNode = new SearchNode(rpg, semanticSearch)
   const result = await searchNode.query({
     mode: input.mode as SearchMode,
     featureTerms: input.featureTerms,
     filePattern: input.filePattern,
+    searchStrategy: input.searchStrategy as SearchStrategy | undefined,
   })
 
   return {

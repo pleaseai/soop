@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import type { SemanticSearch } from '../encoder/semantic-search'
 import { RepositoryPlanningGraph } from '../graph'
 import { RPGError, invalidPathError } from './errors'
 import {
@@ -21,7 +22,10 @@ import {
 /**
  * Create and configure the MCP server for RPG tools
  */
-export function createMcpServer(rpg: RepositoryPlanningGraph | null): McpServer {
+export function createMcpServer(
+  rpg: RepositoryPlanningGraph | null,
+  semanticSearch?: SemanticSearch | null
+): McpServer {
   const server = new McpServer({
     name: 'rpg-mcp-server',
     version: '0.1.0',
@@ -32,7 +36,8 @@ export function createMcpServer(rpg: RepositoryPlanningGraph | null): McpServer 
     RPG_TOOLS.rpg_search.name,
     RPG_TOOLS.rpg_search.description,
     SearchInputSchema.shape,
-    async (args) => wrapHandler(() => executeSearch(rpg, SearchInputSchema.parse(args)))
+    async (args) =>
+      wrapHandler(() => executeSearch(rpg, SearchInputSchema.parse(args), semanticSearch))
   )
 
   server.tool(

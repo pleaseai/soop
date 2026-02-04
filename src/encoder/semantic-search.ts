@@ -146,6 +146,47 @@ export class SemanticSearch {
   }
 
   /**
+   * Hybrid search combining vector similarity and BM25 full-text search.
+   * Generates an embedding for the query and runs both vector + FTS search with RRF reranking.
+   */
+  async searchHybrid(
+    query: string,
+    topK = 10,
+    vectorWeight = 0.7
+  ): Promise<SemanticSearchResult[]> {
+    const queryEmbedding = await this.embedding.embed(query)
+
+    const results = await this.vectorStore.searchHybrid({
+      textQuery: query,
+      queryVector: queryEmbedding.vector,
+      mode: 'hybrid',
+      topK,
+      vectorWeight,
+    })
+
+    return results.map((result) => ({
+      id: result.id,
+      score: result.score,
+      content: result.text,
+      metadata: result.metadata,
+    }))
+  }
+
+  /**
+   * Full-text search using BM25 scoring (no embedding required)
+   */
+  async searchFts(query: string, topK = 10): Promise<SemanticSearchResult[]> {
+    const results = await this.vectorStore.searchFts(query, topK)
+
+    return results.map((result) => ({
+      id: result.id,
+      score: result.score,
+      content: result.text,
+      metadata: result.metadata,
+    }))
+  }
+
+  /**
    * Delete documents by ID
    */
   async delete(ids: string[]): Promise<void> {

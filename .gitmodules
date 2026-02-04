@@ -1,3 +1,6 @@
 [submodule "vendor/context-please"]
 	path = vendor/context-please
 	url = https://github.com/pleaseai/context-please
+[submodule "tests/fixtures/superjson"]
+	path = tests/fixtures/superjson
+	url = https://github.com/blitz-js/superjson.git

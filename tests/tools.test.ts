@@ -1,4 +1,9 @@
-import { beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { MockEmbedding } from '../src/encoder/embedding'
+import { SemanticSearch } from '../src/encoder/semantic-search'
 import { RepositoryPlanningGraph } from '../src/graph'
 import { ExploreRPG, FetchNode, SearchNode } from '../src/tools'
 
@@ -117,6 +122,154 @@ describe('SearchNode', () => {
 
     expect(results.totalMatches).toBe(0)
     expect(results.nodes).toHaveLength(0)
+  })
+})
+
+describe('SearchNode with SemanticSearch', () => {
+  let rpg: RepositoryPlanningGraph
+  let semanticSearch: SemanticSearch
+  let search: SearchNode
+  let testDbPath: string
+
+  beforeEach(async () => {
+    testDbPath = join(
+      tmpdir(),
+      `rpg-search-test-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    )
+
+    rpg = new RepositoryPlanningGraph({ name: 'test-repo' })
+
+    rpg.addHighLevelNode({
+      id: 'auth-module',
+      feature: {
+        description: 'handle user authentication',
+        keywords: ['auth', 'login', 'security'],
+      },
+      directoryPath: '/src/auth',
+    })
+
+    rpg.addLowLevelNode({
+      id: 'login-func',
+      feature: {
+        description: 'validate user credentials',
+        keywords: ['validate', 'credentials'],
+      },
+      metadata: {
+        entityType: 'function',
+        path: '/src/auth/login.ts',
+        startLine: 10,
+        endLine: 30,
+      },
+    })
+
+    rpg.addFunctionalEdge({ source: 'auth-module', target: 'login-func' })
+
+    // Set up semantic search with mock embeddings
+    const embedding = new MockEmbedding(64)
+    semanticSearch = new SemanticSearch({
+      dbPath: testDbPath,
+      tableName: 'test_search_nodes',
+      embedding,
+    })
+
+    // Index the RPG nodes
+    await semanticSearch.indexBatch([
+      { id: 'auth-module', content: 'handle user authentication' },
+      { id: 'login-func', content: 'validate user credentials' },
+    ])
+
+    search = new SearchNode(rpg, semanticSearch)
+  })
+
+  afterEach(async () => {
+    await semanticSearch.close()
+    try {
+      await rm(testDbPath, { recursive: true, force: true })
+    } catch {
+      // Ignore cleanup errors
+    }
+  })
+
+  test('uses hybrid search when semanticSearch is available', async () => {
+    const results = await search.query({
+      mode: 'features',
+      featureTerms: ['authentication'],
+    })
+
+    expect(results.totalMatches).toBeGreaterThan(0)
+  })
+
+  test('respects explicit string strategy', async () => {
+    const results = await search.query({
+      mode: 'features',
+      featureTerms: ['authentication'],
+      searchStrategy: 'string',
+    })
+
+    // String match should find 'auth-module' (contains 'authentication')
+    expect(results.totalMatches).toBe(1)
+    expect(results.nodes[0]?.id).toBe('auth-module')
+  })
+
+  test('works with fts strategy', async () => {
+    const results = await search.query({
+      mode: 'features',
+      featureTerms: ['authentication'],
+      searchStrategy: 'fts',
+    })
+
+    expect(results.totalMatches).toBeGreaterThan(0)
+  })
+
+  test('works with vector strategy', async () => {
+    const results = await search.query({
+      mode: 'features',
+      featureTerms: ['authentication'],
+      searchStrategy: 'vector',
+    })
+
+    expect(results.totalMatches).toBeGreaterThan(0)
+  })
+})
+
+describe('SearchNode fallback without SemanticSearch', () => {
+  let rpg: RepositoryPlanningGraph
+  let search: SearchNode
+
+  beforeEach(() => {
+    rpg = new RepositoryPlanningGraph({ name: 'test-repo' })
+    rpg.addHighLevelNode({
+      id: 'auth-module',
+      feature: {
+        description: 'handle user authentication',
+        keywords: ['auth'],
+      },
+      directoryPath: '/src/auth',
+    })
+
+    // No semantic search passed — should fall back to string match
+    search = new SearchNode(rpg)
+  })
+
+  test('falls back to string match when no semanticSearch', async () => {
+    const results = await search.query({
+      mode: 'features',
+      featureTerms: ['authentication'],
+    })
+
+    expect(results.totalMatches).toBe(1)
+    expect(results.nodes[0]?.id).toBe('auth-module')
+  })
+
+  test('falls back to string match even when hybrid strategy requested', async () => {
+    const results = await search.query({
+      mode: 'features',
+      featureTerms: ['authentication'],
+      searchStrategy: 'hybrid',
+    })
+
+    // Should still work via fallback
+    expect(results.totalMatches).toBe(1)
   })
 })
 

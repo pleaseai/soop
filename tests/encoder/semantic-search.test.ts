@@ -184,6 +184,63 @@ describe('SemanticSearch', () => {
     })
   })
 
+  describe('searchHybrid', () => {
+    beforeEach(async () => {
+      await search.indexBatch([
+        { id: 'auth-1', content: 'User login and authentication handler' },
+        { id: 'auth-2', content: 'User logout and session termination' },
+        { id: 'db-1', content: 'Database connection pool manager' },
+        { id: 'db-2', content: 'SQL query executor and result mapper' },
+        { id: 'api-1', content: 'REST API endpoint handler' },
+      ])
+    })
+
+    it('should return results for hybrid query', async () => {
+      const results = await search.searchHybrid('user authentication', 3)
+
+      expect(results.length).toBeGreaterThan(0)
+      expect(results.length).toBeLessThanOrEqual(3)
+      for (const result of results) {
+        expect(result.id).toBeDefined()
+        expect(result.score).toBeDefined()
+        expect(result.content).toBeDefined()
+      }
+    })
+
+    it('should respect topK parameter', async () => {
+      const results = await search.searchHybrid('handler', 2)
+      expect(results.length).toBeLessThanOrEqual(2)
+    })
+
+    it('should accept vectorWeight parameter', async () => {
+      const results = await search.searchHybrid('database', 3, 0.3)
+      expect(results.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('searchFts', () => {
+    beforeEach(async () => {
+      await search.indexBatch([
+        { id: 'auth-1', content: 'User login and authentication handler' },
+        { id: 'db-1', content: 'Database connection pool manager' },
+        { id: 'api-1', content: 'REST API endpoint handler' },
+      ])
+    })
+
+    it('should return results for text query', async () => {
+      const results = await search.searchFts('database connection', 3)
+
+      expect(results.length).toBeGreaterThan(0)
+      const ids = results.map((r) => r.id)
+      expect(ids).toContain('db-1')
+    })
+
+    it('should return empty for no matches', async () => {
+      const results = await search.searchFts('zzzznonexistentterm', 5)
+      expect(results.length).toBe(0)
+    })
+  })
+
   describe('getters', () => {
     it('should return embedding instance', () => {
       const embedding = search.getEmbedding()

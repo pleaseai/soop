@@ -1,4 +1,5 @@
 import * as lancedb from '@lancedb/lancedb'
+import { Index } from '@lancedb/lancedb'
 
 /**
  * Vector store options
@@ -30,12 +31,33 @@ export interface EmbeddingResult {
 export interface VectorSearchResult {
   /** Document ID */
   id: string
-  /** Similarity score (distance) */
+  /** Similarity score (distance or relevance) */
   score: number
   /** Document text */
   text: string
   /** Associated metadata */
   metadata?: Record<string, unknown>
+}
+
+/**
+ * Search mode for VectorStore
+ */
+export type VectorSearchMode = 'vector' | 'fts' | 'hybrid'
+
+/**
+ * Options for hybrid search
+ */
+export interface HybridSearchOptions {
+  /** Text query for FTS (BM25) search */
+  textQuery: string
+  /** Query vector for vector similarity search */
+  queryVector: number[]
+  /** Search mode */
+  mode: VectorSearchMode
+  /** Number of results to return */
+  topK?: number
+  /** Weight for vector results in RRF (0-1), FTS weight = 1 - vectorWeight */
+  vectorWeight?: number
 }
 
 /**
@@ -66,6 +88,7 @@ export class VectorStore {
   private options: VectorStoreOptions
   private db: lancedb.Connection | null = null
   private table: lancedb.Table | null = null
+  private ftsIndexCreated = false
 
   constructor(options: VectorStoreOptions) {
     this.options = {
@@ -128,6 +151,9 @@ export class VectorStore {
       // Create new table
       this.table = await this.db.createTable(this.options.tableName, data)
     }
+
+    // Auto-create FTS index after adding documents
+    await this.createFtsIndex()
   }
 
   /**
@@ -179,6 +205,124 @@ export class VectorStore {
   }
 
   /**
+   * Create FTS (Full-Text Search) index on the text column.
+   * Idempotent — recreates the index if already exists.
+   */
+  async createFtsIndex(): Promise<void> {
+    if (this.ftsIndexCreated) {
+      return
+    }
+
+    const table = await this.ensureConnection()
+
+    try {
+      await table.createIndex('text', {
+        config: Index.fts(),
+        replace: true,
+      })
+      this.ftsIndexCreated = true
+    } catch (error) {
+      // If FTS index creation fails (e.g., empty table), log but don't throw
+      const message = error instanceof Error ? error.message : String(error)
+      console.warn(`[VectorStore] FTS index creation failed: ${message}`)
+    }
+  }
+
+  /**
+   * Full-text search using BM25 scoring
+   */
+  async searchFts(textQuery: string, topK = 10): Promise<VectorSearchResult[]> {
+    const table = await this.ensureConnection()
+
+    const results = await table
+      .query()
+      .fullTextSearch(textQuery, { columns: ['text'] })
+      .limit(topK)
+      .toArray()
+
+    return results.map((row, index) => {
+      const parsedMetadata = row.metadata ? JSON.parse(row.metadata as string) : {}
+      const hasMetadata = Object.keys(parsedMetadata).length > 0
+      return {
+        id: row.id as string,
+        // BM25 relevance score: use _score if available, otherwise rank-based
+        score: (row._score as number) ?? index,
+        text: row.text as string,
+        metadata: hasMetadata ? parsedMetadata : undefined,
+      }
+    })
+  }
+
+  /**
+   * Hybrid search combining vector similarity and BM25 full-text search.
+   * Uses RRF (Reciprocal Rank Fusion) for result merging.
+   */
+  async searchHybrid(options: HybridSearchOptions): Promise<VectorSearchResult[]> {
+    const topK = options.topK ?? 10
+    const vectorWeight = options.vectorWeight ?? 0.7
+
+    if (options.mode === 'vector') {
+      return this.search(options.queryVector, topK)
+    }
+
+    if (options.mode === 'fts') {
+      return this.searchFts(options.textQuery, topK)
+    }
+
+    // Hybrid: run both searches in parallel, then rerank
+    const fetchK = topK * 2 // Fetch more candidates for better reranking
+    const [vectorResults, ftsResults] = await Promise.all([
+      this.search(options.queryVector, fetchK),
+      this.searchFts(options.textQuery, fetchK),
+    ])
+
+    return this.rrfRerank(vectorResults, ftsResults, vectorWeight, topK)
+  }
+
+  /**
+   * RRF (Reciprocal Rank Fusion) reranking.
+   *
+   * RRF_score(doc) = w_vector / (k + rank_vector) + w_fts / (k + rank_fts)
+   * k = 60 (standard constant)
+   */
+  rrfRerank(
+    vectorResults: VectorSearchResult[],
+    ftsResults: VectorSearchResult[],
+    vectorWeight = 0.7,
+    topK = 10
+  ): VectorSearchResult[] {
+    const k = 60
+    const ftsWeight = 1 - vectorWeight
+    const scores = new Map<string, { score: number; result: VectorSearchResult }>()
+
+    // Score vector results by rank
+    for (const [rank, result] of vectorResults.entries()) {
+      const rrfScore = vectorWeight / (k + rank + 1)
+      scores.set(result.id, { score: rrfScore, result })
+    }
+
+    // Score FTS results by rank
+    for (const [rank, result] of ftsResults.entries()) {
+      const rrfScore = ftsWeight / (k + rank + 1)
+      const existing = scores.get(result.id)
+      if (existing) {
+        existing.score += rrfScore
+      } else {
+        scores.set(result.id, { score: rrfScore, result })
+      }
+    }
+
+    // Sort by combined RRF score (descending) and take topK
+    return Array.from(scores.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK)
+      .map(({ score, result }) => ({
+        ...result,
+        score,
+      }))
+  }
+
+  /**
    * Get document count
    */
   async count(): Promise<number> {
@@ -192,5 +336,6 @@ export class VectorStore {
   async close(): Promise<void> {
     this.db = null
     this.table = null
+    this.ftsIndexCreated = false
   }
 }

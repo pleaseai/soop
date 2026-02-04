@@ -1,9 +1,15 @@
+import type { SemanticSearch } from '../encoder/semantic-search'
 import type { Node, RepositoryPlanningGraph } from '../graph'
 
 /**
  * Search mode
  */
 export type SearchMode = 'features' | 'snippets' | 'auto'
+
+/**
+ * Search strategy for feature-based search
+ */
+export type SearchStrategy = 'hybrid' | 'vector' | 'fts' | 'string'
 
 /**
  * Options for SearchNode
@@ -21,6 +27,8 @@ export interface SearchOptions {
   filePattern?: string
   /** Line range [start, end] for specific file extraction */
   lineRange?: [number, number]
+  /** Search strategy for feature search (default: hybrid if semanticSearch available, otherwise string) */
+  searchStrategy?: SearchStrategy
 }
 
 /**
@@ -40,12 +48,17 @@ export interface SearchResult {
  *
  * Maps high-level functional descriptions to concrete code entities
  * via RPG mapping, and/or retrieves code snippets via symbol/file search.
+ *
+ * When a SemanticSearch instance is provided, feature search uses
+ * hybrid (vector + BM25) search for better quality results.
  */
 export class SearchNode {
   private rpg: RepositoryPlanningGraph
+  private semanticSearch: SemanticSearch | null
 
-  constructor(rpg: RepositoryPlanningGraph) {
+  constructor(rpg: RepositoryPlanningGraph, semanticSearch?: SemanticSearch | null) {
     this.rpg = rpg
+    this.semanticSearch = semanticSearch ?? null
   }
 
   /**
@@ -55,12 +68,10 @@ export class SearchNode {
     const results: Node[] = []
 
     if (options.mode === 'features' || options.mode === 'auto') {
-      // Feature-based search
       if (options.featureTerms) {
-        for (const term of options.featureTerms) {
-          const matches = this.rpg.searchByFeature(term)
-          results.push(...matches)
-        }
+        const strategy = options.searchStrategy ?? (this.semanticSearch ? 'hybrid' : 'string')
+        const featureResults = await this.searchFeatures(options.featureTerms, strategy)
+        results.push(...featureResults)
       }
     }
 
@@ -80,5 +91,40 @@ export class SearchNode {
       totalMatches: uniqueNodes.length,
       mode: options.mode,
     }
+  }
+
+  /**
+   * Search by feature terms using the configured strategy
+   */
+  private async searchFeatures(featureTerms: string[], strategy: SearchStrategy): Promise<Node[]> {
+    // Always fall back to string match if no semantic search available
+    if (strategy === 'string' || !this.semanticSearch) {
+      const results: Node[] = []
+      for (const term of featureTerms) {
+        const matches = this.rpg.searchByFeature(term)
+        results.push(...matches)
+      }
+      return results
+    }
+
+    // Use semantic search for vector/fts/hybrid strategies
+    const results: Node[] = []
+    for (const term of featureTerms) {
+      const searchResults =
+        strategy === 'hybrid'
+          ? await this.semanticSearch.searchHybrid(term)
+          : strategy === 'fts'
+            ? await this.semanticSearch.searchFts(term)
+            : await this.semanticSearch.search(term)
+
+      // Map search results back to RPG nodes
+      for (const sr of searchResults) {
+        const node = this.rpg.getNode(sr.id)
+        if (node) {
+          results.push(node)
+        }
+      }
+    }
+    return results
   }
 }
