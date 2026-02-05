@@ -1,5 +1,5 @@
 {
-  "name": "rpg-please",
+  "name": "@pleaseai/rpg",
   "version": "0.1.0",
   "description": "Repository Planning Graph - A unified framework for repository understanding and generation",
   "type": "module",
