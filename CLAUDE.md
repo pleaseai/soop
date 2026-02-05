@@ -25,6 +25,12 @@ bun run build
 # Run all tests
 bun run test
 
+# Run unit tests only
+bun run test:unit
+
+# Run integration tests only
+bun run test:integration
+
 # Run single test file
 bun run test tests/graph.test.ts
 
@@ -197,6 +203,10 @@ If `better-sqlite3` native bindings are compiled for a different Node.js version
 - **No LIKE operator**: Use application-level regex filtering instead.
 - **update().patch()**: Expects RFC 6902 JSON Patch operations, not plain objects. Use `UPDATE SET` queries for partial updates.
 - **SDK imports**: Use `createNodeEngines` from `@surrealdb/node` and `RecordId`, `Table`, `Surreal` from `surrealdb`.
+
+### Vitest CLI
+- `--include` is not a valid CLI option; use positional arguments (`vitest run 'pattern'`) or workspace projects (`--project=unit`)
+- Test file naming: `*.integration.test.ts` for integration tests, `*.test.ts` for unit tests
 
 ## Semantic Extraction
 
