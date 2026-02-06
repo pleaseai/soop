@@ -5,6 +5,8 @@
     "context@passionfactory": true,
     "review@passionfactory": true,
     "please@passionfactory": true,
+    "testing@passionfactory": true,
+    "backend@passionfactory": true,
     "typescript-lsp@language-server-please": true,
     "eslint-lsp@language-server-please": true
   },
