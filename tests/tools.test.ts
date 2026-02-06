@@ -158,6 +158,7 @@ describe('searchNode', () => {
 
     // Feature search finds nothing in data-module subtree
     // So snippet fallback runs and finds auth files by path
+    expect(results.totalMatches).toBeGreaterThanOrEqual(1)
     expect(results.nodes.every(n => n.metadata?.path?.startsWith('/src/auth/'))).toBe(true)
   })
 
@@ -300,6 +301,30 @@ describe('searchNode with SemanticSearch', () => {
     })
 
     expect(results.totalMatches).toBeGreaterThan(0)
+  })
+
+  it('restricts semantic search results to searchScopes subtree', async () => {
+    // Add a second module outside auth subtree
+    await rpg.addHighLevelNode({
+      id: 'data-module',
+      feature: { description: 'data processing' },
+      directoryPath: '/src/data',
+    })
+
+    // Without scopes, hybrid search returns auth results
+    const allResults = await search.query({
+      mode: 'features',
+      featureTerms: ['authentication'],
+    })
+    expect(allResults.totalMatches).toBeGreaterThan(0)
+
+    // With scopes restricted to data-module, auth results are filtered out
+    const scopedResults = await search.query({
+      mode: 'features',
+      featureTerms: ['authentication'],
+      searchScopes: ['data-module'],
+    })
+    expect(scopedResults.totalMatches).toBe(0)
   })
 })
 
