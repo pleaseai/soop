@@ -11,7 +11,7 @@ import { RPGEvolver } from '../encoder/evolution/evolve'
 import { ExploreRPG } from '../tools/explore'
 import { FetchNode } from '../tools/fetch'
 import { SearchNode } from '../tools/search'
-import { encodeFailedError, evolveFailedError, invalidInputError, invalidPathError, nodeNotFoundError, rpgNotLoadedError } from './errors'
+import { encodeFailedError, evolveFailedError, invalidInputError, invalidPathError, nodeNotFoundError, RPGError, rpgNotLoadedError } from './errors'
 
 /**
  * Input schema for rpg_search tool
@@ -304,7 +304,7 @@ export async function executeEvolve(rpg: RepositoryPlanningGraph | null, input: 
     return result
   }
   catch (error) {
-    if (error instanceof Error && error.name === 'RPGError') {
+    if (error instanceof RPGError) {
       throw error
     }
     throw evolveFailedError(error instanceof Error ? error.message : String(error))

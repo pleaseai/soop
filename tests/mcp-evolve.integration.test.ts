@@ -56,6 +56,7 @@ describe('MCP rpg_evolve Integration', () => {
       expect(statsAfter.nodeCount).toBeGreaterThan(0)
 
       const edges = await encodedRpg.getEdges()
+      expect(edges.length).toBeGreaterThan(0)
       for (const edge of edges) {
         expect(await encodedRpg.hasNode(edge.source)).toBe(true)
         expect(await encodedRpg.hasNode(edge.target)).toBe(true)
