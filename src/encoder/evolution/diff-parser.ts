@@ -1,6 +1,7 @@
 import type { EntityType } from '../../graph/node'
 import type { CodeEntity } from '../../utils/ast'
 import type { ChangedEntity, DiffResult, FileChange, FileChangeStatus } from './types'
+import { execFileSync } from 'node:child_process'
 import { ASTParser } from '../../utils/ast'
 
 /**
@@ -334,8 +335,7 @@ export class DiffParser {
   /**
    * Execute a git command in the repo
    */
-  private async execGit(args: string[]): Promise<string> {
-    const { execFileSync } = await import('node:child_process')
+  private execGit(args: string[]): string {
     try {
       const stdout = execFileSync('git', args, {
         cwd: this.repoPath,

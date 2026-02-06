@@ -71,7 +71,7 @@ describe('deleteNode (AC-2)', () => {
     expect(await rpg.hasNode('src/utils.ts:function:helper')).toBe(false)
   })
 
-  it('cASCADE removes functional edges', async () => {
+  it('cascade removes functional edges', async () => {
     await deleteNode(rpg, 'src/utils.ts:function:helper')
 
     // The functional edge from file to helper should be gone
@@ -83,7 +83,7 @@ describe('deleteNode (AC-2)', () => {
     expect(helperEdges).toHaveLength(0)
   })
 
-  it('cASCADE removes dependency edges', async () => {
+  it('cascade removes dependency edges', async () => {
     await deleteNode(rpg, 'src/utils.ts:file:src/utils.ts')
 
     // The dependency edge from main to utils should be gone
