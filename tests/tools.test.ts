@@ -104,14 +104,61 @@ describe('searchNode', () => {
     expect(results.totalMatches).toBe(2)
   })
 
-  it('auto mode searches both features and snippets', async () => {
+  it('auto mode uses staged fallback (feature first, then snippet)', async () => {
     const results = await search.query({
       mode: 'auto',
       featureTerms: ['validate'],
       filePattern: '/src/auth/login%',
     })
 
+    // Feature search finds 'login-func' (validate user credentials)
+    // Since feature results are not empty, snippet search is skipped
     expect(results.totalMatches).toBeGreaterThanOrEqual(1)
+    expect(results.nodes.some(n => n.id === 'login-func')).toBe(true)
+  })
+
+  it('auto mode skips snippet search when feature results are sufficient', async () => {
+    // Feature search for 'validate' returns 'login-func'
+    // Snippet search for '/src/auth/logout%' would return 'logout-func'
+    // But with staged fallback, snippet search should be skipped since feature results are non-empty
+    const results = await search.query({
+      mode: 'auto',
+      featureTerms: ['validate'],
+      filePattern: '/src/auth/logout%', // This pattern would only match logout-func
+    })
+
+    // Feature search finds 'login-func', so snippet search is skipped
+    // Result should only contain login-func, not logout-func
+    expect(results.nodes.some(n => n.id === 'login-func')).toBe(true)
+    expect(results.nodes.some(n => n.id === 'logout-func')).toBe(false)
+  })
+
+  it('auto mode falls back to snippet search when feature search returns empty', async () => {
+    const results = await search.query({
+      mode: 'auto',
+      featureTerms: ['nonexistent-feature-xyz'],
+      filePattern: '/src/auth/%',
+    })
+
+    // Feature search returns nothing, so snippet search runs
+    expect(results.totalMatches).toBeGreaterThanOrEqual(1)
+    // Path search for /src/auth/% should find auth files
+    expect(results.nodes.some(n => n.metadata?.path?.startsWith('/src/auth/'))).toBe(true)
+  })
+
+  it('auto mode with searchScopes restricts feature search to subtree', async () => {
+    // Feature search for 'auth' scoped to data-module should find nothing
+    // because auth-module is not in the data-module subtree
+    const results = await search.query({
+      mode: 'auto',
+      featureTerms: ['auth'],
+      searchScopes: ['data-module'],
+      filePattern: '/src/auth/%',
+    })
+
+    // Feature search finds nothing in data-module subtree
+    // So snippet fallback runs and finds auth files by path
+    expect(results.nodes.every(n => n.metadata?.path?.startsWith('/src/auth/'))).toBe(true)
   })
 
   it('returns empty for no matches', async () => {
@@ -122,6 +169,29 @@ describe('searchNode', () => {
 
     expect(results.totalMatches).toBe(0)
     expect(results.nodes).toHaveLength(0)
+  })
+
+  it('restricts feature search to searchScopes for string strategy', async () => {
+    // Without scopes, searching "validate" should find login-func (in auth subtree)
+    const allResults = await search.query({
+      mode: 'features',
+      featureTerms: ['validate'],
+    })
+    expect(allResults.totalMatches).toBeGreaterThan(0)
+
+    // With scopes: ['data-module'], should restrict to data subtree
+    // Since login-func and logout-func are under auth-module, they should be filtered out
+    // But the test setup doesn't put anything under data-module, so this should return empty
+    const scopedResults = await search.query({
+      mode: 'features',
+      featureTerms: ['validate'],
+      searchScopes: ['data-module'],
+    })
+
+    // Results should be filtered to only data-module subtree
+    // Since validate keyword is only in login-func/logout-func (under auth-module),
+    // it should be empty when scoped to data-module
+    expect(scopedResults.totalMatches).toBe(0)
   })
 })
 

@@ -67,16 +67,37 @@ export class SearchNode {
   async query(options: SearchOptions): Promise<SearchResult> {
     const results: Node[] = []
 
-    if (options.mode === 'features' || options.mode === 'auto') {
+    if (options.mode === 'auto') {
+      // Staged fallback per paper §5.1:
+      // Stage 1: Feature search first
       if (options.featureTerms) {
         const strategy = options.searchStrategy ?? (this.semanticSearch ? 'hybrid' : 'string')
-        const featureResults = await this.searchFeatures(options.featureTerms, strategy)
+        const featureResults = await this.searchFeatures(
+          options.featureTerms,
+          strategy,
+          options.searchScopes,
+        )
+        results.push(...featureResults)
+      }
+
+      // Stage 2: Snippet fallback only when feature results are insufficient
+      if (results.length === 0 && options.filePattern) {
+        const snippetResults = await this.rpg.searchByPath(options.filePattern)
+        results.push(...snippetResults)
+      }
+    }
+    else if (options.mode === 'features') {
+      if (options.featureTerms) {
+        const strategy = options.searchStrategy ?? (this.semanticSearch ? 'hybrid' : 'string')
+        const featureResults = await this.searchFeatures(
+          options.featureTerms,
+          strategy,
+          options.searchScopes,
+        )
         results.push(...featureResults)
       }
     }
-
-    if (options.mode === 'snippets' || options.mode === 'auto') {
-      // Path/pattern-based search
+    else if (options.mode === 'snippets') {
       if (options.filePattern) {
         const matches = await this.rpg.searchByPath(options.filePattern)
         results.push(...matches)
@@ -96,12 +117,16 @@ export class SearchNode {
   /**
    * Search by feature terms using the configured strategy
    */
-  private async searchFeatures(featureTerms: string[], strategy: SearchStrategy): Promise<Node[]> {
+  private async searchFeatures(
+    featureTerms: string[],
+    strategy: SearchStrategy,
+    scopes?: string[],
+  ): Promise<Node[]> {
     // Always fall back to string match if no semantic search available
     if (strategy === 'string' || !this.semanticSearch) {
       const results: Node[] = []
       for (const term of featureTerms) {
-        const matches = await this.rpg.searchByFeature(term)
+        const matches = await this.rpg.searchByFeature(term, scopes)
         results.push(...matches)
       }
       return results
@@ -125,6 +150,25 @@ export class SearchNode {
         }
       }
     }
+
+    // Post-filter by scopes for semantic strategies
+    if (scopes && scopes.length > 0) {
+      const subtreeIds = new Set<string>()
+      const bfsQueue = [...scopes]
+      while (bfsQueue.length > 0) {
+        const current = bfsQueue.shift()
+        if (current === undefined || subtreeIds.has(current))
+          continue
+        subtreeIds.add(current)
+        const children = await this.rpg.getChildren(current)
+        for (const child of children) {
+          if (!subtreeIds.has(child.id))
+            bfsQueue.push(child.id)
+        }
+      }
+      return results.filter(node => subtreeIds.has(node.id))
+    }
+
     return results
   }
 }
