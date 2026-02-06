@@ -130,6 +130,7 @@ import { SurrealStore } from './graph/surreal-store'
 - RPG-ZeroRepo: https://arxiv.org/abs/2509.16198
 - RPG-Encoder: https://arxiv.org/abs/2602.02084
 - Paper source files in `docs/arXiv-*/` for implementation details
+- **Paper vs Implementation Status**: [docs/implementation-status.md](docs/implementation-status.md)
 
 ## MCP Server
 

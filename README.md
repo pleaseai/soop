@@ -262,6 +262,10 @@ rpg/
 
 MIT License
 
+## Documentation
+
+- [Implementation Status](docs/implementation-status.md) — Paper vs implementation gap analysis (implemented / not implemented / needs modification)
+
 ## Acknowledgments
 
 This implementation is based on research from Microsoft Research Asia.
