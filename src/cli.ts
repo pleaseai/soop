@@ -183,9 +183,9 @@ program
   .description('Explore graph from a starting node')
   .requiredOption('--rpg <file>', 'RPG file path')
   .argument('<node>', 'Starting node ID')
-  .option('-e, --edge-type <type>', 'Edge type (functional, dependency, both)', 'both')
+  .option('-e, --edge-type <type>', 'Edge type (containment, dependency, all)', 'all')
   .option('-d, --depth <depth>', 'Maximum depth', '3')
-  .option('--direction <dir>', 'Direction (out, in, both)', 'out')
+  .option('--direction <dir>', 'Direction (downstream, upstream, both)', 'downstream')
   .action(
     async (
       node: string,
@@ -198,9 +198,9 @@ program
       const explorer = new ExploreRPG(rpg)
       const results = await explorer.traverse({
         startNode: node,
-        edgeType: options.edgeType as 'functional' | 'dependency' | 'both',
+        edgeType: options.edgeType as 'containment' | 'dependency' | 'all',
         maxDepth: Number.parseInt(options.depth),
-        direction: options.direction as 'out' | 'in' | 'both',
+        direction: options.direction as 'downstream' | 'upstream' | 'both',
       })
 
       console.log(`\nExploration from "${node}":`)

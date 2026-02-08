@@ -519,24 +519,24 @@ describe('exploreRPG', () => {
     explore = new ExploreRPG(rpg)
   })
 
-  it('explores functional edges outward', async () => {
+  it('explores containment edges downstream', async () => {
     const result = await explore.traverse({
       startNode: 'root',
-      edgeType: 'functional',
+      edgeType: 'containment',
       maxDepth: 1,
-      direction: 'out',
+      direction: 'downstream',
     })
 
     expect(result.nodes.length).toBe(3) // root, moduleA, moduleB
     expect(result.maxDepthReached).toBe(1)
   })
 
-  it('explores functional edges with deeper depth', async () => {
+  it('explores containment edges with deeper depth', async () => {
     const result = await explore.traverse({
       startNode: 'root',
-      edgeType: 'functional',
+      edgeType: 'containment',
       maxDepth: 2,
-      direction: 'out',
+      direction: 'downstream',
     })
 
     expect(result.nodes.length).toBe(6) // all nodes
@@ -548,31 +548,31 @@ describe('exploreRPG', () => {
       startNode: 'funcA1',
       edgeType: 'dependency',
       maxDepth: 1,
-      direction: 'out',
+      direction: 'downstream',
     })
 
     expect(result.nodes.length).toBe(2) // funcA1, funcB1
     expect(result.edges.some(e => e.target === 'funcB1')).toBe(true)
   })
 
-  it('explores both edge types', async () => {
+  it('explores all edge types', async () => {
     const result = await explore.traverse({
       startNode: 'moduleA',
-      edgeType: 'both',
+      edgeType: 'all',
       maxDepth: 2,
-      direction: 'out',
+      direction: 'downstream',
     })
 
     // moduleA -> funcA1, funcA2, funcA1 -> funcB1
     expect(result.nodes.length).toBeGreaterThanOrEqual(3)
   })
 
-  it('explores inward direction', async () => {
+  it('explores upstream direction', async () => {
     const result = await explore.traverse({
       startNode: 'funcA1',
-      edgeType: 'functional',
+      edgeType: 'containment',
       maxDepth: 2,
-      direction: 'in',
+      direction: 'upstream',
     })
 
     // funcA1 <- moduleA <- root
@@ -583,9 +583,9 @@ describe('exploreRPG', () => {
   it('respects max depth limit', async () => {
     const result = await explore.traverse({
       startNode: 'root',
-      edgeType: 'functional',
+      edgeType: 'containment',
       maxDepth: 0,
-      direction: 'out',
+      direction: 'downstream',
     })
 
     expect(result.nodes.length).toBe(1) // only root
@@ -595,9 +595,9 @@ describe('exploreRPG', () => {
   it('handles nonexistent start node', async () => {
     const result = await explore.traverse({
       startNode: 'nonexistent',
-      edgeType: 'functional',
+      edgeType: 'containment',
       maxDepth: 2,
-      direction: 'out',
+      direction: 'downstream',
     })
 
     expect(result.nodes).toHaveLength(0)

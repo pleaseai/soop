@@ -4,7 +4,7 @@ import { EdgeType } from '../graph'
 /**
  * Edge type for exploration
  */
-export type ExploreEdgeType = 'functional' | 'dependency' | 'both'
+export type ExploreEdgeType = 'containment' | 'dependency' | 'all'
 
 /**
  * Options for ExploreRPG
@@ -16,8 +16,8 @@ export interface ExploreOptions {
   edgeType: ExploreEdgeType
   /** Maximum depth to explore */
   maxDepth?: number
-  /** Direction: outgoing, incoming, or both */
-  direction?: 'out' | 'in' | 'both'
+  /** Direction: downstream (out-edges), upstream (in-edges), or both */
+  direction?: 'downstream' | 'upstream' | 'both'
 }
 
 /**
@@ -45,8 +45,8 @@ interface ExploreState {
 /**
  * ExploreRPG - Cross-view traversal
  *
- * Navigate along functional and dependency edges to discover
- * related modules and interactions.
+ * Navigate along containment (hierarchy) and dependency (import/call) edges
+ * to discover related modules and interactions.
  */
 export class ExploreRPG {
   private rpg: RepositoryPlanningGraph
@@ -59,7 +59,7 @@ export class ExploreRPG {
    * Traverse the graph from a starting node
    */
   async traverse(options: ExploreOptions): Promise<ExploreResult> {
-    const { startNode, edgeType, maxDepth = 3, direction = 'out' } = options
+    const { startNode, edgeType, maxDepth = 3, direction = 'downstream' } = options
 
     const state: ExploreState = {
       visited: new Set<string>(),
@@ -82,10 +82,10 @@ export class ExploreRPG {
    * Resolve edge type option to EdgeType array
    */
   private resolveEdgeTypes(edgeType: ExploreEdgeType): EdgeType[] {
-    if (edgeType === 'both') {
+    if (edgeType === 'all') {
       return [EdgeType.Functional, EdgeType.Dependency]
     }
-    return [edgeType === 'functional' ? EdgeType.Functional : EdgeType.Dependency]
+    return [edgeType === 'containment' ? EdgeType.Functional : EdgeType.Dependency]
   }
 
   /**
@@ -95,7 +95,7 @@ export class ExploreRPG {
     nodeId: string,
     depth: number,
     maxDepth: number,
-    direction: 'out' | 'in' | 'both',
+    direction: 'downstream' | 'upstream' | 'both',
     edgeTypes: EdgeType[],
     state: ExploreState,
   ): Promise<void> {
@@ -124,15 +124,15 @@ export class ExploreRPG {
     nodeId: string,
     depth: number,
     maxDepth: number,
-    direction: 'out' | 'in' | 'both',
+    direction: 'downstream' | 'upstream' | 'both',
     edgeType: EdgeType,
     state: ExploreState,
   ): Promise<void> {
-    if (direction === 'out' || direction === 'both') {
+    if (direction === 'downstream' || direction === 'both') {
       await this.processOutEdges(nodeId, depth, maxDepth, direction, edgeType, state)
     }
 
-    if (direction === 'in' || direction === 'both') {
+    if (direction === 'upstream' || direction === 'both') {
       await this.processInEdges(nodeId, depth, maxDepth, direction, edgeType, state)
     }
   }
@@ -144,7 +144,7 @@ export class ExploreRPG {
     nodeId: string,
     depth: number,
     maxDepth: number,
-    direction: 'out' | 'in' | 'both',
+    direction: 'downstream' | 'upstream' | 'both',
     edgeType: EdgeType,
     state: ExploreState,
   ): Promise<void> {
@@ -162,7 +162,7 @@ export class ExploreRPG {
     nodeId: string,
     depth: number,
     maxDepth: number,
-    direction: 'out' | 'in' | 'both',
+    direction: 'downstream' | 'upstream' | 'both',
     edgeType: EdgeType,
     state: ExploreState,
   ): Promise<void> {
