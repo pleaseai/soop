@@ -82,10 +82,14 @@ export class ExploreRPG {
    * Resolve edge type option to EdgeType array
    */
   private resolveEdgeTypes(edgeType: ExploreEdgeType): EdgeType[] {
-    if (edgeType === 'all') {
-      return [EdgeType.Functional, EdgeType.Dependency]
+    switch (edgeType) {
+      case 'all':
+        return [EdgeType.Functional, EdgeType.Dependency]
+      case 'containment':
+        return [EdgeType.Functional]
+      case 'dependency':
+        return [EdgeType.Dependency]
     }
-    return [edgeType === 'containment' ? EdgeType.Functional : EdgeType.Dependency]
   }
 
   /**
