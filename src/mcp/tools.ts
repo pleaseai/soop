@@ -56,9 +56,9 @@ export type FetchInput = z.infer<typeof FetchInputSchema>
  */
 export const ExploreInputSchema = z.object({
   startNode: z.string(),
-  edgeType: z.enum(['functional', 'dependency', 'both']).default('both'),
+  edgeType: z.enum(['containment', 'dependency', 'all']).default('all'),
   maxDepth: z.number().default(3),
-  direction: z.enum(['out', 'in', 'both']).default('out'),
+  direction: z.enum(['downstream', 'upstream', 'both']).default('downstream'),
 })
 
 export type ExploreInput = z.infer<typeof ExploreInputSchema>
@@ -113,7 +113,7 @@ export const RPG_TOOLS = {
   rpg_explore: {
     name: 'rpg_explore',
     description:
-      'Traverse the Repository Planning Graph to discover related modules. Navigate along functional (hierarchy) and dependency (import/call) edges.',
+      'Traverse the Repository Planning Graph to discover related modules. Navigate along containment (hierarchy) and dependency (import/call) edges in upstream or downstream direction.',
     inputSchema: ExploreInputSchema,
   },
   rpg_encode: {

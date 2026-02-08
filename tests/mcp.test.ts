@@ -107,13 +107,13 @@ describe('MCP Tool Schemas', () => {
     it('should accept valid explore input with all fields', () => {
       const input = {
         startNode: 'node1',
-        edgeType: 'functional',
+        edgeType: 'containment',
         maxDepth: 5,
         direction: 'both',
       }
       const result = ExploreInputSchema.parse(input)
       expect(result.startNode).toBe('node1')
-      expect(result.edgeType).toBe('functional')
+      expect(result.edgeType).toBe('containment')
       expect(result.maxDepth).toBe(5)
       expect(result.direction).toBe('both')
     })
@@ -121,9 +121,19 @@ describe('MCP Tool Schemas', () => {
     it('should apply defaults for optional fields', () => {
       const input = { startNode: 'node1' }
       const result = ExploreInputSchema.parse(input)
-      expect(result.edgeType).toBe('both')
+      expect(result.edgeType).toBe('all')
       expect(result.maxDepth).toBe(3)
-      expect(result.direction).toBe('out')
+      expect(result.direction).toBe('downstream')
+    })
+
+    it('should reject old edgeType values', () => {
+      expect(() => ExploreInputSchema.parse({ startNode: 'n', edgeType: 'functional' })).toThrow()
+      expect(() => ExploreInputSchema.parse({ startNode: 'n', edgeType: 'both' })).toThrow()
+    })
+
+    it('should reject old direction values', () => {
+      expect(() => ExploreInputSchema.parse({ startNode: 'n', direction: 'out' })).toThrow()
+      expect(() => ExploreInputSchema.parse({ startNode: 'n', direction: 'in' })).toThrow()
     })
 
     it('should require startNode', () => {
@@ -353,7 +363,7 @@ describe('MCP Tool Execution', () => {
   describe('executeExplore', () => {
     it('should throw when RPG is null', async () => {
       await expect(
-        executeExplore(null, { startNode: 'root', edgeType: 'both', maxDepth: 3, direction: 'out' }),
+        executeExplore(null, { startNode: 'root', edgeType: 'all', maxDepth: 3, direction: 'downstream' }),
       ).rejects.toThrow(RPGError)
     })
 
@@ -361,9 +371,9 @@ describe('MCP Tool Execution', () => {
       await expect(
         executeExplore(rpg, {
           startNode: 'nonexistent',
-          edgeType: 'both',
+          edgeType: 'all',
           maxDepth: 3,
-          direction: 'out',
+          direction: 'downstream',
         }),
       ).rejects.toThrow(RPGError)
     })
@@ -371,9 +381,9 @@ describe('MCP Tool Execution', () => {
     it('should explore from root node', async () => {
       const result = await executeExplore(rpg, {
         startNode: 'root',
-        edgeType: 'functional',
+        edgeType: 'containment',
         maxDepth: 2,
-        direction: 'out',
+        direction: 'downstream',
       })
       expect(result.nodes.length).toBeGreaterThan(0)
       expect(result.edges.length).toBeGreaterThan(0)
@@ -382,15 +392,15 @@ describe('MCP Tool Execution', () => {
     it('should respect maxDepth', async () => {
       const shallow = await executeExplore(rpg, {
         startNode: 'root',
-        edgeType: 'functional',
+        edgeType: 'containment',
         maxDepth: 1,
-        direction: 'out',
+        direction: 'downstream',
       })
       const deep = await executeExplore(rpg, {
         startNode: 'root',
-        edgeType: 'functional',
+        edgeType: 'containment',
         maxDepth: 3,
-        direction: 'out',
+        direction: 'downstream',
       })
       expect(deep.nodes.length).toBeGreaterThanOrEqual(shallow.nodes.length)
     })

@@ -57,9 +57,9 @@ describe('MCP Integration Tests', () => {
       // Step 3: Explore from the utils module
       const exploreResult = await executeExplore(rpg, {
         startNode: 'utils',
-        edgeType: 'functional',
+        edgeType: 'containment',
         maxDepth: 2,
-        direction: 'out',
+        direction: 'downstream',
       })
       expect(exploreResult.nodes.length).toBeGreaterThan(0)
       expect(exploreResult.edges.length).toBeGreaterThan(0)
@@ -83,9 +83,9 @@ describe('MCP Integration Tests', () => {
     it('should find all children of utils module', async () => {
       const result = await executeExplore(rpg, {
         startNode: 'utils',
-        edgeType: 'functional',
+        edgeType: 'containment',
         maxDepth: 1,
-        direction: 'out',
+        direction: 'downstream',
       })
 
       // utils has 2 children: math.ts and string.ts
@@ -99,7 +99,7 @@ describe('MCP Integration Tests', () => {
         startNode: 'services/calculator.ts',
         edgeType: 'dependency',
         maxDepth: 1,
-        direction: 'out',
+        direction: 'downstream',
       })
 
       const dependencyTargets = result.edges
@@ -113,7 +113,7 @@ describe('MCP Integration Tests', () => {
         startNode: 'utils/math.ts',
         edgeType: 'dependency',
         maxDepth: 1,
-        direction: 'in',
+        direction: 'upstream',
       })
 
       const dependents = result.edges
