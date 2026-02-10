@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { readFile, writeFile } from 'node:fs/promises'
 import { program } from 'commander'
 import { RPGEncoder } from './encoder'
 import { RepositoryPlanningGraph } from './graph'
@@ -56,7 +57,7 @@ program
 
       const result = await encoder.encode()
 
-      await Bun.write(options.output, await result.rpg.toJSON())
+      await writeFile(options.output, await result.rpg.toJSON())
 
       const stats = await result.rpg.getStats()
 
@@ -90,8 +91,7 @@ program
     let spec = options.spec
 
     if (options.specFile) {
-      const file = Bun.file(options.specFile)
-      spec = await file.text()
+      spec = await readFile(options.specFile, 'utf-8')
     }
 
     if (!spec) {
@@ -126,8 +126,7 @@ program
   .option('-m, --mode <mode>', 'Search mode (features, snippets, auto)', 'auto')
   .option('-p, --pattern <pattern>', 'File pattern for snippet search')
   .action(async (options: { rpg: string, term?: string, mode: string, pattern?: string }) => {
-    const file = Bun.file(options.rpg)
-    const json = await file.text()
+    const json = await readFile(options.rpg, 'utf-8')
     const rpg = await RepositoryPlanningGraph.fromJSON(json)
 
     const search = new SearchNode(rpg)
@@ -155,8 +154,7 @@ program
   .requiredOption('--rpg <file>', 'RPG file path')
   .argument('<entities...>', 'Entity IDs to fetch')
   .action(async (entities: string[], options: { rpg: string }) => {
-    const file = Bun.file(options.rpg)
-    const json = await file.text()
+    const json = await readFile(options.rpg, 'utf-8')
     const rpg = await RepositoryPlanningGraph.fromJSON(json)
 
     const fetcher = new FetchNode(rpg)
@@ -191,8 +189,7 @@ program
       node: string,
       options: { rpg: string, edgeType: string, depth: string, direction: string },
     ) => {
-      const file = Bun.file(options.rpg)
-      const json = await file.text()
+      const json = await readFile(options.rpg, 'utf-8')
       const rpg = await RepositoryPlanningGraph.fromJSON(json)
 
       const explorer = new ExploreRPG(rpg)
@@ -233,8 +230,7 @@ program
   .description('Show RPG statistics')
   .argument('<file>', 'RPG file path')
   .action(async (filePath: string) => {
-    const file = Bun.file(filePath)
-    const json = await file.text()
+    const json = await readFile(filePath, 'utf-8')
     const rpg = await RepositoryPlanningGraph.fromJSON(json)
     const stats = await rpg.getStats()
     const config = rpg.getConfig()

@@ -24,13 +24,27 @@ import {
   StatsInputSchema,
 } from './tools'
 
+export interface McpServerOptions {
+  rpg: RepositoryPlanningGraph | null
+  semanticSearch?: SemanticSearch | null
+  /** Root path override for filesystem source resolution */
+  rootPath?: string
+}
+
 /**
  * Create and configure the MCP server for RPG tools
  */
 export function createMcpServer(
-  rpg: RepositoryPlanningGraph | null,
+  rpgOrOptions: RepositoryPlanningGraph | null | McpServerOptions,
   semanticSearch?: SemanticSearch | null,
 ): McpServer {
+  // Support both old signature and new options object
+  const options: McpServerOptions = rpgOrOptions && typeof rpgOrOptions === 'object' && 'rpg' in rpgOrOptions
+    ? rpgOrOptions
+    : { rpg: rpgOrOptions as RepositoryPlanningGraph | null, semanticSearch }
+  const rpg = options.rpg
+  const search = options.semanticSearch ?? semanticSearch ?? null
+  const rootPath = options.rootPath
   const server = new McpServer({
     name: 'rpg-mcp-server',
     version: '0.1.0',
@@ -42,14 +56,14 @@ export function createMcpServer(
     RPG_TOOLS.rpg_search.description,
     SearchInputSchema.shape,
     async args =>
-      wrapHandler(() => executeSearch(rpg, SearchInputSchema.parse(args), semanticSearch)),
+      wrapHandler(() => executeSearch(rpg, SearchInputSchema.parse(args), search)),
   )
 
   server.tool(
     RPG_TOOLS.rpg_fetch.name,
     RPG_TOOLS.rpg_fetch.description,
     FetchInputBaseSchema.shape,
-    async (args: unknown) => wrapHandler(() => executeFetch(rpg, FetchInputSchema.parse(args))),
+    async (args: unknown) => wrapHandler(() => executeFetch(rpg, FetchInputSchema.parse(args), { rootPath })),
   )
 
   server.tool(
@@ -148,7 +162,19 @@ export async function loadRPG(filePath: string): Promise<RepositoryPlanningGraph
 export async function main(): Promise<void> {
   const args = process.argv.slice(2)
   const noSearch = args.includes('--no-search')
-  const filteredArgs = args.filter(a => a !== '--no-search')
+
+  // Parse --root-path <dir>
+  let rootPath: string | undefined
+  const rootPathIdx = args.indexOf('--root-path')
+  if (rootPathIdx !== -1 && rootPathIdx + 1 < args.length) {
+    rootPath = args[rootPathIdx + 1]
+  }
+
+  const filteredArgs = args.filter((a, i) =>
+    a !== '--no-search'
+    && a !== '--root-path'
+    && (rootPathIdx === -1 || i !== rootPathIdx + 1),
+  )
 
   let rpg: RepositoryPlanningGraph | null = null
   let semanticSearch: SemanticSearch | null = null
@@ -182,13 +208,17 @@ export async function main(): Promise<void> {
   }
   else {
     console.error('No RPG file path provided. Server will start without a pre-loaded RPG.')
-    console.error('Usage: bun run src/mcp/server.ts <rpg-file.json> [--no-search]')
+    console.error('Usage: bun run src/mcp/server.ts <rpg-file.json> [--root-path <dir>] [--no-search]')
     console.error(
       'Note: rpg_encode tool will still work, but other tools require an RPG to be loaded.',
     )
   }
 
-  const server = createMcpServer(rpg, semanticSearch)
+  if (rootPath) {
+    console.error(`Source root path: ${rootPath}`)
+  }
+
+  const server = createMcpServer({ rpg, semanticSearch, rootPath })
   const transport = new StdioServerTransport()
 
   await server.connect(transport)

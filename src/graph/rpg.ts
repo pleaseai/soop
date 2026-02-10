@@ -27,13 +27,26 @@ import {
 /**
  * Repository Planning Graph configuration
  */
+/**
+ * GitHub repository reference for remote source resolution
+ */
+export interface GitHubSource {
+  owner: string
+  repo: string
+  commit: string
+  /** Path prefix within monorepo (e.g., "packages/next") */
+  pathPrefix?: string
+}
+
 export interface RPGConfig {
   /** Repository name */
   name: string
-  /** Repository root path */
+  /** Repository root path (for filesystem mode) */
   rootPath?: string
   /** Repository description */
   description?: string
+  /** GitHub source reference (for github mode) */
+  github?: GitHubSource
 }
 
 /**
@@ -45,6 +58,12 @@ export const SerializedRPGSchema = z.object({
     name: z.string(),
     rootPath: z.string().optional(),
     description: z.string().optional(),
+    github: z.object({
+      owner: z.string(),
+      repo: z.string(),
+      commit: z.string(),
+      pathPrefix: z.string().optional(),
+    }).optional(),
   }),
   nodes: z.array(z.unknown()),
   edges: z.array(z.unknown()),
