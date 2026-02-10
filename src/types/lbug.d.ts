@@ -1,13 +1,13 @@
 declare module 'lbug' {
-  export type KuzuValue =
-    | null
-    | boolean
-    | number
-    | bigint
-    | string
-    | Date
-    | KuzuValue[]
-    | { [key: string]: KuzuValue }
+  export type KuzuValue
+    = | null
+      | boolean
+      | number
+      | bigint
+      | string
+      | Date
+      | KuzuValue[]
+      | { [key: string]: KuzuValue }
 
   export class Database {
     constructor(

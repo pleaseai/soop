@@ -1,4 +1,4 @@
-import type { ExperimentConfig } from '@vercel/agent-eval';
+import type { ExperimentConfig } from '@vercel/agent-eval'
 
 const config: ExperimentConfig = {
   agent: 'claude-code',
@@ -9,10 +9,10 @@ const config: ExperimentConfig = {
   setup: async (sandbox) => {
     await sandbox.writeFiles({
       '.claude/settings.json': JSON.stringify({
-        mcpServers: { rpg: { command: 'npx @pleaseai/rpg' } }
-      })
-    });
+        mcpServers: { rpg: { command: 'npx @pleaseai/rpg' } },
+      }),
+    })
   },
-};
+}
 
-export default config;
+export default config
