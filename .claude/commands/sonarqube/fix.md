@@ -225,7 +225,7 @@ Security hotspots require **review only**, not automatic fixes:
 2. Commit using conventional commit format:
 
 ```bash
-git commit -m "fix: SonarQube 이슈 해결 - {수정 내용에 대한 간략한 설명}"
+git commit -m "fix: Resolve SonarQube issues - {brief description of changes}"
 ```
 
 ### Cases Where Auto-fix is Not Performed
