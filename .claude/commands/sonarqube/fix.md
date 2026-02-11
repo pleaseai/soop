@@ -31,7 +31,7 @@ Create the following tasks using `TaskCreate` and set dependencies:
 | Step5   | Register issue tasks          | Registering issues       | Step3, Step4 |
 | Step6   | Verify fixes and commit       | Verifying and committing | Step5        |
 
-**Metadata 저장:** 각 Task에 `metadata`를 사용하여 컨텍스트 정보를 저장합니다:
+**Storing Metadata:** Store context information in each Task using `metadata`:
 
 ```json
 {
