@@ -110,6 +110,7 @@ function createProvider(provider: LLMProvider, apiKey?: string) {
  * const client = new LLMClient({ provider: 'openai', model: 'gpt-4o' })
  * ```
  */
+
 /**
  * Cumulative token usage statistics
  */
@@ -120,15 +121,20 @@ export interface TokenUsageStats {
   requestCount: number
 }
 
+const INITIAL_USAGE_STATS: TokenUsageStats = {
+  totalPromptTokens: 0,
+  totalCompletionTokens: 0,
+  totalTokens: 0,
+  requestCount: 0,
+}
+
+/**
+ * LLM Client for semantic operations using Vercel AI SDK
+ */
 export class LLMClient {
   private options: LLMOptions
   private providerInstance: ReturnType<typeof createProvider>
-  private usageStats: TokenUsageStats = {
-    totalPromptTokens: 0,
-    totalCompletionTokens: 0,
-    totalTokens: 0,
-    requestCount: 0,
-  }
+  private usageStats: TokenUsageStats = { ...INITIAL_USAGE_STATS }
 
   constructor(options: LLMOptions) {
     this.options = {
@@ -242,11 +248,6 @@ export class LLMClient {
    * Reset usage statistics
    */
   resetUsageStats(): void {
-    this.usageStats = {
-      totalPromptTokens: 0,
-      totalCompletionTokens: 0,
-      totalTokens: 0,
-      requestCount: 0,
-    }
+    this.usageStats = { ...INITIAL_USAGE_STATS }
   }
 }

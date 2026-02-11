@@ -1,6 +1,7 @@
 import type { RPGConfig } from '../graph'
 import type { LowLevelNode } from '../graph/node'
 import type { CodeEntity, ParseResult } from '../utils/ast'
+import type { TokenUsageStats } from '../utils/llm'
 import type { CacheOptions } from './cache'
 import type { FileParseInfo } from './data-flow'
 import type { EvolutionResult } from './evolution/types'
@@ -661,15 +662,17 @@ export class RPGEncoder {
     }
 
     // Log LLM token usage statistics
-    const semanticStats = this.semanticExtractor.getLLMClient()?.getUsageStats()
-    const reorgStats = this.llmClient?.getUsageStats()
-    const totalRequests = (semanticStats?.requestCount ?? 0) + (reorgStats?.requestCount ?? 0)
+    const allStats = [
+      this.semanticExtractor.getLLMClient()?.getUsageStats(),
+      this.llmClient?.getUsageStats(),
+    ].filter((s): s is TokenUsageStats => s != null && s.requestCount > 0)
+
+    const totalRequests = allStats.reduce((sum, s) => sum + s.requestCount, 0)
     if (totalRequests > 0) {
-      const totalInput = (semanticStats?.totalPromptTokens ?? 0) + (reorgStats?.totalPromptTokens ?? 0)
-      const totalOutput = (semanticStats?.totalCompletionTokens ?? 0) + (reorgStats?.totalCompletionTokens ?? 0)
+      const totalInput = allStats.reduce((sum, s) => sum + s.totalPromptTokens, 0)
+      const totalOutput = allStats.reduce((sum, s) => sum + s.totalCompletionTokens, 0)
       const totalTokens = totalInput + totalOutput
 
-      // Estimate cost using the primary LLM client (semantic extractor or reorganization)
       const costClient = this.semanticExtractor.getLLMClient() ?? this.llmClient
       const combinedStats = { totalPromptTokens: totalInput, totalCompletionTokens: totalOutput, totalTokens, requestCount: totalRequests }
       const cost = costClient?.estimateCost(combinedStats)
