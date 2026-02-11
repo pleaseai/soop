@@ -25,7 +25,7 @@ Test AI coding agents to measure what actually works.
 See what will run without making API calls:
 
 ```bash
-npx @vercel/agent-eval cc --dry
+npx @pleaseai/agent-eval cc --dry
 ```
 
 ### Run Experiments
@@ -33,13 +33,13 @@ npx @vercel/agent-eval cc --dry
 Run the Claude Code experiment:
 
 ```bash
-npx @vercel/agent-eval cc
+npx @pleaseai/agent-eval cc
 ```
 
 Run the Codex experiment:
 
 ```bash
-npx @vercel/agent-eval codex
+npx @pleaseai/agent-eval codex
 ```
 
 ### View Results
@@ -47,7 +47,7 @@ npx @vercel/agent-eval codex
 Launch the web-based results viewer:
 
 ```bash
-npx @vercel/agent-eval playground
+npx @pleaseai/agent-eval playground
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to browse results.

@@ -1,6 +1,7 @@
 import type { SemanticSearch } from '../encoder/semantic-search'
 import type { RepositoryPlanningGraph } from '../graph'
 import type { ExploreEdgeType } from '../tools/explore'
+import type { FetchNodeConfig } from '../tools/fetch'
 import type { SearchMode, SearchStrategy } from '../tools/search'
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
@@ -172,12 +173,12 @@ export async function executeSearch(
 /**
  * Execute rpg_fetch tool
  */
-export async function executeFetch(rpg: RepositoryPlanningGraph | null, input: FetchInput) {
+export async function executeFetch(rpg: RepositoryPlanningGraph | null, input: FetchInput, config?: FetchNodeConfig) {
   if (!rpg) {
     throw rpgNotLoadedError()
   }
 
-  const fetchNode = new FetchNode(rpg)
+  const fetchNode = new FetchNode(rpg, config)
   const result = await fetchNode.get({
     codeEntities: input.codeEntities,
     featureEntities: input.featureEntities,

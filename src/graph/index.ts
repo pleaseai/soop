@@ -53,7 +53,7 @@ export type {
 // Repository Planning Graph
 export { RepositoryPlanningGraph, SerializedRPGSchema } from './rpg'
 
-export type { RPGConfig, SerializedRPG } from './rpg'
+export type { GitHubSource, RPGConfig, SerializedRPG } from './rpg'
 
 // GraphStore interface and types
 export type {

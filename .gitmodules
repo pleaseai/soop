@@ -4,3 +4,6 @@
 [submodule "tests/fixtures/superjson"]
 	path = tests/fixtures/superjson
 	url = https://github.com/blitz-js/superjson.git
+[submodule "tests/fixtures/nextjs"]
+	path = tests/fixtures/nextjs
+	url = https://github.com/vercel/next.js.git
