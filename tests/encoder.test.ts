@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { RPGEncoder } from '../src/encoder'
+import { discoverFiles, RPGEncoder } from '../src/encoder'
 
 // Get current project root for testing
 const PROJECT_ROOT = path.resolve(__dirname, '..')
@@ -164,6 +164,87 @@ describe('RPGEncoder.discoverFiles', () => {
 
     // Should return empty result, not throw
     expect(result.filesProcessed).toBe(0)
+  })
+
+  it('excludes gitignored files when respectGitignore is true', async () => {
+    const files = await discoverFiles(PROJECT_ROOT, {
+      include: ['**/*.ts', '**/*.js', '**/*.json'],
+      respectGitignore: true,
+    })
+    const relativePaths = files.map(f => path.relative(PROJECT_ROOT, f))
+
+    // dist/ is in .gitignore — should not appear
+    const distFiles = relativePaths.filter(p => p.startsWith('dist/'))
+    expect(distFiles).toHaveLength(0)
+
+    // node_modules/ is in .gitignore — should not appear
+    const nmFiles = relativePaths.filter(p => p.startsWith('node_modules/'))
+    expect(nmFiles).toHaveLength(0)
+
+    // src/ files should still be present
+    const srcFiles = relativePaths.filter(p => p.startsWith('src/'))
+    expect(srcFiles.length).toBeGreaterThan(0)
+  })
+
+  it('falls back to walkDirectory when respectGitignore is false', async () => {
+    const files = await discoverFiles(PROJECT_ROOT, {
+      include: ['**/*.ts'],
+      exclude: ['**/node_modules/**', '**/.git/**'],
+      respectGitignore: false,
+    })
+    const relativePaths = files.map(f => path.relative(PROJECT_ROOT, f))
+
+    // Should still find src files via walkDirectory
+    const srcFiles = relativePaths.filter(p => p.startsWith('src/'))
+    expect(srcFiles.length).toBeGreaterThan(0)
+  })
+
+  it('handles non-git directory gracefully with respectGitignore', async () => {
+    // /tmp is not a git repo — should fall back to walkDirectory without error
+    const files = await discoverFiles('/tmp', {
+      include: ['**/*'],
+      exclude: [],
+      respectGitignore: true,
+      maxDepth: 1,
+    })
+    // Should not throw; may return files or empty depending on /tmp contents
+    expect(Array.isArray(files)).toBe(true)
+  })
+
+  it('applies maxDepth with git ls-files mode', async () => {
+    const shallowFiles = await discoverFiles(PROJECT_ROOT, {
+      include: ['**/*.ts'],
+      respectGitignore: true,
+      maxDepth: 0,
+    })
+    const relativePaths = shallowFiles.map(f => path.relative(PROJECT_ROOT, f))
+
+    // maxDepth 0 means only root-level files (depth = 0 segments before file)
+    for (const p of relativePaths) {
+      const depth = p.split('/').length - 1
+      expect(depth).toBeLessThanOrEqual(0)
+    }
+  })
+
+  it('applies include/exclude patterns with git ls-files mode', async () => {
+    const files = await discoverFiles(PROJECT_ROOT, {
+      include: ['src/encoder/**/*.ts'],
+      exclude: ['**/evolution/**'],
+      respectGitignore: true,
+    })
+    const relativePaths = files.map(f => path.relative(PROJECT_ROOT, f))
+
+    // All files should be under src/encoder
+    for (const p of relativePaths) {
+      expect(p.startsWith('src/encoder/')).toBe(true)
+    }
+
+    // No evolution files should be included
+    const evolutionFiles = relativePaths.filter(p => p.includes('evolution'))
+    expect(evolutionFiles).toHaveLength(0)
+
+    // Should still find encoder.ts
+    expect(relativePaths).toContain('src/encoder/encoder.ts')
   })
 })
 

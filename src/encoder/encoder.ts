@@ -7,6 +7,7 @@ import type { FileParseInfo } from './data-flow'
 import type { EvolutionResult } from './evolution/types'
 import type { FileFeatureGroup } from './reorganization'
 import type { EntityInput, SemanticFeature, SemanticOptions } from './semantic'
+import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import { readdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
@@ -34,6 +35,8 @@ export interface EncoderOptions {
   exclude?: string[]
   /** Maximum depth for directory traversal */
   maxDepth?: number
+  /** Respect .gitignore rules via git ls-files (default: true) */
+  respectGitignore?: boolean
   /** Semantic extraction options */
   semantic?: SemanticOptions
   /** Cache options */
@@ -65,10 +68,80 @@ export interface DiscoverFilesOptions {
   include?: string[]
   exclude?: string[]
   maxDepth?: number
+  /** Respect .gitignore rules via git ls-files (default: true) */
+  respectGitignore?: boolean
+}
+
+/**
+ * Check if a path is inside a git working tree.
+ */
+function isGitRepo(repoPath: string): boolean {
+  try {
+    execFileSync('git', ['rev-parse', '--is-inside-work-tree'], {
+      cwd: repoPath,
+      encoding: 'utf-8',
+      stdio: 'pipe',
+    })
+    return true
+  }
+  catch {
+    return false
+  }
+}
+
+/**
+ * List files known to git: tracked + untracked-but-not-ignored.
+ * Returns relative paths (forward-slash separated).
+ */
+function gitListFiles(repoPath: string): string[] {
+  try {
+    const stdout = execFileSync(
+      'git',
+      ['ls-files', '--cached', '--others', '--exclude-standard'],
+      {
+        cwd: repoPath,
+        encoding: 'utf-8',
+        maxBuffer: 10 * 1024 * 1024, // 10MB
+      },
+    )
+    return stdout.split('\n').filter(Boolean)
+  }
+  catch {
+    return []
+  }
+}
+
+/**
+ * Filter git file list using include/exclude patterns and maxDepth.
+ * Returns absolute paths matching the criteria.
+ */
+function filterGitFiles(
+  repoPath: string,
+  gitFiles: string[],
+  includePatterns: string[],
+  excludePatterns: string[],
+  maxDepth: number,
+): string[] {
+  const result: string[] = []
+  for (const relativePath of gitFiles) {
+    const depth = relativePath.split('/').length - 1
+    if (depth > maxDepth)
+      continue
+    if (matchesPattern(relativePath, excludePatterns))
+      continue
+    if (!matchesPattern(relativePath, includePatterns))
+      continue
+    result.push(path.join(repoPath, relativePath))
+  }
+  return result
 }
 
 /**
  * Discover files in a repository matching the given patterns.
+ *
+ * When respectGitignore is true (default) and the path is a git repo,
+ * uses `git ls-files` to respect .gitignore rules. Falls back to
+ * walkDirectory for non-git repos or when respectGitignore is false.
  *
  * Shared between RPGEncoder and interactive encoder.
  */
@@ -80,7 +153,6 @@ export async function discoverFiles(
     throw new Error(`Repository path does not exist: ${repoPath}`)
   }
 
-  const files: string[] = []
   const includePatterns = opts?.include ?? ['**/*.ts', '**/*.js', '**/*.py']
   const excludePatterns = opts?.exclude ?? [
     '**/node_modules/**',
@@ -88,7 +160,18 @@ export async function discoverFiles(
     '**/.git/**',
   ]
   const maxDepth = opts?.maxDepth ?? 10
+  const respectGitignore = opts?.respectGitignore !== false
 
+  // Try git ls-files when gitignore is respected and path is a git repo
+  if (respectGitignore && isGitRepo(repoPath)) {
+    const gitFiles = gitListFiles(repoPath)
+    if (gitFiles.length > 0) {
+      return filterGitFiles(repoPath, gitFiles, includePatterns, excludePatterns, maxDepth).sort()
+    }
+    // Empty git repo or error — fall through to walkDirectory
+  }
+
+  const files: string[] = []
   await walkDirectory(repoPath, repoPath, files, includePatterns, excludePatterns, 0, maxDepth)
 
   return files.sort()
@@ -561,6 +644,7 @@ export class RPGEncoder {
         include: this.options.include,
         exclude: this.options.exclude,
         maxDepth: this.options.maxDepth,
+        respectGitignore: this.options.respectGitignore,
       })
     }
     catch (error) {
