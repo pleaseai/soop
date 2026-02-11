@@ -1,4 +1,8 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
+import { config } from 'dotenv'
+
+config({ path: ['.env.local', '.env'] })
+
 import { readFile, writeFile } from 'node:fs/promises'
 import { program } from 'commander'
 import { RPGEncoder } from './encoder'

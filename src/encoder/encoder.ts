@@ -475,6 +475,8 @@ export class RPGEncoder {
   private semanticExtractor: SemanticExtractor
   private llmClient: LLMClient | null = null
   private cache: SemanticCache
+  private cacheHits = 0
+  private cacheMisses = 0
 
   constructor(repoPath: string, options?: Partial<Omit<EncoderOptions, 'repoPath'>>) {
     this.repoPath = repoPath
@@ -497,6 +499,16 @@ export class RPGEncoder {
 
     // Initialize shared LLM client for reorganization module
     this.llmClient = this.createLLMClient()
+
+    // Log LLM configuration
+    const provider = this.llmClient?.getProvider()
+    const model = this.llmClient?.getModel()
+    if (provider) {
+      console.log(`[RPGEncoder] LLM: ${provider} (${model})`)
+    }
+    else {
+      console.log(`[RPGEncoder] LLM: disabled (heuristic mode)`)
+    }
   }
 
   private createLLMClient(): LLMClient | null {
@@ -565,7 +577,10 @@ export class RPGEncoder {
     let entitiesExtracted = 0
     const fileParseInfos: FileParseInfo[] = []
 
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const displayPath = path.relative(this.repoPath, file)
+      console.log(`[RPGEncoder] [${i + 1}/${files.length}] ${displayPath}`)
       const { entities, fileToChildEdges, parseResult, sourceCode } = await this.extractEntities(file)
       entitiesExtracted += entities.length
 
@@ -595,15 +610,19 @@ export class RPGEncoder {
           sourceCode,
         })
       }
+
+      // Save cache incrementally after each file (survives interruption)
+      await this.cache.save()
     }
 
-    // Save cache after processing all files
-    await this.cache.save()
+    console.log(`[RPGEncoder] Phase 1 done: ${this.cacheHits} cache hits, ${this.cacheMisses} cache misses`)
 
     // Phase 2: Structural Reorganization
+    console.log(`[RPGEncoder] Phase 2: Structural Reorganization...`)
     await this.buildFunctionalHierarchy(rpg)
 
-    // Phase 3a: Artifact Grounding — metadata propagation
+    // Phase 3: Artifact Grounding
+    console.log(`[RPGEncoder] Phase 3.1: Metadata propagation...`)
     try {
       const grounder = new ArtifactGrounder(rpg)
       await grounder.ground()
@@ -616,9 +635,11 @@ export class RPGEncoder {
     }
 
     // Phase 3b: Artifact Grounding — dependency injection
+    console.log(`[RPGEncoder] Phase 3.2: Dependency injection...`)
     await injectDependencies(rpg, this.repoPath, this.astParser)
 
     // Phase 3c: Data flow edge creation (§3.2 inter-module + intra-module flows)
+    console.log(`[RPGEncoder] Phase 3.3: Data flow detection...`)
     try {
       await this.injectDataFlows(rpg, fileParseInfos)
     }
@@ -627,6 +648,17 @@ export class RPGEncoder {
         + `${error instanceof Error ? error.message : String(error)}`
       console.warn(`[RPGEncoder] ${msg}`)
       warnings.push(msg)
+    }
+
+    // Log LLM token usage statistics
+    const semanticStats = this.semanticExtractor.getLLMClient()?.getUsageStats()
+    const reorgStats = this.llmClient?.getUsageStats()
+    const totalRequests = (semanticStats?.requestCount ?? 0) + (reorgStats?.requestCount ?? 0)
+    if (totalRequests > 0) {
+      const totalInput = (semanticStats?.totalPromptTokens ?? 0) + (reorgStats?.totalPromptTokens ?? 0)
+      const totalOutput = (semanticStats?.totalCompletionTokens ?? 0) + (reorgStats?.totalCompletionTokens ?? 0)
+      const totalTokens = totalInput + totalOutput
+      console.log(`[RPGEncoder] LLM usage: ${totalRequests} requests, ${totalInput.toLocaleString()} input + ${totalOutput.toLocaleString()} output = ${totalTokens.toLocaleString()} total tokens`)
     }
 
     return {
@@ -751,8 +783,11 @@ export class RPGEncoder {
     // Check cache first
     const cached = await this.cache.get(input)
     if (cached) {
+      this.cacheHits++
       return cached
     }
+
+    this.cacheMisses++
 
     // Extract using semantic extractor
     const feature = await this.semanticExtractor.extract(input)
@@ -789,12 +824,16 @@ export class RPGEncoder {
     }
 
     // Step 1: Domain Discovery — identify functional areas
+    console.log(`[RPGEncoder] Phase 2.1: Domain Discovery (${fileGroups.length} file groups)...`)
     const domainDiscovery = new DomainDiscovery(this.llmClient)
     const { functionalAreas } = await domainDiscovery.discover(fileGroups)
+    console.log(`[RPGEncoder] Phase 2.1: Found ${functionalAreas.length} functional areas: ${functionalAreas.join(', ')}`)
 
     // Step 2: Hierarchical Construction — build 3-level paths and link nodes
+    console.log(`[RPGEncoder] Phase 2.2: Hierarchical Construction...`)
     const hierarchyBuilder = new HierarchyBuilder(rpg, this.llmClient)
     await hierarchyBuilder.build(functionalAreas, fileGroups)
+    console.log(`[RPGEncoder] Phase 2.2: Done`)
   }
 
   /**

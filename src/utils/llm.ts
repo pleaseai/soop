@@ -45,8 +45,8 @@ export interface LLMResponse {
  */
 const DEFAULT_MODELS: Record<LLMProvider, string> = {
   openai: 'gpt-4o',
-  anthropic: 'claude-sonnet-4-20250514',
-  google: 'gemini-2.0-flash',
+  anthropic: 'claude-sonnet-4.5',
+  google: 'gemini-3-flash-preview',
 }
 
 /**
@@ -91,9 +91,25 @@ function createProvider(provider: LLMProvider, apiKey?: string) {
  * const client = new LLMClient({ provider: 'openai', model: 'gpt-4o' })
  * ```
  */
+/**
+ * Cumulative token usage statistics
+ */
+export interface TokenUsageStats {
+  totalPromptTokens: number
+  totalCompletionTokens: number
+  totalTokens: number
+  requestCount: number
+}
+
 export class LLMClient {
   private options: LLMOptions
   private providerInstance: ReturnType<typeof createProvider>
+  private usageStats: TokenUsageStats = {
+    totalPromptTokens: 0,
+    totalCompletionTokens: 0,
+    totalTokens: 0,
+    requestCount: 0,
+  }
 
   constructor(options: LLMOptions) {
     this.options = {
@@ -122,6 +138,11 @@ export class LLMClient {
 
     const inputTokens = result.usage?.inputTokens ?? 0
     const outputTokens = result.usage?.outputTokens ?? 0
+
+    this.usageStats.totalPromptTokens += inputTokens
+    this.usageStats.totalCompletionTokens += outputTokens
+    this.usageStats.totalTokens += inputTokens + outputTokens
+    this.usageStats.requestCount++
 
     return {
       content: result.text,
@@ -163,5 +184,24 @@ export class LLMClient {
    */
   getModel(): string {
     return this.options.model ?? DEFAULT_MODELS[this.options.provider]
+  }
+
+  /**
+   * Get cumulative token usage statistics
+   */
+  getUsageStats(): TokenUsageStats {
+    return { ...this.usageStats }
+  }
+
+  /**
+   * Reset usage statistics
+   */
+  resetUsageStats(): void {
+    this.usageStats = {
+      totalPromptTokens: 0,
+      totalCompletionTokens: 0,
+      totalTokens: 0,
+      requestCount: 0,
+    }
   }
 }
