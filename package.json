@@ -42,6 +42,7 @@
     "ai": "^6.0.70",
     "better-sqlite3": "^12.6.2",
     "commander": "^12.1.0",
+    "dotenv": "^17.2.4",
     "graphology": "^0.25.4",
     "graphology-types": "^0.24.8",
     "openai": "^4.104.0",
