@@ -73,6 +73,13 @@ export class SemanticExtractor {
   }
 
   /**
+   * Get the internal LLM client (for usage stats)
+   */
+  getLLMClient(): LLMClient | undefined {
+    return this.llmClient
+  }
+
+  /**
    * Detect available LLM provider from environment
    * Priority: Google (free tier) > Anthropic > OpenAI
    */
