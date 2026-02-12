@@ -173,8 +173,8 @@ export async function discoverFiles(
       if (filtered.length === 0) {
         console.warn(
           `[discoverFiles] git ls-files found ${gitFiles.length} files, `
-          + `but 0 matched include patterns: ${includePatterns.join(', ')}. `
-          + `Check your include/exclude configuration.`,
+          + `but 0 matched the configured filters (include/exclude/maxDepth). `
+          + `Please check your configuration.`,
         )
       }
       return filtered.sort()
