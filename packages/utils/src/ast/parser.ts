@@ -43,8 +43,6 @@ export class ASTParser {
       rs: 'rust',
       go: 'go',
       java: 'java',
-      kt: 'kotlin',
-      dart: 'dart',
     }
     return langMap[ext ?? ''] ?? 'unknown'
   }
@@ -274,10 +272,26 @@ export class ASTParser {
    * Extract parent class name for methods
    */
   private extractParentClass(node: Parser.SyntaxNode): string | undefined {
+    // For Go methods, extract receiver type
+    if (node.type === 'method_declaration') {
+      const receiver = node.childForFieldName('receiver')
+      if (receiver) {
+        for (const child of receiver.children) {
+          if (child.type === 'parameter_declaration') {
+            const typeNode = child.childForFieldName('type')
+            if (typeNode) {
+              // Strip pointer prefix (*User -> User)
+              return typeNode.text.replace(/^\*/, '')
+            }
+          }
+        }
+      }
+    }
+
     let current = node.parent
     while (current) {
-      if (current.type === 'class_declaration' || current.type === 'class_definition') {
-        const nameNode = current.childForFieldName('name')
+      if (current.type === 'class_declaration' || current.type === 'class_definition' || current.type === 'impl_item') {
+        const nameNode = current.childForFieldName('name') ?? current.childForFieldName('type')
         return nameNode?.text
       }
       current = current.parent

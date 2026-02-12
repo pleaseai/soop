@@ -15,6 +15,18 @@ describe('Language Configurations', () => {
     it('has python configuration', () => {
       expect(LANGUAGE_CONFIGS.python).toBeDefined()
     })
+
+    it('has rust configuration', () => {
+      expect(LANGUAGE_CONFIGS.rust).toBeDefined()
+    })
+
+    it('has go configuration', () => {
+      expect(LANGUAGE_CONFIGS.go).toBeDefined()
+    })
+
+    it('has java configuration', () => {
+      expect(LANGUAGE_CONFIGS.java).toBeDefined()
+    })
   })
 
   describe('TypeScript configuration', () => {
@@ -137,6 +149,80 @@ describe('Language Configurations', () => {
     it('import types contains import_statement and import_from_statement', () => {
       config = LANGUAGE_CONFIGS.python
       expect(config.importTypes).toEqual(['import_statement', 'import_from_statement'])
+    })
+  })
+
+  describe('Rust configuration', () => {
+    it('has parser', () => {
+      expect(LANGUAGE_CONFIGS.rust.parser).toBeDefined()
+    })
+
+    it('has entity types with function_item', () => {
+      expect(LANGUAGE_CONFIGS.rust.entityTypes.function_item).toBe('function')
+    })
+
+    it('has entity types with struct_item', () => {
+      expect(LANGUAGE_CONFIGS.rust.entityTypes.struct_item).toBe('class')
+    })
+
+    it('has entity types with impl_item', () => {
+      expect(LANGUAGE_CONFIGS.rust.entityTypes.impl_item).toBe('class')
+    })
+
+    it('has entity types with trait_item', () => {
+      expect(LANGUAGE_CONFIGS.rust.entityTypes.trait_item).toBe('class')
+    })
+
+    it('has import types with use_declaration', () => {
+      expect(LANGUAGE_CONFIGS.rust.importTypes).toEqual(['use_declaration'])
+    })
+  })
+
+  describe('Go configuration', () => {
+    it('has parser', () => {
+      expect(LANGUAGE_CONFIGS.go.parser).toBeDefined()
+    })
+
+    it('has entity types with function_declaration', () => {
+      expect(LANGUAGE_CONFIGS.go.entityTypes.function_declaration).toBe('function')
+    })
+
+    it('has entity types with method_declaration', () => {
+      expect(LANGUAGE_CONFIGS.go.entityTypes.method_declaration).toBe('method')
+    })
+
+    it('has entity types with type_spec', () => {
+      expect(LANGUAGE_CONFIGS.go.entityTypes.type_spec).toBe('class')
+    })
+
+    it('has import types with import_spec', () => {
+      expect(LANGUAGE_CONFIGS.go.importTypes).toEqual(['import_spec'])
+    })
+  })
+
+  describe('Java configuration', () => {
+    it('has parser', () => {
+      expect(LANGUAGE_CONFIGS.java.parser).toBeDefined()
+    })
+
+    it('has entity types with class_declaration', () => {
+      expect(LANGUAGE_CONFIGS.java.entityTypes.class_declaration).toBe('class')
+    })
+
+    it('has entity types with method_declaration', () => {
+      expect(LANGUAGE_CONFIGS.java.entityTypes.method_declaration).toBe('method')
+    })
+
+    it('has entity types with interface_declaration', () => {
+      expect(LANGUAGE_CONFIGS.java.entityTypes.interface_declaration).toBe('class')
+    })
+
+    it('has entity types with constructor_declaration', () => {
+      expect(LANGUAGE_CONFIGS.java.entityTypes.constructor_declaration).toBe('method')
+    })
+
+    it('has import types with import_declaration', () => {
+      expect(LANGUAGE_CONFIGS.java.importTypes).toEqual(['import_declaration'])
     })
   })
 })

@@ -8,7 +8,7 @@ const GO_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
   type_spec: 'class',
 }
 
-const GO_IMPORT_TYPES = ['import_declaration', 'import_spec']
+const GO_IMPORT_TYPES = ['import_spec']
 
 export const goConfig: LanguageConfig = {
   parser: Go,

@@ -3,7 +3,7 @@
  */
 export interface CodeEntity {
   /** Entity type */
-  type: 'function' | 'class' | 'method' | 'variable' | 'import'
+  type: 'function' | 'class' | 'method'
   /** Entity name */
   name: string
   /** Start line (1-indexed) */

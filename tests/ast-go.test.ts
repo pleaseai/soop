@@ -26,7 +26,7 @@ describe('ASTParser - Go', () => {
       })
     })
 
-    it('extracts method_declaration', async () => {
+    it('extracts method_declaration with receiver type', async () => {
       const source = 'func (u *User) Greet() string {\n  return "Hello, " + u.Name\n}'
       const result = await parser.parse(source, 'go')
 
@@ -34,6 +34,7 @@ describe('ASTParser - Go', () => {
       expect(result.entities[0]).toMatchObject({
         type: 'method',
         name: 'Greet',
+        parent: 'User',
       })
     })
 

@@ -104,6 +104,14 @@ describe('ASTParser - Rust', () => {
       expect(result.imports[0].module).toContain('std::io')
     })
 
+    it('extracts grouped use declaration', async () => {
+      const source = `use std::collections::{HashMap, BTreeMap};`
+      const result = await parser.parse(source, 'rust')
+
+      expect(result.imports).toHaveLength(1)
+      expect(result.imports[0].module).toBe('std::collections::{HashMap, BTreeMap}')
+    })
+
     it('handles empty source', async () => {
       const result = await parser.parse('', 'rust')
       expect(result.entities).toEqual([])

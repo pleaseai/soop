@@ -1,27 +1,10 @@
-import type { CodeEntity, LanguageConfig, ParseResult, SupportedLanguage } from '../packages/utils/src/ast/types'
+import type { CodeEntity, LanguageConfig, ParseResult, SupportedLanguage } from '@pleaseai/rpg-utils/ast/types'
 import { describe, expect, it } from 'vitest'
 
 describe('AST Types', () => {
   describe('imports', () => {
-    it('should import CodeEntity type from ast/types', async () => {
-      // This test verifies that the type can be imported
-      // TypeScript types are not available at runtime, so we just check the module loads
-      const module = await import('../packages/utils/src/ast/types')
-      expect(module).toBeDefined()
-    })
-
-    it('should import ParseResult type from ast/types', async () => {
-      const module = await import('../packages/utils/src/ast/types')
-      expect(module).toBeDefined()
-    })
-
-    it('should import SupportedLanguage type from ast/types', async () => {
-      const module = await import('../packages/utils/src/ast/types')
-      expect(module).toBeDefined()
-    })
-
-    it('should import LanguageConfig type from ast/types', async () => {
-      const module = await import('../packages/utils/src/ast/types')
+    it('should import types from ast/types', async () => {
+      const module = await import('@pleaseai/rpg-utils/ast/types')
       expect(module).toBeDefined()
     })
   })
