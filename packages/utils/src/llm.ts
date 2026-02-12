@@ -107,6 +107,49 @@ function createProvider(provider: LLMProvider, apiKey?: string, claudeCodeSettin
 }
 
 /**
+ * Cumulative token usage statistics
+ */
+export interface TokenUsageStats {
+  totalPromptTokens: number
+  totalCompletionTokens: number
+  totalTokens: number
+  requestCount: number
+}
+
+const INITIAL_USAGE_STATS: TokenUsageStats = {
+  totalPromptTokens: 0,
+  totalCompletionTokens: 0,
+  totalTokens: 0,
+  requestCount: 0,
+}
+
+/**
+ * Parse a "provider/model" format string into provider and model components.
+ *
+ * @example
+ * parseModelString('openai/gpt-5.2') // { provider: 'openai', model: 'gpt-5.2' }
+ * parseModelString('claude-code/haiku') // { provider: 'claude-code', model: 'haiku' }
+ * parseModelString('google') // { provider: 'google', model: undefined }
+ */
+export function parseModelString(modelString: string): { provider: LLMProvider, model?: string } {
+  const slashIndex = modelString.indexOf('/')
+  if (slashIndex === -1) {
+    return { provider: validateProvider(modelString) }
+  }
+  const provider = validateProvider(modelString.substring(0, slashIndex))
+  const model = modelString.substring(slashIndex + 1)
+  return { provider, model: model || undefined }
+}
+
+function validateProvider(name: string): LLMProvider {
+  const valid = Object.keys(DEFAULT_MODELS) as LLMProvider[]
+  if (!valid.includes(name as LLMProvider)) {
+    throw new Error(`Unknown LLM provider: "${name}". Valid providers: ${valid.join(', ')}`)
+  }
+  return name as LLMProvider
+}
+
+/**
  * LLM Client for semantic operations using Vercel AI SDK
  *
  * Used for:
@@ -131,53 +174,6 @@ function createProvider(provider: LLMProvider, apiKey?: string, claudeCodeSettin
  * const client = new LLMClient({ provider: 'claude-code', model: 'sonnet' })
  * ```
  */
-
-/**
- * Cumulative token usage statistics
- */
-export interface TokenUsageStats {
-  totalPromptTokens: number
-  totalCompletionTokens: number
-  totalTokens: number
-  requestCount: number
-}
-
-const INITIAL_USAGE_STATS: TokenUsageStats = {
-  totalPromptTokens: 0,
-  totalCompletionTokens: 0,
-  totalTokens: 0,
-  requestCount: 0,
-}
-
-/**
- * LLM Client for semantic operations using Vercel AI SDK
- */
-/**
- * Parse a "provider/model" format string into provider and model components.
- *
- * @example
- * parseModelString('openai/gpt-5.2') // { provider: 'openai', model: 'gpt-5.2' }
- * parseModelString('claude-code/haiku') // { provider: 'claude-code', model: 'haiku' }
- * parseModelString('google') // { provider: 'google', model: undefined }
- */
-export function parseModelString(modelString: string): { provider: LLMProvider, model?: string } {
-  const slashIndex = modelString.indexOf('/')
-  if (slashIndex === -1) {
-    return { provider: validateProvider(modelString) }
-  }
-  const provider = validateProvider(modelString.substring(0, slashIndex))
-  const model = modelString.substring(slashIndex + 1)
-  return { provider, model: model || undefined }
-}
-
-function validateProvider(name: string): LLMProvider {
-  const valid: LLMProvider[] = ['openai', 'anthropic', 'google', 'claude-code']
-  if (!valid.includes(name as LLMProvider)) {
-    throw new Error(`Unknown LLM provider: "${name}". Valid providers: ${valid.join(', ')}`)
-  }
-  return name as LLMProvider
-}
-
 export class LLMClient {
   private readonly options: LLMOptions
   private readonly providerInstance: ReturnType<typeof createProvider>

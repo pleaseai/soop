@@ -105,9 +105,7 @@ program
   .option('-f, --spec-file <file>', 'Specification file')
   .option('-o, --output <dir>', 'Output directory', './generated')
   .option('--no-tests', 'Skip test generation')
-  .option('-m, --model <provider/model>', 'LLM provider/model (e.g., claude-code/haiku, openai/gpt-5.2, google)')
-  .option('--no-llm', 'Disable LLM (use heuristic extraction)')
-  .action(async (options: { spec?: string, specFile?: string, output: string, tests: boolean, model?: string, llm?: boolean }) => {
+  .action(async (options: { spec?: string, specFile?: string, output: string, tests: boolean }) => {
     let spec = options.spec
 
     if (options.specFile) {
@@ -261,7 +259,10 @@ program
     console.log(`  Rerouted: ${result.rerouted}`)
     console.log(`  Duration: ${result.duration}ms`)
     if (result.errors.length > 0) {
-      console.log(`  Errors: ${result.errors.length}`)
+      console.warn(`\n  Errors (${result.errors.length}):`)
+      for (const err of result.errors) {
+        console.warn(`    - [${err.phase}] ${err.entity}: ${err.error}`)
+      }
     }
   })
 
