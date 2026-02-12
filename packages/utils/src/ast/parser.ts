@@ -1,113 +1,7 @@
+import type { CodeEntity, LanguageConfig, ParseResult, SupportedLanguage } from './types'
+
 import Parser from 'tree-sitter'
-
-// Tree-sitter language parsers - using require for CommonJS modules
-const TypeScript = require('tree-sitter-typescript').typescript
-const Python = require('tree-sitter-python')
-
-/**
- * Parsed code entity from AST
- */
-export interface CodeEntity {
-  /** Entity type */
-  type: 'function' | 'class' | 'method' | 'variable' | 'import'
-  /** Entity name */
-  name: string
-  /** Start line (1-indexed) */
-  startLine: number
-  /** End line (1-indexed) */
-  endLine: number
-  /** Start column */
-  startColumn: number
-  /** End column */
-  endColumn: number
-  /** Docstring or comment */
-  documentation?: string
-  /** Parameters for functions/methods */
-  parameters?: string[]
-  /** Return type annotation */
-  returnType?: string
-  /** Parent entity (for methods) */
-  parent?: string
-}
-
-/**
- * Result of parsing a file
- */
-export interface ParseResult {
-  /** Detected language */
-  language: string
-  /** Extracted entities */
-  entities: CodeEntity[]
-  /** Import statements */
-  imports: Array<{ module: string, names: string[] }>
-  /** Parsing errors */
-  errors: string[]
-}
-
-/**
- * Supported language names
- */
-type SupportedLanguage = 'typescript' | 'javascript' | 'python'
-
-/**
- * Node types that represent splittable code units per language
- */
-const ENTITY_NODE_TYPES: Record<SupportedLanguage, Record<string, CodeEntity['type']>> = {
-  typescript: {
-    function_declaration: 'function',
-    arrow_function: 'function',
-    class_declaration: 'class',
-    method_definition: 'method',
-    // export_statement: handled separately for imports
-  },
-  javascript: {
-    function_declaration: 'function',
-    arrow_function: 'function',
-    class_declaration: 'class',
-    method_definition: 'method',
-  },
-  python: {
-    function_definition: 'function',
-    async_function_definition: 'function',
-    class_definition: 'class',
-  },
-}
-
-/**
- * Import node types per language
- */
-const IMPORT_NODE_TYPES: Record<SupportedLanguage, string[]> = {
-  typescript: ['import_statement'],
-  javascript: ['import_statement'],
-  python: ['import_statement', 'import_from_statement'],
-}
-
-/**
- * Language configurations with parser and settings
- */
-interface LanguageConfig {
-  parser: unknown
-  entityTypes: Record<string, CodeEntity['type']>
-  importTypes: string[]
-}
-
-const LANGUAGE_CONFIGS: Record<SupportedLanguage, LanguageConfig> = {
-  typescript: {
-    parser: TypeScript,
-    entityTypes: ENTITY_NODE_TYPES.typescript,
-    importTypes: IMPORT_NODE_TYPES.typescript,
-  },
-  javascript: {
-    parser: TypeScript, // TypeScript parser handles JS as well
-    entityTypes: ENTITY_NODE_TYPES.javascript,
-    importTypes: IMPORT_NODE_TYPES.javascript,
-  },
-  python: {
-    parser: Python,
-    entityTypes: ENTITY_NODE_TYPES.python,
-    importTypes: IMPORT_NODE_TYPES.python,
-  },
-}
+import { LANGUAGE_CONFIGS } from './languages'
 
 /**
  * AST Parser using tree-sitter
@@ -132,7 +26,7 @@ export class ASTParser {
    * Type guard to check if language is a supported language
    */
   private isSupportedLanguage(language: string): language is SupportedLanguage {
-    return language in LANGUAGE_CONFIGS
+    return language in LANGUAGE_CONFIGS && LANGUAGE_CONFIGS[language as SupportedLanguage] !== undefined
   }
 
   /**
@@ -176,7 +70,7 @@ export class ASTParser {
       result.errors.push(`Unsupported language: ${language}`)
       return result
     }
-    const config = LANGUAGE_CONFIGS[language]
+    const config = LANGUAGE_CONFIGS[language]!
 
     try {
       // Set language parser

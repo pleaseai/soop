@@ -188,7 +188,7 @@ from typing import List, Dict`
   describe('parseFile', () => {
     it('parses file from path', async () => {
       // Use a file that exists in the project
-      const result = await parser.parseFile('./packages/utils/src/ast.ts')
+      const result = await parser.parseFile('./packages/utils/src/ast/parser.ts')
 
       expect(result.language).toBe('typescript')
       expect(result.entities.length).toBeGreaterThan(0)

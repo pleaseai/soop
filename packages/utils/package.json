@@ -7,7 +7,7 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./ast": "./src/ast.ts",
+    "./ast": "./src/ast/index.ts",
     "./ast/languages": "./src/ast/languages/index.ts",
     "./ast/types": "./src/ast/types.ts",
     "./llm": "./src/llm.ts",
