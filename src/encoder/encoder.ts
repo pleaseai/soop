@@ -73,48 +73,48 @@ export interface DiscoverFilesOptions {
 }
 
 /**
- * Check if a path is inside a git working tree.
- */
-function isGitRepo(repoPath: string): boolean {
-  try {
-    execFileSync('git', ['rev-parse', '--is-inside-work-tree'], {
-      cwd: repoPath,
-      encoding: 'utf-8',
-      stdio: 'pipe',
-    })
-    return true
-  }
-  catch {
-    return false
-  }
-}
-
-/**
  * List files known to git: tracked + untracked-but-not-ignored.
  * Returns relative paths (forward-slash separated).
+ * Returns empty array for non-git directories or on failure (with warning).
  */
 function gitListFiles(repoPath: string): string[] {
   try {
     const stdout = execFileSync(
       'git',
-      ['ls-files', '--cached', '--others', '--exclude-standard'],
+      ['ls-files', '--cached', '--others', '--exclude-standard', '-z'],
       {
         cwd: repoPath,
         encoding: 'utf-8',
+        stdio: 'pipe',
         maxBuffer: 10 * 1024 * 1024, // 10MB
       },
     )
-    return stdout.split('\n').filter(Boolean)
+    return [...new Set(stdout.split('\0').filter(Boolean))]
   }
-  catch {
+  catch (error: unknown) {
+    const err = error as { status?: number, code?: string, stderr?: string }
+    const stderr = (err.stderr ?? '').trim()
+    if (err.code === 'ENOENT') {
+      console.warn(
+        `[discoverFiles] git binary not found on PATH. `
+        + `Cannot check .gitignore rules; falling back to directory walk.`,
+      )
+    }
+    else if (err.status === 128 && stderr.includes('not a git repository')) {
+      // Normal "not a git repo" response — no warning needed
+    }
+    else {
+      console.warn(
+        `[discoverFiles] git ls-files failed`
+        + ` (exit ${err.status ?? '?'}, code=${err.code ?? 'unknown'}): `
+        + `${stderr || (error instanceof Error ? error.message : String(error))}. `
+        + `Falling back to directory walk (gitignore rules will NOT be applied).`,
+      )
+    }
     return []
   }
 }
 
-/**
- * Filter git file list using include/exclude patterns and maxDepth.
- * Returns absolute paths matching the criteria.
- */
 function filterGitFiles(
   repoPath: string,
   gitFiles: string[],
@@ -122,26 +122,23 @@ function filterGitFiles(
   excludePatterns: string[],
   maxDepth: number,
 ): string[] {
-  const result: string[] = []
-  for (const relativePath of gitFiles) {
-    const depth = relativePath.split('/').length - 1
-    if (depth > maxDepth)
-      continue
-    if (matchesPattern(relativePath, excludePatterns))
-      continue
-    if (!matchesPattern(relativePath, includePatterns))
-      continue
-    result.push(path.join(repoPath, relativePath))
-  }
-  return result
+  return gitFiles
+    .filter((relativePath) => {
+      const normalizedPath = relativePath.replace(/\\/g, '/')
+      const depth = normalizedPath.split('/').length - 1
+      return depth <= maxDepth
+        && !matchesPattern(normalizedPath, excludePatterns)
+        && matchesPattern(normalizedPath, includePatterns)
+    })
+    .map(relativePath => path.join(repoPath, relativePath))
 }
 
 /**
  * Discover files in a repository matching the given patterns.
  *
- * When respectGitignore is true (default) and the path is a git repo,
- * uses `git ls-files` to respect .gitignore rules. Falls back to
- * walkDirectory for non-git repos or when respectGitignore is false.
+ * When respectGitignore is true (default), uses `git ls-files` to respect
+ * .gitignore rules. Falls back to walkDirectory for non-git repos, when
+ * git is unavailable, or when respectGitignore is false.
  *
  * Shared between RPGEncoder and interactive encoder.
  */
@@ -162,13 +159,19 @@ export async function discoverFiles(
   const maxDepth = opts?.maxDepth ?? 10
   const respectGitignore = opts?.respectGitignore !== false
 
-  // Try git ls-files when gitignore is respected and path is a git repo
-  if (respectGitignore && isGitRepo(repoPath)) {
+  if (respectGitignore) {
     const gitFiles = gitListFiles(repoPath)
     if (gitFiles.length > 0) {
-      return filterGitFiles(repoPath, gitFiles, includePatterns, excludePatterns, maxDepth).sort()
+      const filtered = filterGitFiles(repoPath, gitFiles, includePatterns, excludePatterns, maxDepth)
+      if (filtered.length === 0) {
+        console.warn(
+          `[discoverFiles] git ls-files found ${gitFiles.length} files, `
+          + `but 0 matched include patterns: ${includePatterns.join(', ')}. `
+          + `Check your include/exclude configuration.`,
+        )
+      }
+      return filtered.sort()
     }
-    // Empty git repo or error — fall through to walkDirectory
   }
 
   const files: string[] = []

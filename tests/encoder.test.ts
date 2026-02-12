@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process'
+import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { discoverFiles, RPGEncoder } from '../src/encoder'
 
 // Get current project root for testing
@@ -186,6 +188,17 @@ describe('RPGEncoder.discoverFiles', () => {
     expect(srcFiles.length).toBeGreaterThan(0)
   })
 
+  it('defaults to respectGitignore=true when option is omitted', async () => {
+    const files = await discoverFiles(PROJECT_ROOT, {
+      include: ['**/*.ts', '**/*.json'],
+    })
+    const relativePaths = files.map(f => path.relative(PROJECT_ROOT, f))
+
+    // dist/ is in .gitignore — should not appear even without explicit respectGitignore
+    const distFiles = relativePaths.filter(p => p.startsWith('dist/'))
+    expect(distFiles).toHaveLength(0)
+  })
+
   it('falls back to walkDirectory when respectGitignore is false', async () => {
     const files = await discoverFiles(PROJECT_ROOT, {
       include: ['**/*.ts'],
@@ -200,15 +213,20 @@ describe('RPGEncoder.discoverFiles', () => {
   })
 
   it('handles non-git directory gracefully with respectGitignore', async () => {
-    // /tmp is not a git repo — should fall back to walkDirectory without error
-    const files = await discoverFiles('/tmp', {
-      include: ['**/*'],
-      exclude: [],
-      respectGitignore: true,
-      maxDepth: 1,
-    })
-    // Should not throw; may return files or empty depending on /tmp contents
-    expect(Array.isArray(files)).toBe(true)
+    const tmpDir = path.join(os.tmpdir(), `rpg-nongit-${Date.now()}`)
+    fs.mkdirSync(tmpDir, { recursive: true })
+    fs.writeFileSync(path.join(tmpDir, 'test.ts'), '// test')
+    try {
+      const files = await discoverFiles(tmpDir, {
+        include: ['**/*.ts'],
+        respectGitignore: true,
+      })
+      expect(files).toHaveLength(1)
+      expect(files[0]).toContain('test.ts')
+    }
+    finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true })
+    }
   })
 
   it('applies maxDepth with git ls-files mode', async () => {
@@ -219,6 +237,7 @@ describe('RPGEncoder.discoverFiles', () => {
     })
     const relativePaths = shallowFiles.map(f => path.relative(PROJECT_ROOT, f))
 
+    expect(shallowFiles.length).toBeGreaterThan(0)
     // maxDepth 0 means only root-level files (depth = 0 segments before file)
     for (const p of relativePaths) {
       const depth = p.split('/').length - 1
@@ -234,6 +253,7 @@ describe('RPGEncoder.discoverFiles', () => {
     })
     const relativePaths = files.map(f => path.relative(PROJECT_ROOT, f))
 
+    expect(relativePaths.length).toBeGreaterThan(0)
     // All files should be under src/encoder
     for (const p of relativePaths) {
       expect(p.startsWith('src/encoder/')).toBe(true)
@@ -245,6 +265,40 @@ describe('RPGEncoder.discoverFiles', () => {
 
     // Should still find encoder.ts
     expect(relativePaths).toContain('src/encoder/encoder.ts')
+  })
+
+  it('throws for non-existent repository path', async () => {
+    await expect(
+      discoverFiles('/non/existent/path', { include: ['**/*.ts'] }),
+    ).rejects.toThrow('Repository path does not exist')
+  })
+
+  it('warns and falls back when git ls-files fails', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const tmpDir = path.join(os.tmpdir(), `rpg-gitfail-${Date.now()}`)
+    fs.mkdirSync(tmpDir, { recursive: true })
+    // Init git repo but corrupt the index to trigger git ls-files failure
+    execFileSync('git', ['init'], { cwd: tmpDir, stdio: 'pipe' })
+    fs.writeFileSync(path.join(tmpDir, 'hello.ts'), '// hello')
+    // Corrupt the git index
+    fs.writeFileSync(path.join(tmpDir, '.git', 'index'), 'corrupted')
+    try {
+      const files = await discoverFiles(tmpDir, {
+        include: ['**/*.ts'],
+        respectGitignore: true,
+      })
+      // Should fall back to walkDirectory and still find the file
+      expect(files).toHaveLength(1)
+      expect(files[0]).toContain('hello.ts')
+      // Should have logged a warning about git failure
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('git ls-files failed'),
+      )
+    }
+    finally {
+      warnSpy.mockRestore()
+      fs.rmSync(tmpDir, { recursive: true, force: true })
+    }
   })
 })
 
