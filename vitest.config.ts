@@ -9,8 +9,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/**/*.ts'],
-      exclude: ['src/cli.ts'],
+      include: ['packages/*/src/**/*.ts'],
+      exclude: ['packages/cli/src/cli.ts'],
     },
     testTimeout: 10000,
     server: {
@@ -18,10 +18,27 @@ export default defineConfig({
         external: [],
       },
     },
-  },
-  resolve: {
-    alias: {
-      '@': './src',
-    },
+    projects: [
+      {
+        test: {
+          name: 'unit',
+          globals: true,
+          environment: 'node',
+          include: ['tests/**/*.test.ts'],
+          exclude: ['tests/fixtures/**', 'tests/**/*.integration.test.ts'],
+          testTimeout: 15000,
+        },
+      },
+      {
+        test: {
+          name: 'integration',
+          globals: true,
+          environment: 'node',
+          include: ['tests/**/*.integration.test.ts'],
+          exclude: ['tests/fixtures/**'],
+          testTimeout: 30000,
+        },
+      },
+    ],
   },
 })

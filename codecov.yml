@@ -1,0 +1,88 @@
+codecov:
+  require_ci_to_pass: false
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+    patch:
+      default:
+        target: 80%
+
+flags:
+  unit:
+    paths:
+      - packages/
+    carryforward: true
+  integration:
+    paths:
+      - packages/
+    carryforward: true
+
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        threshold: 5%
+      - type: patch
+        target: 80%
+  individual_components:
+    - component_id: utils
+      name: '@pleaseai/rpg-utils'
+      paths:
+        - packages/utils/src/**
+      flag_regexes:
+        - unit
+        - integration
+    - component_id: store
+      name: '@pleaseai/rpg-store'
+      paths:
+        - packages/store/src/**
+      flag_regexes:
+        - unit
+        - integration
+    - component_id: graph
+      name: '@pleaseai/rpg-graph'
+      paths:
+        - packages/graph/src/**
+      flag_regexes:
+        - unit
+        - integration
+    - component_id: encoder
+      name: '@pleaseai/rpg-encoder'
+      paths:
+        - packages/encoder/src/**
+      flag_regexes:
+        - unit
+        - integration
+    - component_id: tools
+      name: '@pleaseai/rpg-tools'
+      paths:
+        - packages/tools/src/**
+      flag_regexes:
+        - unit
+        - integration
+    - component_id: zerorepo
+      name: '@pleaseai/rpg-zerorepo'
+      paths:
+        - packages/zerorepo/src/**
+      flag_regexes:
+        - unit
+        - integration
+    - component_id: mcp
+      name: '@pleaseai/rpg-mcp'
+      paths:
+        - packages/mcp/src/**
+      flag_regexes:
+        - unit
+        - integration
+    - component_id: cli
+      name: '@pleaseai/rpg-cli'
+      paths:
+        - packages/cli/src/**
+      flag_regexes:
+        - unit
+        - integration

@@ -59,10 +59,48 @@ bun run format
 bun run typecheck
 
 # CLI (development)
-bun run src/cli.ts encode ./my_project
+bun run packages/cli/src/cli.ts encode ./my_project
 ```
 
 ## Architecture
+
+### Workspace Structure
+
+The project uses **Bun workspaces** with 8 packages under `packages/`. All packages are `private: true`; publishing is done via the root `@pleaseai/rpg` umbrella package.
+
+```
+packages/
+├── utils/     # Layer 0: AST parser, LLM interface, Vector DB (independent)
+├── store/     # Layer 0: Storage interfaces & implementations (independent)
+├── graph/     # Layer 1: RPG data structures (→ store)
+├── encoder/   # Layer 2: Code → RPG extraction (→ graph, utils)
+├── tools/     # Layer 2: Agentic tools for graph navigation (→ graph, encoder)
+├── zerorepo/  # Layer 2: Intent → Code generation (→ graph, utils)
+├── mcp/       # Layer 3: MCP server (→ graph, encoder, tools, utils)
+└── cli/       # Layer 4: CLI entry point (→ encoder, graph, tools, zerorepo)
+```
+
+### Import Pattern
+
+Cross-package imports use workspace package names:
+```typescript
+// Correct: workspace package imports
+import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
+import { ASTParser } from '@pleaseai/rpg-utils/ast'
+import { RPGEncoder } from '@pleaseai/rpg-encoder'
+
+// Sub-path exports are available for fine-grained imports:
+import { SQLiteGraphStore } from '@pleaseai/rpg-store/sqlite'
+import { DataFlowEdgeSchema } from '@pleaseai/rpg-graph/edge'
+import { SemanticSearch } from '@pleaseai/rpg-encoder/semantic-search'
+```
+
+Within the same package, use relative imports:
+```typescript
+// Inside packages/encoder/src/encoder.ts:
+import { SemanticCache } from './cache'
+import { DataFlowDetector } from './data-flow'
+```
 
 ### Core Concepts
 
@@ -76,13 +114,16 @@ bun run src/cli.ts encode ./my_project
 
 ### Module Responsibilities
 
-| Module | Purpose |
-|--------|---------|
-| `src/graph/` | RPG data structures (Node, Edge, GraphStore interface, SQLiteStore, SurrealStore) |
-| `src/encoder/` | Code → RPG extraction (semantic lifting, structural reorganization, artifact grounding) |
-| `src/zerorepo/` | Intent → Code generation (proposal construction, implementation planning, code generation) |
-| `src/tools/` | Agentic tools (SearchNode, FetchNode, ExploreRPG) for graph navigation |
-| `src/utils/` | AST parser (tree-sitter), LLM interface (OpenAI/Anthropic), Vector DB (LanceDB) |
+| Package | Purpose |
+|---------|---------|
+| `@pleaseai/rpg-utils` | AST parser (tree-sitter), LLM interface (OpenAI/Anthropic/Google), Vector DB (LanceDB) |
+| `@pleaseai/rpg-store` | Storage interfaces (GraphStore, VectorStore, TextSearchStore) & implementations (SQLite, SurrealDB, LanceDB) |
+| `@pleaseai/rpg-graph` | RPG data structures (Node, Edge, RPG class) |
+| `@pleaseai/rpg-encoder` | Code → RPG extraction (semantic lifting, structural reorganization, artifact grounding, evolution) |
+| `@pleaseai/rpg-tools` | Agentic tools (SearchNode, FetchNode, ExploreRPG) for graph navigation |
+| `@pleaseai/rpg-zerorepo` | Intent → Code generation (proposal construction, implementation planning, code generation) |
+| `@pleaseai/rpg-mcp` | MCP server for Claude Code integration |
+| `@pleaseai/rpg-cli` | CLI entry point |
 
 ### Key Pipelines
 
@@ -96,23 +137,22 @@ bun run src/cli.ts encode ./my_project
 2. Evolution: Commit-level incremental updates (add/modify/delete)
 3. Operation: SearchNode, FetchNode, ExploreRPG tools
 
-### GraphStore Implementations
+### Store Implementations
 
-The `GraphStore` interface (`src/graph/store.ts`) defines the storage API for RPG graphs. Two implementations exist:
+The `@pleaseai/rpg-store` package provides the storage layer with decomposed interfaces:
 
 | Store | Module | Engine | Search |
 |-------|--------|--------|--------|
-| `SQLiteStore` | `src/graph/sqlite-store.ts` | `better-sqlite3` (WAL mode) | FTS5 full-text search |
-| `SurrealStore` | `src/graph/surreal-store.ts` | `surrealdb` + `@surrealdb/node` embedded | BM25 search |
+| `SQLiteGraphStore` | `packages/store/src/sqlite/` | `better-sqlite3` (WAL mode) | FTS5 full-text search |
+| `SurrealGraphStore` | `packages/store/src/surreal/` | `surrealdb` + `@surrealdb/node` embedded | BM25 search |
+| `LanceDBVectorStore` | `packages/store/src/lancedb/` | LanceDB | Vector similarity search |
+| `DefaultContextStore` | `packages/store/src/default-context-store.ts` | Composite (SQLite + LanceDB) | Graph + Text + Vector |
 
-**Import pattern** — store implementations are NOT re-exported from `src/graph/index.ts` to avoid transitive native module loading:
+**Import pattern** — store implementations are NOT re-exported from the barrel to avoid transitive native module loading:
 ```typescript
-// Correct: import directly
-import { SQLiteStore } from './graph/sqlite-store'
-import { SurrealStore } from './graph/surreal-store'
-
-// Wrong: barrel import will fail in non-Bun environments
-// import { SQLiteStore } from './graph'
+import { SQLiteGraphStore } from '@pleaseai/rpg-store/sqlite'
+import { SurrealGraphStore } from '@pleaseai/rpg-store/surreal'
+import { DefaultContextStore } from '@pleaseai/rpg-store/default-context-store'
 ```
 
 ### Key Libraries
@@ -165,7 +205,7 @@ Add to your Claude Code settings (`.claude/settings.json` or `~/.config/claude/s
   "mcpServers": {
     "rpg": {
       "command": "bun",
-      "args": ["run", "/path/to/rpg/src/mcp/server.ts", "/path/to/rpg-file.json"],
+      "args": ["run", "/path/to/rpg/packages/mcp/src/server.ts", "/path/to/rpg-file.json"],
       "env": {}
     }
   }
@@ -191,10 +231,11 @@ All git commit messages, code comments, GitHub issues, pull request titles/descr
 
 ## Design Decisions
 
+- **Bun workspaces**: Modular package structure with explicit dependency management, all `private: true`, single umbrella publish
 - **Vitest over Bun Test**: Jest compatibility for planned MCP server development
 - **LanceDB over ChromaDB**: No external server required, Bun-native, disk-based persistence
 - **Paper-based implementation**: Original implementation based on research papers, not forked from Microsoft code
-- **Dual GraphStore backends**: SQLiteStore (better-sqlite3) and SurrealStore (native graph relations) for evaluation
+- **Dual GraphStore backends**: SQLiteGraphStore (better-sqlite3) and SurrealGraphStore (native graph relations) in `@pleaseai/rpg-store` for evaluation
 
 ## Known Gotchas
 
