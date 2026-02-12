@@ -17,12 +17,15 @@
     "@ai-sdk/anthropic": "^3.0.36",
     "@ai-sdk/google": "^3.0.21",
     "@ai-sdk/openai": "^3.0.25",
+    "@lancedb/lancedb": "^0.13.0",
     "ai": "^6.0.70",
     "ai-sdk-provider-claude-code": "^3.4.0",
-    "@lancedb/lancedb": "^0.13.0",
     "consola": "^3.4.2",
     "tree-sitter": "^0.21.1",
+    "tree-sitter-go": "^0.25.0",
+    "tree-sitter-java": "^0.23.5",
     "tree-sitter-python": "^0.21.0",
+    "tree-sitter-rust": "^0.24.0",
     "tree-sitter-typescript": "^0.21.2"
   },
   "peerDependencies": {
