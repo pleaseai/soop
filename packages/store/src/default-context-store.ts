@@ -1,8 +1,12 @@
 import type { ContextStore } from './context-store'
 import type { GraphStore } from './graph-store'
 import type { TextSearchStore } from './text-search-store'
+
 import type { ContextStoreConfig } from './types'
 import type { VectorStore } from './vector-store'
+import { mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 /**
  * DefaultContextStore — Composes SQLiteGraphStore + SQLiteTextSearchStore + LanceDBVectorStore.
@@ -44,7 +48,9 @@ export class DefaultContextStore implements ContextStore {
     const vectorStore = new LanceDBVectorStore()
     const vectorPath
       = config.vectorPath
-        ?? (config.path === 'memory' ? '/tmp/rpg-vectors' : `${config.path}-vectors`)
+        ?? (config.path === 'memory'
+          ? mkdtempSync(join(tmpdir(), 'rpg-vectors-'))
+          : `${config.path}-vectors`)
     await vectorStore.open({ path: vectorPath })
 
     this._graph = graphStore
