@@ -114,6 +114,63 @@ describe('openAIEmbedding', () => {
     expect(models['text-embedding-ada-002']).toBeDefined()
   })
 
+  it('should embed text using AI SDK embed()', async () => {
+    const { embed: embedFn } = await import('ai')
+
+    const mockVector = Array.from({ length: 1536 }, (_, i) => i * 0.001)
+    vi.mocked(embedFn).mockResolvedValueOnce({
+      embedding: mockVector,
+      usage: { tokens: 5 },
+      value: 'test',
+    } as any)
+
+    const embedding = new OpenAIEmbedding({ apiKey: 'test-key' })
+    const result = await embedding.embed('test text')
+
+    expect(result.vector).toEqual(mockVector)
+    expect(result.dimension).toBe(1536)
+  })
+
+  it('should embed batch using AI SDK embedMany()', async () => {
+    const { embedMany: embedManyFn } = await import('ai')
+
+    const mockEmbeddings = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+    vi.mocked(embedManyFn).mockResolvedValueOnce({
+      embeddings: mockEmbeddings,
+      usage: { tokens: 10 },
+      values: ['text1', 'text2'],
+    } as any)
+
+    const embedding = new OpenAIEmbedding({ apiKey: 'test-key' })
+    const results = await embedding.embedBatch(['text1', 'text2'])
+
+    expect(results).toHaveLength(2)
+    expect(results[0].vector).toEqual([0.1, 0.2, 0.3])
+    expect(results[1].vector).toEqual([0.4, 0.5, 0.6])
+  })
+
+  it('should handle empty batch', async () => {
+    const embedding = new OpenAIEmbedding({ apiKey: 'test-key' })
+    const results = await embedding.embedBatch([])
+    expect(results).toHaveLength(0)
+  })
+
+  it('should wrap errors with OpenAI prefix', async () => {
+    const { embed: embedFn } = await import('ai')
+    vi.mocked(embedFn).mockRejectedValueOnce(new Error('Rate limit exceeded'))
+
+    const embedding = new OpenAIEmbedding({ apiKey: 'test-key' })
+    await expect(embedding.embed('test')).rejects.toThrow('Failed to generate OpenAI embedding')
+  })
+
+  it('should wrap batch errors with OpenAI prefix', async () => {
+    const { embedMany: embedManyFn } = await import('ai')
+    vi.mocked(embedManyFn).mockRejectedValueOnce(new Error('Timeout'))
+
+    const embedding = new OpenAIEmbedding({ apiKey: 'test-key' })
+    await expect(embedding.embedBatch(['text'])).rejects.toThrow('Failed to generate OpenAI batch embeddings')
+  })
+
   // Integration test (skipped without real API key)
   it.skip('should generate real embeddings', async () => {
     const embedding = new OpenAIEmbedding({
