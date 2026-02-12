@@ -8,7 +8,13 @@ import { resolveGitBinary } from '../../src/utils/git-path'
 const FIXTURE_REPO = path.resolve(__dirname, '../fixtures/superjson')
 
 function hasGitAncestor(repoPath: string, ref: string): boolean {
-  const git = resolveGitBinary()
+  let git: string
+  try {
+    git = resolveGitBinary()
+  }
+  catch {
+    return false
+  }
   try {
     execFileSync(git, ['rev-parse', '--verify', ref], { cwd: repoPath, stdio: 'pipe' })
     return true

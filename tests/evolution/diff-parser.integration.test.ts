@@ -5,7 +5,13 @@ import { DiffParser } from '../../src/encoder/evolution/diff-parser'
 import { resolveGitBinary } from '../../src/utils/git-path'
 
 function hasGitAncestor(repoPath: string, ref: string): boolean {
-  const git = resolveGitBinary()
+  let git: string
+  try {
+    git = resolveGitBinary()
+  }
+  catch {
+    return false
+  }
   try {
     execFileSync(git, ['rev-parse', '--verify', ref], { cwd: repoPath, stdio: 'pipe' })
     return true
