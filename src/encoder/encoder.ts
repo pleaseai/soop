@@ -13,6 +13,7 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { RepositoryPlanningGraph } from '../graph'
 import { ASTParser } from '../utils/ast'
+import { resolveGitBinary } from '../utils/git-path'
 import { LLMClient } from '../utils/llm'
 import { SemanticCache } from './cache'
 import { DataFlowDetector } from './data-flow'
@@ -80,7 +81,7 @@ export interface DiscoverFilesOptions {
 function gitListFiles(repoPath: string): string[] {
   try {
     const stdout = execFileSync(
-      'git',
+      resolveGitBinary(),
       ['ls-files', '--cached', '--others', '--exclude-standard', '-z'],
       {
         cwd: repoPath,
