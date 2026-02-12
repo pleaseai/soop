@@ -10,7 +10,7 @@ import {
 import { ArtifactGrounder } from '@pleaseai/rpg-encoder/grounding'
 import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
 import { ASTParser } from '@pleaseai/rpg-utils/ast'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { createStderrLogger } from '@pleaseai/rpg-utils/logger'
 import {
   DOMAIN_DISCOVERY_INSTRUCTIONS,
   FILE_SYNTHESIS_INSTRUCTIONS,
@@ -19,7 +19,7 @@ import {
   SEMANTIC_PARSING_INSTRUCTIONS,
 } from './prompt-texts'
 
-const log = createLogger('InteractiveEncoder')
+const log = createStderrLogger('InteractiveEncoder')
 
 /**
  * Result returned by mutation operations

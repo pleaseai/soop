@@ -221,7 +221,7 @@ export class LLMClient {
     }
     catch (error) {
       const err = error instanceof Error ? error : new Error(String(error))
-      log.error(`${modelId} error: ${err.message}`)
+      log.error(`${modelId} error: ${err.message}`, err)
       this.options.onError?.(err, { model: modelId, promptLength: prompt.length })
       throw err
     }

@@ -213,7 +213,7 @@ export async function main(): Promise<void> {
         semanticSearch = await initSemanticSearch(rpg, rpgPath)
       }
       catch (error) {
-        log.warn(
+        log.error(
           `Semantic search initialization failed, continuing without it: ${error instanceof Error ? error.message : String(error)}`,
         )
       }

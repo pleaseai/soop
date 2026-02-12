@@ -257,7 +257,7 @@ log.debug('Verbose details')    // Hidden unless log level >= 4
 import { createStderrLogger } from '@pleaseai/rpg-utils/logger'
 const log = createStderrLogger('MCP')
 
-// Set global log level (affects all createLogger children)
+// Set global log level (affects all loggers: createLogger children + createStderrLogger instances)
 import { setLogLevel, LogLevels } from '@pleaseai/rpg-utils/logger'
 setLogLevel(LogLevels.debug)    // Enable debug output
 ```
@@ -269,13 +269,14 @@ setLogLevel(LogLevels.debug)    // Enable debug output
 | Fatal | 0 | `log.fatal()` |
 | Error | 0 | `log.error()` |
 | Warn | 1 | `log.warn()` |
-| Info | 3 | `log.info()`, `log.success()`, `log.ready()`, `log.start()` |
+| Log | 2 | `log.log()` |
+| Info | 3 | `log.info()`, `log.success()`, `log.fail()`, `log.ready()`, `log.start()`, `log.box()` |
 | Debug | 4 | `log.debug()` |
 | Trace | 5 | `log.trace()` |
 
 ### CLI `--verbose` Flag
 
-The CLI `encode` command accepts `--verbose` which sets the global log level to `debug` (4), making `log.debug()` calls visible across all packages.
+The CLI `encode` command accepts `--verbose` which sets the global log level to `debug` (4), making `log.debug()` calls visible across all packages (both `createLogger` and `createStderrLogger` instances).
 
 ### Logging vs Output in CLI
 

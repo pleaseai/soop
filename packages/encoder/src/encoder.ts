@@ -87,10 +87,10 @@ function gitListFiles(repoPath: string): string[] {
   try {
     gitBinary = resolveGitBinary()
   }
-  catch {
+  catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
     logDiscover.warn(
-      'git binary not found on PATH. '
-      + 'Cannot check .gitignore rules; falling back to directory walk.',
+      `git binary not available: ${msg}. Cannot check .gitignore rules; falling back to directory walk.`,
     )
     return []
   }
@@ -391,7 +391,7 @@ export async function extractEntitiesFromFile(
   }
   catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
-    logDiscover.warn(`Cannot read ${filePath}: ${msg}`)
+    log.warn(`Cannot read ${filePath}: ${msg}`)
   }
 
   const parseResult = await astParser.parseFile(filePath)
