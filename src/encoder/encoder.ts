@@ -177,14 +177,14 @@ export async function discoverFiles(
           + `Please check your configuration.`,
         )
       }
-      return filtered.sort()
+      return filtered.sort((a, b) => a.localeCompare(b))
     }
   }
 
   const files: string[] = []
   await walkDirectory(repoPath, repoPath, files, includePatterns, excludePatterns, 0, maxDepth)
 
-  return files.sort()
+  return files.sort((a, b) => a.localeCompare(b))
 }
 
 async function walkDirectory(
