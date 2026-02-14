@@ -75,6 +75,7 @@ const DEFAULT_MODELS: Record<LLMProvider, string> = {
  */
 const CLAUDE_SONNET_PRICING = { input: 3.00, output: 15.00 }
 const CLAUDE_HAIKU_PRICING = { input: 1.00, output: 5.00 }
+const CODEX_GPT5_PRICING = { input: 1.25, output: 10.00 }
 
 const MODEL_PRICING: Record<string, { input: number, output: number }> = {
   'gpt-4o': { input: 2.50, output: 10.00 },
@@ -95,9 +96,9 @@ const MODEL_PRICING: Record<string, { input: number, output: number }> = {
   // Codex CLI provider uses ChatGPT Plus/Pro subscription.
   // Pricing reflects equivalent OpenAI API rates for cost estimation,
   // not actual charges (Codex CLI uses subscription billing).
-  'gpt-5.3-codex': { input: 1.25, output: 10.00 },
-  'gpt-5.2-codex': { input: 1.25, output: 10.00 },
-  'gpt-5.1-codex-max': { input: 1.25, output: 10.00 },
+  'gpt-5.3-codex': CODEX_GPT5_PRICING,
+  'gpt-5.2-codex': CODEX_GPT5_PRICING,
+  'gpt-5.1-codex-max': CODEX_GPT5_PRICING,
 }
 
 /**
