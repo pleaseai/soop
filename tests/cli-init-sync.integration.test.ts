@@ -336,16 +336,20 @@ describe('rpg sync command', () => {
       throw new Error('process.exit called')
     }) as never)
 
-    const program = new Command()
-    program.exitOverride()
-    registerSyncCommand(program)
+    try {
+      const program = new Command()
+      program.exitOverride()
+      registerSyncCommand(program)
 
-    await expect(
-      program.parseAsync(['node', 'rpg', 'sync']),
-    ).rejects.toThrow('process.exit called')
+      await expect(
+        program.parseAsync(['node', 'rpg', 'sync']),
+      ).rejects.toThrow('process.exit called')
 
-    expect(exitSpy).toHaveBeenCalledWith(1)
-    exitSpy.mockRestore()
+      expect(exitSpy).toHaveBeenCalledWith(1)
+    }
+    finally {
+      exitSpy.mockRestore()
+    }
   })
 
   it('should write correct state after sync', async () => {

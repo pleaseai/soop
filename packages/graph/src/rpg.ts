@@ -552,16 +552,16 @@ export class RepositoryPlanningGraph {
    */
   updateConfig(updates: Partial<RPGConfig>): void {
     if (updates.name !== undefined) {
-      ;(this.config as RPGConfig).name = updates.name
+      this.config.name = updates.name
     }
     if (updates.rootPath !== undefined) {
-      ;(this.config as RPGConfig).rootPath = updates.rootPath
+      this.config.rootPath = updates.rootPath
     }
     if (updates.description !== undefined) {
-      ;(this.config as RPGConfig).description = updates.description
+      this.config.description = updates.description
     }
     if (updates.github !== undefined) {
-      ;(this.config as RPGConfig).github = updates.github
+      this.config.github = updates.github
     }
   }
 

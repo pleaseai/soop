@@ -51,6 +51,7 @@ export function getCurrentBranch(repoPath: string): string {
  * Get the default branch name (main or master).
  */
 export function getDefaultBranch(repoPath: string): string {
+  resolveGitBinary() // Let "git not found" propagate before entering catch blocks
   try {
     // Check remote HEAD reference
     const ref = git(repoPath, ['symbolic-ref', 'refs/remotes/origin/HEAD'])

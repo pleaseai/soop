@@ -39,7 +39,10 @@ jobs:
               rpg encode . -o .rpg/graph.json --stamp
             else
               echo "Evolving from $LAST_COMMIT..HEAD"
-              rpg evolve --rpg .rpg/graph.json -c "$LAST_COMMIT..HEAD" --stamp
+              rpg evolve --rpg .rpg/graph.json -c "$LAST_COMMIT..HEAD" --stamp || {
+                echo "Evolve failed, falling back to full encode"
+                rpg encode . -o .rpg/graph.json --stamp
+              }
             fi
           fi
 
