@@ -241,27 +241,27 @@ describe('LLMClient', () => {
         cwd: '/tmp/test',
       }
 
-      // eslint-disable-next-line no-new
-      new LLMClient({ provider: 'codex', codexSettings: settings })
+      const client = new LLMClient({ provider: 'codex', codexSettings: settings })
 
+      expect(client).toBeDefined()
       expect(mockCreateCodexCli).toHaveBeenCalledWith({ defaultSettings: settings })
     })
 
     it('should call createCodexCli with undefined when no settings provided', () => {
       mockCreateCodexCli.mockClear()
 
-      // eslint-disable-next-line no-new
-      new LLMClient({ provider: 'codex' })
+      const client = new LLMClient({ provider: 'codex' })
 
+      expect(client).toBeDefined()
       expect(mockCreateCodexCli).toHaveBeenCalledWith(undefined)
     })
 
     it('should not pass apiKey to createCodexCli', () => {
       mockCreateCodexCli.mockClear()
 
-      // eslint-disable-next-line no-new
-      new LLMClient({ provider: 'codex', apiKey: 'should-be-ignored' })
+      const client = new LLMClient({ provider: 'codex', apiKey: 'should-be-ignored' })
 
+      expect(client).toBeDefined()
       expect(mockCreateCodexCli).toHaveBeenCalledWith(undefined)
     })
 
