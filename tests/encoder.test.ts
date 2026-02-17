@@ -604,7 +604,7 @@ describe('RPGEncoder.injectDependencies', () => {
     expect(dependencyEdges.length).toBeGreaterThan(0)
   })
 
-  it('dependency edges have import type', async () => {
+  it('dependency edges include import type', async () => {
     const encoder = new RPGEncoder(PROJECT_ROOT, {
       include: ['packages/encoder/src/**/*.ts'],
       exclude: [],
@@ -612,8 +612,24 @@ describe('RPGEncoder.injectDependencies', () => {
     const result = await encoder.encode()
 
     const dependencyEdges = await result.rpg.getDependencyEdges()
-    for (const edge of dependencyEdges) {
-      expect(edge.dependencyType).toBe('import')
+    const importEdges = dependencyEdges.filter(e => e.dependencyType === 'import')
+    expect(importEdges.length).toBeGreaterThan(0)
+  })
+
+  it('dependency edges include call/inherit/implement types when applicable', async () => {
+    const encoder = new RPGEncoder(PROJECT_ROOT, {
+      include: ['packages/encoder/src/**/*.ts'],
+      exclude: [],
+    })
+    const result = await encoder.encode()
+
+    const dependencyEdges = await result.rpg.getDependencyEdges()
+    const edgeTypes = new Set(dependencyEdges.map(e => e.dependencyType))
+    // At minimum we should have import edges
+    expect(edgeTypes.has('import')).toBe(true)
+    // All edge types should be valid
+    for (const type of edgeTypes) {
+      expect(['import', 'call', 'inherit', 'implement', 'use']).toContain(type)
     }
   })
 
