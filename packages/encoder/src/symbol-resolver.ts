@@ -41,7 +41,7 @@ export interface SymbolTable {
  * using import graph information from the AST
  */
 export class SymbolResolver {
-  private symbolTable: SymbolTable = {
+  private readonly symbolTable: SymbolTable = {
     exports: new Map(),
     imports: new Map(),
   }

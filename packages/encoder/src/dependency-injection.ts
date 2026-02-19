@@ -119,9 +119,23 @@ export async function injectDependencies(
   // Note: createdEdges uses `${source}->${target}` as key to match the DB
   // UNIQUE(source, target, type) constraint (all dependency edges share type='dependency').
   // Import edges are created first and take priority over call/inherit edges.
+  await addCallEdges(rpg, fileData, callExtractor, symbolResolver, filePathToNodeId, knownFiles, createdEdges)
+
+  // Phase 4: Extract and resolve inheritance/implementation edges
+  await addInheritanceEdges(rpg, fileData, inheritanceExtractor, symbolResolver, filePathToNodeId, knownFiles, createdEdges)
+}
+
+async function addCallEdges(
+  rpg: RepositoryPlanningGraph,
+  fileData: Array<{ filePath: string, nodeId: string, parseResult: ParseResult, sourceCode: string }>,
+  callExtractor: CallExtractor,
+  symbolResolver: SymbolResolver,
+  filePathToNodeId: Map<string, string>,
+  knownFiles: Set<string>,
+  createdEdges: Set<string>,
+): Promise<void> {
   for (const file of fileData) {
-    const language = file.parseResult.language
-    const calls = callExtractor.extract(file.sourceCode, language, file.filePath)
+    const calls = callExtractor.extract(file.sourceCode, file.parseResult.language, file.filePath)
 
     for (const call of calls) {
       const resolved = symbolResolver.resolveCall(call, knownFiles)
@@ -146,11 +160,19 @@ export async function injectDependencies(
       })
     }
   }
+}
 
-  // Phase 4: Extract and resolve inheritance/implementation edges
+async function addInheritanceEdges(
+  rpg: RepositoryPlanningGraph,
+  fileData: Array<{ filePath: string, nodeId: string, parseResult: ParseResult, sourceCode: string }>,
+  inheritanceExtractor: InheritanceExtractor,
+  symbolResolver: SymbolResolver,
+  filePathToNodeId: Map<string, string>,
+  knownFiles: Set<string>,
+  createdEdges: Set<string>,
+): Promise<void> {
   for (const file of fileData) {
-    const language = file.parseResult.language
-    const relations = inheritanceExtractor.extract(file.sourceCode, language, file.filePath)
+    const relations = inheritanceExtractor.extract(file.sourceCode, file.parseResult.language, file.filePath)
 
     for (const relation of relations) {
       const resolved = symbolResolver.resolveInheritance(relation, knownFiles)

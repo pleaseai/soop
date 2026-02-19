@@ -131,29 +131,46 @@ export class InheritanceExtractor {
 
     for (const clause of heritage.children) {
       if (clause.type === 'extends_clause') {
-        // Parent class is the identifier or type_identifier within extends_clause
-        for (const child of clause.children) {
-          if (child.type === 'identifier' || child.type === 'type_identifier') {
-            relations.push({
-              childFile: filePath,
-              childClass,
-              parentClass: child.text,
-              kind: 'inherit',
-            })
-          }
-        }
+        this.extractExtendsClause(clause, childClass, filePath, relations)
       }
       else if (clause.type === 'implements_clause') {
-        for (const child of clause.children) {
-          if (child.type === 'type_identifier') {
-            relations.push({
-              childFile: filePath,
-              childClass,
-              parentClass: child.text,
-              kind: 'implement',
-            })
-          }
-        }
+        this.extractImplementsClause(clause, childClass, filePath, relations)
+      }
+    }
+  }
+
+  private extractExtendsClause(
+    clause: Parser.SyntaxNode,
+    childClass: string,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
+    for (const child of clause.children) {
+      if (child.type === 'identifier' || child.type === 'type_identifier') {
+        relations.push({
+          childFile: filePath,
+          childClass,
+          parentClass: child.text,
+          kind: 'inherit',
+        })
+      }
+    }
+  }
+
+  private extractImplementsClause(
+    clause: Parser.SyntaxNode,
+    childClass: string,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
+    for (const child of clause.children) {
+      if (child.type === 'type_identifier') {
+        relations.push({
+          childFile: filePath,
+          childClass,
+          parentClass: child.text,
+          kind: 'implement',
+        })
       }
     }
   }
@@ -209,39 +226,67 @@ export class InheritanceExtractor {
       return
     }
 
+    this.extractJavaSuperclass(node, childClass, filePath, relations)
+    this.extractJavaSuperInterfaces(node, childClass, filePath, relations)
+  }
+
+  private extractJavaSuperclass(
+    node: Parser.SyntaxNode,
+    childClass: string,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
     // superclass field returns the superclass node (e.g. "extends Animal")
     // Extract type_identifier within it
     const superclass = node.childForFieldName('superclass')
-    if (superclass) {
-      for (const child of superclass.children) {
-        if (child.type === 'type_identifier') {
-          relations.push({
-            childFile: filePath,
-            childClass,
-            parentClass: child.text,
-            kind: 'inherit',
-          })
+    if (!superclass) {
+      return
+    }
+    for (const child of superclass.children) {
+      if (child.type === 'type_identifier') {
+        relations.push({
+          childFile: filePath,
+          childClass,
+          parentClass: child.text,
+          kind: 'inherit',
+        })
+      }
+    }
+  }
+
+  private extractJavaSuperInterfaces(
+    node: Parser.SyntaxNode,
+    childClass: string,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
+    // super_interfaces is a child node (not a field), contains type_list → type_identifier
+    for (const child of node.children) {
+      if (child.type !== 'super_interfaces') {
+        continue
+      }
+      for (const listChild of child.children) {
+        if (listChild.type === 'type_list') {
+          this.extractJavaTypeListInterfaces(listChild, childClass, filePath, relations)
         }
       }
     }
+  }
 
-    // super_interfaces is a child node (not a field), contains type_list → type_identifier
-    for (const child of node.children) {
-      if (child.type === 'super_interfaces') {
-        for (const listChild of child.children) {
-          if (listChild.type === 'type_list') {
-            for (const typeChild of listChild.children) {
-              if (typeChild.type === 'type_identifier') {
-                relations.push({
-                  childFile: filePath,
-                  childClass,
-                  parentClass: typeChild.text,
-                  kind: 'implement',
-                })
-              }
-            }
-          }
-        }
+  private extractJavaTypeListInterfaces(
+    typeList: Parser.SyntaxNode,
+    childClass: string,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
+    for (const typeChild of typeList.children) {
+      if (typeChild.type === 'type_identifier') {
+        relations.push({
+          childFile: filePath,
+          childClass,
+          parentClass: typeChild.text,
+          kind: 'implement',
+        })
       }
     }
   }
@@ -297,31 +342,37 @@ export class InheritanceExtractor {
     }
 
     const structType = typeSpec.childForFieldName('type')
-    if (!structType || structType.type !== 'struct_type') {
+    if (structType?.type !== 'struct_type') {
       return
     }
 
-    // Look for embedded structs (field declarations without name field)
+    this.extractGoEmbeddedStructs(structType, childClass, filePath, relations)
+  }
+
+  private extractGoEmbeddedStructs(
+    structType: Parser.SyntaxNode,
+    childClass: string,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
     for (const child of structType.children) {
-      if (child.type === 'field_declaration_list') {
-        for (const fieldChild of child.children) {
-          if (fieldChild.type === 'field_declaration') {
-            const name = fieldChild.childForFieldName('name')
-            if (!name) {
-              const type = fieldChild.childForFieldName('type')
-              if (type) {
-                relations.push({
-                  childFile: filePath,
-                  childClass,
-                  parentClass: type.text,
-                  kind: 'inherit',
-                })
-              }
-            }
+      if (child.type !== 'field_declaration_list') {
+        continue
+      }
+      for (const fieldChild of child.children) {
+        if (fieldChild.type === 'field_declaration' && !fieldChild.childForFieldName('name')) {
+          const type = fieldChild.childForFieldName('type')
+          if (type) {
+            relations.push({
+              childFile: filePath,
+              childClass,
+              parentClass: type.text,
+              kind: 'inherit',
+            })
           }
         }
-        break
       }
+      break
     }
   }
 

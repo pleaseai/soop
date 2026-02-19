@@ -45,8 +45,8 @@ export interface DependencyEdgeOutput {
  * call analysis and inheritance tracking.
  */
 export class DependencyGraph {
-  private calls: CallSite[] = []
-  private inheritances: InheritanceRelation[] = []
+  private readonly calls: CallSite[] = []
+  private readonly inheritances: InheritanceRelation[] = []
 
   /**
    * Add a call site to the graph
