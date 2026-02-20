@@ -1,6 +1,6 @@
 import type { VectorSearchOpts, VectorSearchResult } from '../types'
 import type { VectorStore } from '../vector-store'
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -22,6 +22,7 @@ interface LocalVectorDocument {
 export class LocalVectorStore implements VectorStore {
   private index: Map<string, LocalVectorDocument> = new Map()
   private filePath: string | null = null
+  private _tempDir: string | undefined = undefined
 
   async open(config: unknown): Promise<void> {
     if (
@@ -38,6 +39,7 @@ export class LocalVectorStore implements VectorStore {
 
     if (dir === 'memory') {
       dir = mkdtempSync(join(tmpdir(), 'rpg-local-vectors-'))
+      this._tempDir = dir
     }
     else {
       mkdirSync(dir, { recursive: true })
@@ -70,6 +72,10 @@ export class LocalVectorStore implements VectorStore {
     finally {
       this.index = new Map()
       this.filePath = null
+      if (this._tempDir) {
+        rmSync(this._tempDir, { recursive: true, force: true })
+        this._tempDir = undefined
+      }
     }
   }
 
@@ -126,13 +132,15 @@ export class LocalVectorStore implements VectorStore {
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) {
+    throw new Error(`Vector dimension mismatch: ${a.length} vs ${b.length}`)
+  }
   let dot = 0
   let normA = 0
   let normB = 0
-  const len = Math.min(a.length, b.length)
-  for (let i = 0; i < len; i++) {
-    const ai = a[i] ?? 0
-    const bi = b[i] ?? 0
+  for (let i = 0; i < a.length; i++) {
+    const ai = a[i]!
+    const bi = b[i]!
     dot += ai * bi
     normA += ai * ai
     normB += bi * bi

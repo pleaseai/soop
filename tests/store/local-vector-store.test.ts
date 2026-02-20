@@ -62,6 +62,7 @@ describe('LocalVectorStore', () => {
     await store.remove('a')
     expect(await store.count()).toBe(1)
     const results = await store.search([1, 0, 0])
+    expect(results.length).toBeGreaterThan(0)
     expect(results.every(r => r.id !== 'a')).toBe(true)
   })
 
