@@ -10,7 +10,7 @@ This document compares the Microsoft RPG-ZeroRepo reference implementation (Pyth
 |-----------|----------------|-------------------|
 | **Language** | Python 3.10+ monolithic package | TypeScript 5.x, Bun workspaces (8 packages) |
 | **Source lines** | ~60,600 lines (.py) | ~13,200 lines (.ts, excluding tests) |
-| **Encoder pipeline** | Fully implemented (rebuild, parse, refactor, evolve) | Fully implemented (3-phase encode, evolution, dependency graph, token-aware batching) |
+| **Encoder pipeline** | Fully implemented (rebuild, parse, refactor, evolve) | Fully implemented (3-phase encode, evolution, dependency graph, token-aware batching, type-aware call resolution) |
 | **ZeroRepo pipeline** | Fully implemented (prop → impl → code gen) | Skeleton only (97 lines, all TODO) |
 | **AST parsing** | Python `ast` module (Python-only) | tree-sitter (6 languages) |
 | **Storage** | JSON files + FAISS (in-memory) | SQLite/SurrealDB + LanceDB (persistent) |
@@ -135,7 +135,7 @@ export const LowLevelNodeSchema = BaseNodeSchema.extend({
 
 ### 3.3 DependencyGraph
 
-The vendor has a dedicated `DependencyGraph` class (`dep_graph.py`, 1,023 lines) built on `networkx.MultiDiGraph`. Our implementation now covers the same core capabilities (~1,322 lines across 5 files, PR #83):
+The vendor has a dedicated `DependencyGraph` class (`dep_graph.py`, 1,023 lines) built on `networkx.MultiDiGraph`. Our implementation now covers the same core capabilities (~2,110 lines across 7 files, PR #83 + PR #90):
 
 ```python
 # Vendor: Python-only, networkx MultiDiGraph
@@ -149,16 +149,18 @@ class DependencyGraph:
 
 ```typescript
 // Ours: multi-language (tree-sitter), array-based (calls[], inheritances[])
-class DependencyGraph          // packages/encoder/src/dependency-graph.ts (176 lines)
-class CallExtractor            // packages/encoder/src/call-extractor.ts (282 lines)
+class DependencyGraph          // packages/encoder/src/dependency-graph.ts (196 lines)
+class CallExtractor            // packages/encoder/src/call-extractor.ts (353 lines)
 class InheritanceExtractor     // packages/encoder/src/inheritance-extractor.ts (393 lines)
 class SymbolResolver           // packages/encoder/src/symbol-resolver.ts (240 lines)
-injectDependencies             // packages/encoder/src/dependency-injection.ts (231 lines)
+injectDependencies             // packages/encoder/src/dependency-injection.ts (317 lines)
+class TypeInferrer             // packages/encoder/src/type-inferrer.ts (345 lines)
+                               // packages/encoder/src/type-inference-patterns.ts (266 lines)
 ```
 
 **Key difference**: Ours uses tree-sitter (6 languages: TS, JS, Python, Rust, Go, Java) vs vendor's Python `ast` module (Python-only).
 
-**Remaining gap**: No type inference (`_infer_local_var_type()`, `_infer_attribute_type()`, MRO traversal) — call resolution is syntactic only, not type-aware.
+**Type-aware call resolution** (PR #90): `TypeInferrer` (`type-inferrer.ts`, 345 lines) provides `resolveQualifiedCall()` (the integration point used by `dependency-injection.ts`), backed by `inferLocalVarType()`, `inferAttributeType()`, and MRO traversal — achieving parity with the vendor's `_infer_local_var_type()` and `_infer_attribute_type()` methods. Note: full AST traversal is implemented for TypeScript, JavaScript, Python, and Java; Rust and Go use pattern-based inference only.
 
 ### 3.4 RepoNode Hierarchy (Vendor-Only, Generation Pipeline)
 
@@ -230,17 +232,17 @@ This is a generation-pipeline concept with no equivalent in our encoder-focused 
 
 ### 4.5 Dependency Analysis
 
-| Aspect | Vendor (`dep_graph.py`, 1,023 lines) | Ours (`DependencyGraph`, ~1,322 lines, PR #83) |
+| Aspect | Vendor (`dep_graph.py`, 1,023 lines) | Ours (`DependencyGraph`, ~2,110 lines, PR #83 + PR #90) |
 |--------|--------------------------------------|------------------------------------------------|
 | **Scope** | Imports + invocations + inheritance | Imports + invocations + inheritance |
 | **Graph engine** | networkx `MultiDiGraph` with subgraph views | Array-based (`calls[]`, `inheritances[]`) with `DependencyEdge` records |
 | **Language** | Python-only (uses `ast` module) | Multi-language (tree-sitter: 6 languages) |
-| **Resolution** | Full symbol resolution with fuzzy matching | `SymbolResolver` (syntactic + case-insensitive fuzzy match; no type inference) |
-| **Type inference** | `_infer_local_var_type()`, attribute tracking | Not implemented |
+| **Resolution** | Full symbol resolution with fuzzy matching | `SymbolResolver` (syntactic + case-insensitive fuzzy match) + `TypeInferrer` (type-aware for self/super/variable calls) |
+| **Type inference** | `_infer_local_var_type()`, attribute tracking | `TypeInferrer.resolveQualifiedCall()` (via `inferLocalVarType()`, `inferAttributeType()`, MRO traversal) — full AST traversal for TS/JS/Python/Java; pattern-only for Rust/Go (PR #90) |
 | **Call graph** | `G_invokes` subgraph view | `CallExtractor` → `DependencyEdge { dependencyType: 'call' }` |
 | **Class hierarchy** | `G_inherits` with MRO traversal | `InheritanceExtractor` → `DependencyEdge { dependencyType: 'inherit' }` |
 
-**Analysis**: Both implementations now track imports, invocations, and inheritance. The vendor's approach is Python-specific (relies on `ast` module), while ours works across 6 languages via tree-sitter. The remaining gap is type-aware call resolution — vendor resolves `self.method()` through type inference; ours resolves calls syntactically only.
+**Analysis**: Both implementations now track imports, invocations, and inheritance at parity. The vendor's approach is Python-specific (relies on `ast` module), while ours works across 6 languages via tree-sitter. Type-aware call resolution (`self.method()`, `super()`, variable type inference, MRO) is implemented via `TypeInferrer` (PR #90), matching the vendor's capability.
 
 ---
 
@@ -352,7 +354,8 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | Priority | Improvement | Vendor Source | Impact |
 |----------|-------------|---------------|--------|
 | **P0** | ZeroRepo generation pipeline (prop → impl → code gen) | `rpg_gen/prop_level/`, `rpg_gen/impl_level/`, `code_gen/` (~30K lines) | Enables code generation from specifications |
-| ✅ **P1** | DependencyGraph (invocation + inheritance tracking) | `base/rpg/dep_graph.py` (1,023 lines) | Done (PR #83); remaining: type inference for call resolution |
+| ✅ **P1** | DependencyGraph (invocation + inheritance tracking) | `base/rpg/dep_graph.py` (1,023 lines) | Done (PR #83) |
+| ✅ **P1** | Type-aware call resolution (TypeInferrer, MRO traversal) | `base/rpg/dep_graph.py` (`_infer_local_var_type()`, `_infer_attribute_type()`) | Done (PR #90) |
 | ✅ **P1** | Token-aware batch semantic extraction | `rpg_encoder/rpg_parsing/rpg_encoding.py` | Done (PR #82) |
 | **P1** | Checkpoint/resume system for long pipelines | `config/checkpoint_config.py` | Resilience for multi-hour encoding jobs |
 | **P1** | Memory class for multi-turn agent conversations | `base/llm_client/memory.py` (144 lines) | Enables iterative agent workflows |
@@ -385,7 +388,7 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | Vendor File | Lines | Our Equivalent | Notes |
 |-------------|-------|----------------|-------|
 | `rpg_gen/base/rpg/rpg.py` | 1,760 | `packages/graph/src/rpg.ts` (571 lines) | Core RPG class |
-| `rpg_gen/base/rpg/dep_graph.py` | 1,023 | `packages/encoder/src/dependency-graph.ts` (176 lines) + `call-extractor.ts` (282) + `inheritance-extractor.ts` (393) + `symbol-resolver.ts` (240) + `dependency-injection.ts` (231) | Implemented (PR #83); remaining: type inference |
+| `rpg_gen/base/rpg/dep_graph.py` | 1,023 | `packages/encoder/src/dependency-graph.ts` (196 lines) + `call-extractor.ts` (353) + `inheritance-extractor.ts` (393) + `symbol-resolver.ts` (240) + `dependency-injection.ts` (317) + `type-inferrer.ts` (345) + `type-inference-patterns.ts` (266) | Implemented (PR #83 + PR #90) |
 | `rpg_gen/base/rpg/util.py` | 257 | `packages/graph/src/node.ts`, `edge.ts` | Enums + utilities |
 | `rpg_gen/base/unit/code_unit.py` | 577 | `packages/utils/src/ast/types.ts` | `CodeEntity` interface |
 | `rpg_gen/base/node/skeleton.py` | ~500 | — | **Gap**: Generation-only |
@@ -417,11 +420,13 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | — | — | `packages/store/src/sqlite/` | **Our addition**: Persistent graph store |
 | — | — | `packages/store/src/lancedb/` | **Our addition**: Vector store |
 | — | — | `packages/encoder/src/cache.ts` | **Our addition**: Semantic cache |
-| — | — | `packages/encoder/src/dependency-graph.ts` (176 lines) | **Our addition**: DependencyGraph class (PR #83) |
-| — | — | `packages/encoder/src/call-extractor.ts` (282 lines) | **Our addition**: Call/invocation extraction (PR #83) |
+| — | — | `packages/encoder/src/dependency-graph.ts` (196 lines) | **Our addition**: DependencyGraph class (PR #83) |
+| — | — | `packages/encoder/src/call-extractor.ts` (353 lines) | **Our addition**: Call/invocation extraction (PR #83 + PR #90) |
 | — | — | `packages/encoder/src/inheritance-extractor.ts` (393 lines) | **Our addition**: Class hierarchy extraction (PR #83) |
 | — | — | `packages/encoder/src/symbol-resolver.ts` (240 lines) | **Our addition**: Symbol resolution (PR #83) |
-| — | — | `packages/encoder/src/dependency-injection.ts` (231 lines) | **Our addition**: Import path resolution + graph edge injection orchestration (PR #83) |
+| — | — | `packages/encoder/src/dependency-injection.ts` (317 lines) | **Our addition**: Import path resolution + graph edge injection orchestration (PR #83 + PR #90) |
+| — | — | `packages/encoder/src/type-inferrer.ts` (345 lines) | **Our addition**: Type-aware call resolution (inferLocalVarType, inferAttributeType, MRO) (PR #90) |
+| — | — | `packages/encoder/src/type-inference-patterns.ts` (266 lines) | **Our addition**: Language-specific type inference patterns (PR #90) |
 | — | — | `packages/encoder/src/token-counter.ts` (57 lines) | **Our addition**: Token counting for batch sizing (PR #82) |
 | — | — | `packages/mcp/src/` | **Our addition**: MCP server |
 
@@ -437,7 +442,7 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | `NodeType` enum | `EntityType` const object | Same concept |
 | `EdgeType.COMPOSES` / `CONTAINS` | `EdgeType.Functional` | Hierarchy edge |
 | `EdgeType.IMPORTS` | `DependencyEdge { dependencyType: 'import' }` | Typed subclass |
-| `EdgeType.INVOKES` | `DependencyEdge { dependencyType: 'call' }` | Implemented via `CallExtractor` (PR #83); no type inference |
+| `EdgeType.INVOKES` | `DependencyEdge { dependencyType: 'call' }` | Implemented via `CallExtractor` (PR #83) + `TypeInferrer` for type-aware resolution (PR #90) |
 | `EdgeType.INHERITS` | `DependencyEdge { dependencyType: 'inherit' }` | Implemented via `InheritanceExtractor` (PR #83) |
 | `DependencyGraph` | `DependencyGraph` class (`packages/encoder/src/dependency-graph.ts`) | Implemented (PR #83); multi-language via tree-sitter |
 | `RPG.save_json()` | `rpg.toJSON()` / `rpg.serialize()` | Serialization |
