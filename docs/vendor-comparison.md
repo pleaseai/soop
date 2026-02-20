@@ -355,7 +355,7 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 |----------|-------------|---------------|--------|
 | **P0** | ZeroRepo generation pipeline (prop → impl → code gen) | `rpg_gen/prop_level/`, `rpg_gen/impl_level/`, `code_gen/` (~30K lines) | Enables code generation from specifications |
 | ✅ **P1** | DependencyGraph (invocation + inheritance tracking) | `base/rpg/dep_graph.py` (1,023 lines) | Done (PR #83) |
-| ✅ **P1** | Type-aware call resolution (TypeInferrer, MRO traversal) | `dep_graph.py` `_infer_local_var_type()`, `_infer_attribute_type()` | Done (PR #90) |
+| ✅ **P1** | Type-aware call resolution (TypeInferrer, MRO traversal) | `base/rpg/dep_graph.py` (`_infer_local_var_type()`, `_infer_attribute_type()`) | Done (PR #90) |
 | ✅ **P1** | Token-aware batch semantic extraction | `rpg_encoder/rpg_parsing/rpg_encoding.py` | Done (PR #82) |
 | **P1** | Checkpoint/resume system for long pipelines | `config/checkpoint_config.py` | Resilience for multi-hour encoding jobs |
 | **P1** | Memory class for multi-turn agent conversations | `base/llm_client/memory.py` (144 lines) | Enables iterative agent workflows |
