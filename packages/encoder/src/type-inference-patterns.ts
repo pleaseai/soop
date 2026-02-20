@@ -1,15 +1,12 @@
 /**
- * Per-language tree-sitter query patterns for type inference.
- *
- * Provides patterns for detecting:
- * 1. Local variable constructor assignments: `x = Foo()`, `const x = new Foo()`
- * 2. Attribute/field constructor assignments: `self.field = Bar()`, `this.field = new Bar()`
- *
- * Also exports a blocklist of common method names to reject from fuzzy global fallback.
- */
-
-/**
  * Per-language tree-sitter query patterns and extraction helpers for type inference.
+ *
+ * NOTE: INFERENCE_PATTERNS and LanguageInferencePatterns are scaffolding for a future
+ * query-based approach. TypeInferrer currently uses manual AST traversal (findLocalVarType /
+ * findAttributeType) instead of these query strings. Patterns are kept here for reference
+ * and to support tests of the extraction helper functions in isolation.
+ *
+ * Also exports COMMON_METHOD_BLOCKLIST for use by TypeInferrer's fuzzy fallback.
  */
 export interface LanguageInferencePatterns {
   /** tree-sitter query to find local variable assignments from constructors */

@@ -127,13 +127,18 @@ export async function injectDependencies(
   // Phase 4: Build TypeInferrer for type-aware call resolution
   const entityNodes: EntityNode[] = []
   for (const file of fileData) {
-    for (const cls of file.parseResult.entities.filter(e => e.type === 'class')) {
-      entityNodes.push({
-        className: cls.name,
-        methods: file.parseResult.entities
-          .filter(e => e.type === 'method' && e.parent === cls.name)
-          .map(e => e.name),
-      })
+    const methodsByClass = new Map<string, string[]>()
+    for (const entity of file.parseResult.entities) {
+      if (entity.type === 'method' && entity.parent) {
+        const methods = methodsByClass.get(entity.parent) ?? []
+        methods.push(entity.name)
+        methodsByClass.set(entity.parent, methods)
+      }
+    }
+    for (const entity of file.parseResult.entities) {
+      if (entity.type === 'class') {
+        entityNodes.push({ className: entity.name, methods: methodsByClass.get(entity.name) ?? [] })
+      }
     }
   }
   const typeInferrer = new TypeInferrer(entityNodes, allInheritances)
@@ -145,7 +150,7 @@ export async function injectDependencies(
   await addCallEdges(rpg, fileData, callExtractor, symbolResolver, filePathToNodeId, knownFiles, createdEdges, typeInferrer)
 
   // Phase 6: Create inheritance/implementation edges from pre-extracted relations
-  await addInheritanceEdgesFromRelations(rpg, allInheritances, fileData, symbolResolver, filePathToNodeId, knownFiles, createdEdges)
+  await addInheritanceEdgesFromRelations(rpg, allInheritances, symbolResolver, filePathToNodeId, knownFiles, createdEdges)
 }
 
 async function addCallEdges(
@@ -166,13 +171,13 @@ async function addCallEdges(
       let targetSymbol = call.calleeSymbol
       // When type-aware resolution succeeds (even for same-file calls), skip SymbolResolver
       // to avoid incorrect cross-file routing based on the bare method name.
-      let typeAwareHandled = false
+      let skipFallback = false
 
       // Phase 5 (type-aware): Type-aware resolution via TypeInferrer (receiver-based calls only)
       if (call.receiverKind && call.receiverKind !== 'none') {
         const qualifiedName = typeInferrer.resolveQualifiedCall(call, file.sourceCode, file.parseResult.language)
         if (qualifiedName) {
-          typeAwareHandled = true
+          skipFallback = true
           // Resolve the class name to find its defining file
           const className = qualifiedName.split('.')[0] ?? qualifiedName
           const classCall = { ...call, calleeSymbol: className }
@@ -185,7 +190,7 @@ async function addCallEdges(
       }
 
       // Fallback: existing SymbolResolver logic (skipped when type-aware resolution succeeded)
-      if (!targetFile && !typeAwareHandled) {
+      if (!targetFile && !skipFallback) {
         const resolved = symbolResolver.resolveCall(call, knownFiles)
         if (resolved && resolved.targetFile !== file.filePath) {
           targetFile = resolved.targetFile
@@ -219,21 +224,17 @@ async function addCallEdges(
 async function addInheritanceEdgesFromRelations(
   rpg: RepositoryPlanningGraph,
   relations: InheritanceRelation[],
-  fileData: Array<{ filePath: string, nodeId: string, parseResult: ParseResult, sourceCode: string }>,
   symbolResolver: SymbolResolver,
   filePathToNodeId: Map<string, string>,
   knownFiles: Set<string>,
   createdEdges: Set<string>,
 ): Promise<void> {
-  // Build a quick lookup of filePath → nodeId for source resolution
-  const fileNodeIdMap = new Map(fileData.map(f => [f.filePath, f.nodeId]))
-
   for (const relation of relations) {
     const resolved = symbolResolver.resolveInheritance(relation, knownFiles)
     if (!resolved || resolved.parentFile === relation.childFile)
       continue
 
-    const sourceNodeId = fileNodeIdMap.get(relation.childFile)
+    const sourceNodeId = filePathToNodeId.get(relation.childFile)
     const targetNodeId = filePathToNodeId.get(resolved.parentFile)
     if (!sourceNodeId || !targetNodeId)
       continue
