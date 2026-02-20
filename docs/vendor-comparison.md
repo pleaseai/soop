@@ -10,7 +10,7 @@ This document compares the Microsoft RPG-ZeroRepo reference implementation (Pyth
 |-----------|----------------|-------------------|
 | **Language** | Python 3.10+ monolithic package | TypeScript 5.x, Bun workspaces (8 packages) |
 | **Source lines** | ~60,600 lines (.py) | ~13,200 lines (.ts, excluding tests) |
-| **Encoder pipeline** | Fully implemented (rebuild, parse, refactor, evolve) | Fully implemented (3-phase encode, evolution) |
+| **Encoder pipeline** | Fully implemented (rebuild, parse, refactor, evolve) | Fully implemented (3-phase encode, evolution, dependency graph, token-aware batching) |
 | **ZeroRepo pipeline** | Fully implemented (prop → impl → code gen) | Skeleton only (97 lines, all TODO) |
 | **AST parsing** | Python `ast` module (Python-only) | tree-sitter (6 languages) |
 | **Storage** | JSON files + FAISS (in-memory) | SQLite/SurrealDB + LanceDB (persistent) |
@@ -133,11 +133,12 @@ export const LowLevelNodeSchema = BaseNodeSchema.extend({
 
 **Analysis**: Conceptually equivalent. Our design uses discriminated unions with type-specific fields; the vendor uses a flat edge with an enum. Our `DataFlowEdge` has no vendor counterpart — the vendor tracks data flow via the DependencyGraph's invocation/inheritance edges instead.
 
-### 3.3 DependencyGraph (Vendor-Only)
+### 3.3 DependencyGraph
 
-The vendor has a dedicated `DependencyGraph` class (`dep_graph.py`, 1,023 lines) built on `networkx.MultiDiGraph` that is absent from our implementation:
+The vendor has a dedicated `DependencyGraph` class (`dep_graph.py`, 1,023 lines) built on `networkx.MultiDiGraph`. Our implementation now covers the same core capabilities (~1,322 lines across 5 files, PR #83):
 
 ```python
+# Vendor: Python-only, networkx MultiDiGraph
 class DependencyGraph:
     self.G: nx.MultiDiGraph()           # All edges
     self.G_tree: nx.subgraph_view()     # CONTAINS edges
@@ -146,13 +147,18 @@ class DependencyGraph:
     self.G_inherits: nx.subgraph_view() # INHERITS edges
 ```
 
-Key capabilities absent from our code:
-- **Invocation tracking**: Resolves `self.method()`, `super().method()`, attribute chains
-- **Inheritance tracking**: Maps class hierarchies, finds method resolution order
-- **Type inference**: `_infer_local_var_type()`, `_infer_attribute_type()` for call resolution
-- **Fuzzy matching**: `_find_entity_fuzzy()` for imprecise call targets
+```typescript
+// Ours: multi-language (tree-sitter), array-based (calls[], inheritances[])
+class DependencyGraph          // packages/encoder/src/dependency-graph.ts (176 lines)
+class CallExtractor            // packages/encoder/src/call-extractor.ts (282 lines)
+class InheritanceExtractor     // packages/encoder/src/inheritance-extractor.ts (393 lines)
+class SymbolResolver           // packages/encoder/src/symbol-resolver.ts (240 lines)
+injectDependencies             // packages/encoder/src/dependency-injection.ts (231 lines)
+```
 
-Our implementation only creates `DependencyEdge` with `dependencyType: 'import'` — no call/inheritance/invocation edges.
+**Key difference**: Ours uses tree-sitter (6 languages: TS, JS, Python, Rust, Go, Java) vs vendor's Python `ast` module (Python-only).
+
+**Remaining gap**: No type inference (`_infer_local_var_type()`, `_infer_attribute_type()`, MRO traversal) — call resolution is syntactic only, not type-aware.
 
 ### 3.4 RepoNode Hierarchy (Vendor-Only, Generation Pipeline)
 
@@ -177,15 +183,15 @@ This is a generation-pipeline concept with no equivalent in our encoder-focused 
 
 | Aspect | Vendor (`rpg_encoding.py`, `semantic_parsing.py`) | Ours (`semantic.ts`, `encoder.ts`) |
 |--------|--------------------------------------------------|-------------------------------------|
-| **Batching** | Token-aware: `min_batch_tokens=10K`, `max_batch_tokens=50K` | Fixed batch size: 5 entities per call |
+| **Batching** | Token-aware: `min_batch_tokens=10K`, `max_batch_tokens=50K` | Token-aware: `minBatchTokens=10K`, `maxBatchTokens=50K` (PR #82) |
 | **Caching** | None | `SemanticCache`: SQLite-backed, 7-day TTL, MD5 hash validation |
 | **LLM fallback** | LLM only (no heuristic) | LLM with heuristic fallback (regex-based) |
-| **Iterations** | Multi-iteration: `max_parse_iters=10` | Single-pass extraction |
+| **Iterations** | Multi-iteration: `max_parse_iters=10` | `maxParseIterations` (default 1, configurable) |
 | **Output format** | Pydantic `BaseModel` structured output | Zod schema structured output |
 | **AST parsing** | Python `ast` module (Python-only) | tree-sitter (TS, JS, Python, Rust, Go, Java) |
 | **Parallelization** | Sequential within batch | Sequential (Bun single-threaded) |
 
-**Analysis**: The vendor's token-aware batching is more efficient for large repositories — grouping entities until a token budget is reached, rather than using a fixed count. Our caching layer provides significant cost savings on re-encodes that the vendor lacks entirely.
+**Analysis**: Both now use token-aware batching — grouping entities until a token budget is reached. Our caching layer provides significant cost savings on re-encodes that the vendor lacks entirely. Our `maxParseIterations` is configurable but defaults to 1 (vs vendor's default 10).
 
 ### 4.2 Structural Reorganization
 
@@ -224,17 +230,17 @@ This is a generation-pipeline concept with no equivalent in our encoder-focused 
 
 ### 4.5 Dependency Analysis
 
-| Aspect | Vendor (`dep_graph.py`, 1,023 lines) | Ours (`encoder.ts:injectDependencies`) |
-|--------|--------------------------------------|----------------------------------------|
-| **Scope** | Imports + invocations + inheritance | Imports only |
-| **Graph engine** | networkx `MultiDiGraph` with views | In-line DependencyEdge creation |
-| **Language** | Python-only (uses `ast` module) | Multi-language (tree-sitter) |
-| **Resolution** | Full symbol resolution with fuzzy matching | Path-based import resolution |
-| **Type inference** | `_infer_local_var_type()`, attribute tracking | None |
-| **Call graph** | `G_invokes` subgraph view | Not implemented |
-| **Class hierarchy** | `G_inherits` with MRO traversal | Not implemented |
+| Aspect | Vendor (`dep_graph.py`, 1,023 lines) | Ours (`DependencyGraph`, ~1,322 lines, PR #83) |
+|--------|--------------------------------------|------------------------------------------------|
+| **Scope** | Imports + invocations + inheritance | Imports + invocations + inheritance |
+| **Graph engine** | networkx `MultiDiGraph` with subgraph views | Array-based (`calls[]`, `inheritances[]`) with `DependencyEdge` records |
+| **Language** | Python-only (uses `ast` module) | Multi-language (tree-sitter: 6 languages) |
+| **Resolution** | Full symbol resolution with fuzzy matching | `SymbolResolver` (syntactic + case-insensitive fuzzy match; no type inference) |
+| **Type inference** | `_infer_local_var_type()`, attribute tracking | Not implemented |
+| **Call graph** | `G_invokes` subgraph view | `CallExtractor` → `DependencyEdge { dependencyType: 'call' }` |
+| **Class hierarchy** | `G_inherits` with MRO traversal | `InheritanceExtractor` → `DependencyEdge { dependencyType: 'inherit' }` |
 
-**Analysis**: The vendor's dependency graph is significantly more sophisticated — tracking function calls, class inheritance, and method resolution order. Our implementation is limited to import edges. However, the vendor's approach is Python-specific (relies on `ast` module), while ours works across 6 languages via tree-sitter.
+**Analysis**: Both implementations now track imports, invocations, and inheritance. The vendor's approach is Python-specific (relies on `ast` module), while ours works across 6 languages via tree-sitter. The remaining gap is type-aware call resolution — vendor resolves `self.method()` through type inference; ours resolves calls syntactically only.
 
 ---
 
@@ -346,8 +352,8 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | Priority | Improvement | Vendor Source | Impact |
 |----------|-------------|---------------|--------|
 | **P0** | ZeroRepo generation pipeline (prop → impl → code gen) | `rpg_gen/prop_level/`, `rpg_gen/impl_level/`, `code_gen/` (~30K lines) | Enables code generation from specifications |
-| **P1** | DependencyGraph (invocation + inheritance tracking) | `base/rpg/dep_graph.py` (1,023 lines) | More accurate dependency analysis |
-| **P1** | Token-aware batch semantic extraction | `rpg_encoder/rpg_parsing/rpg_encoding.py` | Better scaling for large repositories |
+| ✅ **P1** | DependencyGraph (invocation + inheritance tracking) | `base/rpg/dep_graph.py` (1,023 lines) | Done (PR #83); remaining: type inference for call resolution |
+| ✅ **P1** | Token-aware batch semantic extraction | `rpg_encoder/rpg_parsing/rpg_encoding.py` | Done (PR #82) |
 | **P1** | Checkpoint/resume system for long pipelines | `config/checkpoint_config.py` | Resilience for multi-hour encoding jobs |
 | **P1** | Memory class for multi-turn agent conversations | `base/llm_client/memory.py` (144 lines) | Enables iterative agent workflows |
 | **P2** | Explore-exploit feature selection with FAISS | `prop_level/select_feature/faiss_db.py` | Feature diversity in generation |
@@ -379,7 +385,7 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | Vendor File | Lines | Our Equivalent | Notes |
 |-------------|-------|----------------|-------|
 | `rpg_gen/base/rpg/rpg.py` | 1,760 | `packages/graph/src/rpg.ts` (571 lines) | Core RPG class |
-| `rpg_gen/base/rpg/dep_graph.py` | 1,023 | `packages/encoder/src/encoder.ts` (import analysis only) | **Gap**: No call/inheritance graph |
+| `rpg_gen/base/rpg/dep_graph.py` | 1,023 | `packages/encoder/src/dependency-graph.ts` (176 lines) + `call-extractor.ts` (282) + `inheritance-extractor.ts` (393) + `symbol-resolver.ts` (240) + `dependency-injection.ts` (231) | Implemented (PR #83); remaining: type inference |
 | `rpg_gen/base/rpg/util.py` | 257 | `packages/graph/src/node.ts`, `edge.ts` | Enums + utilities |
 | `rpg_gen/base/unit/code_unit.py` | 577 | `packages/utils/src/ast/types.ts` | `CodeEntity` interface |
 | `rpg_gen/base/node/skeleton.py` | ~500 | — | **Gap**: Generation-only |
@@ -411,6 +417,12 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | — | — | `packages/store/src/sqlite/` | **Our addition**: Persistent graph store |
 | — | — | `packages/store/src/lancedb/` | **Our addition**: Vector store |
 | — | — | `packages/encoder/src/cache.ts` | **Our addition**: Semantic cache |
+| — | — | `packages/encoder/src/dependency-graph.ts` (176 lines) | **Our addition**: DependencyGraph class (PR #83) |
+| — | — | `packages/encoder/src/call-extractor.ts` (282 lines) | **Our addition**: Call/invocation extraction (PR #83) |
+| — | — | `packages/encoder/src/inheritance-extractor.ts` (393 lines) | **Our addition**: Class hierarchy extraction (PR #83) |
+| — | — | `packages/encoder/src/symbol-resolver.ts` (240 lines) | **Our addition**: Symbol resolution (PR #83) |
+| — | — | `packages/encoder/src/dependency-injection.ts` (231 lines) | **Our addition**: Import path resolution + graph edge injection orchestration (PR #83) |
+| — | — | `packages/encoder/src/token-counter.ts` (57 lines) | **Our addition**: Token counting for batch sizing (PR #82) |
 | — | — | `packages/mcp/src/` | **Our addition**: MCP server |
 
 ---
@@ -425,9 +437,9 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | `NodeType` enum | `EntityType` const object | Same concept |
 | `EdgeType.COMPOSES` / `CONTAINS` | `EdgeType.Functional` | Hierarchy edge |
 | `EdgeType.IMPORTS` | `DependencyEdge { dependencyType: 'import' }` | Typed subclass |
-| `EdgeType.INVOKES` | Not implemented | **Gap** |
-| `EdgeType.INHERITS` | Not implemented | **Gap** |
-| `DependencyGraph` | No equivalent | **Gap** |
+| `EdgeType.INVOKES` | `DependencyEdge { dependencyType: 'call' }` | Implemented via `CallExtractor` (PR #83); no type inference |
+| `EdgeType.INHERITS` | `DependencyEdge { dependencyType: 'inherit' }` | Implemented via `InheritanceExtractor` (PR #83) |
+| `DependencyGraph` | `DependencyGraph` class (`packages/encoder/src/dependency-graph.ts`) | Implemented (PR #83); multi-language via tree-sitter |
 | `RPG.save_json()` | `rpg.toJSON()` / `rpg.serialize()` | Serialization |
 | `RPG.from_dict()` | `RepositoryPlanningGraph.deserialize()` | Deserialization |
 | `RPG.visualize_dir_map()` | No equivalent | **Gap** |
