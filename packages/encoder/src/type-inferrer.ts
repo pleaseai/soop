@@ -120,43 +120,60 @@ export class TypeInferrer {
     return this.findLocalVarType(tree.rootNode, language, varName)
   }
 
-  private findLocalVarType(node: Parser.SyntaxNode, language: string, varName: string): string | null {
-    // Python: x = Foo()
-    if (language === 'python' && node.type === 'assignment') {
-      const left = node.childForFieldName('left')
-      const right = node.childForFieldName('right')
-      if (left?.text === varName && right?.type === 'call') {
-        const fn = right.childForFieldName('function')
-        if (fn?.type === 'identifier')
-          return fn.text
-      }
+  private matchPythonLocalVarType(node: Parser.SyntaxNode, varName: string): string | null {
+    if (node.type !== 'assignment')
+      return null
+    const left = node.childForFieldName('left')
+    const right = node.childForFieldName('right')
+    if (left?.text === varName && right?.type === 'call') {
+      const fn = right.childForFieldName('function')
+      if (fn?.type === 'identifier')
+        return fn.text
     }
+    return null
+  }
 
-    // TypeScript / JavaScript: const x = new Foo() or let x = new Foo()
-    if ((language === 'typescript' || language === 'javascript') && node.type === 'variable_declarator') {
-      const nameNode = node.childForFieldName('name')
-      const valueNode = node.childForFieldName('value')
-      if (nameNode?.text === varName && valueNode?.type === 'new_expression') {
-        const ctor = valueNode.childForFieldName('constructor')
-        if (ctor)
-          return ctor.text
-      }
+  private matchTSJSLocalVarType(node: Parser.SyntaxNode, varName: string): string | null {
+    if (node.type !== 'variable_declarator')
+      return null
+    const nameNode = node.childForFieldName('name')
+    const valueNode = node.childForFieldName('value')
+    if (nameNode?.text === varName && valueNode?.type === 'new_expression') {
+      const ctor = valueNode.childForFieldName('constructor')
+      if (ctor)
+        return ctor.text
     }
+    return null
+  }
 
-    // Java: Foo x = new Foo()
-    if (language === 'java' && node.type === 'local_variable_declaration') {
-      for (const child of node.children) {
-        if (child.type === 'variable_declarator') {
-          const nameNode = child.childForFieldName('name')
-          const valueNode = child.childForFieldName('value')
-          if (nameNode?.text === varName && valueNode?.type === 'object_creation_expression') {
-            const type = valueNode.childForFieldName('type')
-            if (type)
-              return type.text
-          }
+  private matchJavaLocalVarType(node: Parser.SyntaxNode, varName: string): string | null {
+    if (node.type !== 'local_variable_declaration')
+      return null
+    for (const child of node.children) {
+      if (child.type === 'variable_declarator') {
+        const nameNode = child.childForFieldName('name')
+        const valueNode = child.childForFieldName('value')
+        if (nameNode?.text === varName && valueNode?.type === 'object_creation_expression') {
+          const type = valueNode.childForFieldName('type')
+          if (type)
+            return type.text
         }
       }
     }
+    return null
+  }
+
+  private findLocalVarType(node: Parser.SyntaxNode, language: string, varName: string): string | null {
+    let matched: string | null = null
+    if (language === 'python')
+      matched = this.matchPythonLocalVarType(node, varName)
+    else if (language === 'typescript' || language === 'javascript')
+      matched = this.matchTSJSLocalVarType(node, varName)
+    else if (language === 'java')
+      matched = this.matchJavaLocalVarType(node, varName)
+
+    if (matched)
+      return matched
 
     for (const child of node.children) {
       const result = this.findLocalVarType(child, language, varName)
@@ -181,36 +198,49 @@ export class TypeInferrer {
     return this.findAttributeType(tree.rootNode, language, attrName)
   }
 
-  private findAttributeType(node: Parser.SyntaxNode, language: string, attrName: string): string | null {
-    // Python: self.field = Bar()
-    if (language === 'python' && node.type === 'assignment') {
-      const left = node.childForFieldName('left')
-      const right = node.childForFieldName('right')
-      if (left?.type === 'attribute' && right?.type === 'call') {
-        const obj = left.childForFieldName('object')
-        const attr = left.childForFieldName('attribute')
-        if (obj?.text === 'self' && attr?.text === attrName) {
-          const fn = right.childForFieldName('function')
-          if (fn?.type === 'identifier')
-            return fn.text
-        }
+  private matchPythonAttributeType(node: Parser.SyntaxNode, attrName: string): string | null {
+    if (node.type !== 'assignment')
+      return null
+    const left = node.childForFieldName('left')
+    const right = node.childForFieldName('right')
+    if (left?.type === 'attribute' && right?.type === 'call') {
+      const obj = left.childForFieldName('object')
+      const attr = left.childForFieldName('attribute')
+      if (obj?.text === 'self' && attr?.text === attrName) {
+        const fn = right.childForFieldName('function')
+        if (fn?.type === 'identifier')
+          return fn.text
       }
     }
+    return null
+  }
 
-    // TypeScript / JavaScript: this.field = new Bar()
-    if ((language === 'typescript' || language === 'javascript') && node.type === 'assignment_expression') {
-      const left = node.childForFieldName('left')
-      const right = node.childForFieldName('right')
-      if (left?.type === 'member_expression' && right?.type === 'new_expression') {
-        const obj = left.childForFieldName('object')
-        const prop = left.childForFieldName('property')
-        if (obj?.type === 'this' && prop?.text === attrName) {
-          const ctor = right.childForFieldName('constructor')
-          if (ctor)
-            return ctor.text
-        }
+  private matchTSJSAttributeType(node: Parser.SyntaxNode, attrName: string): string | null {
+    if (node.type !== 'assignment_expression')
+      return null
+    const left = node.childForFieldName('left')
+    const right = node.childForFieldName('right')
+    if (left?.type === 'member_expression' && right?.type === 'new_expression') {
+      const obj = left.childForFieldName('object')
+      const prop = left.childForFieldName('property')
+      if (obj?.type === 'this' && prop?.text === attrName) {
+        const ctor = right.childForFieldName('constructor')
+        if (ctor)
+          return ctor.text
       }
     }
+    return null
+  }
+
+  private findAttributeType(node: Parser.SyntaxNode, language: string, attrName: string): string | null {
+    let matched: string | null = null
+    if (language === 'python')
+      matched = this.matchPythonAttributeType(node, attrName)
+    else if (language === 'typescript' || language === 'javascript')
+      matched = this.matchTSJSAttributeType(node, attrName)
+
+    if (matched)
+      return matched
 
     for (const child of node.children) {
       const result = this.findAttributeType(child, language, attrName)
@@ -231,7 +261,7 @@ export class TypeInferrer {
    * 4. Fuzzy global fallback (rejects common names + ambiguous matches)
    */
   resolveQualifiedCall(callSite: CallSite, source: string, language: string): string | null {
-    const { receiverKind, calleeSymbol, callerEntity, receiver } = callSite
+    const { receiverKind, calleeSymbol, callerEntity } = callSite
 
     if (!receiverKind || receiverKind === 'none')
       return null
@@ -245,40 +275,48 @@ export class TypeInferrer {
     }
 
     if (receiverKind === 'variable') {
-      if (receiver && INFERENCE_SUPPORTED_LANGUAGES.has(language)) {
-        // Parse the source once and reuse the tree for both inference attempts
-        const tree = this.parseSource(source, language)
-
-        if (tree) {
-          // Try local variable type inference first: x = Foo(); x.method()
-          const localTypeName = this.findLocalVarType(tree.rootNode, language, receiver)
-          if (localTypeName) {
-            const result = this.findMethodInMRO(localTypeName, calleeSymbol)
-            if (result)
-              return result
-          }
-
-          // Try attribute type inference: self.helper = Bar(); self.helper.method()
-          const attrTypeName = this.findAttributeType(tree.rootNode, language, receiver)
-          if (attrTypeName) {
-            const result = this.findMethodInMRO(attrTypeName, calleeSymbol)
-            if (result)
-              return result
-          }
-        }
-      }
-      // Fuzzy fallback
-      return this.fuzzyFallback(calleeSymbol)
+      return this.resolveVariableCall(callSite, source, language)
     }
 
     return null
+  }
+
+  private resolveVariableCall(callSite: CallSite, source: string, language: string): string | null {
+    const { receiver, calleeSymbol } = callSite
+
+    if (!receiver || !INFERENCE_SUPPORTED_LANGUAGES.has(language)) {
+      return this.fuzzyFallback(calleeSymbol)
+    }
+
+    // Parse the source once and reuse the tree for both inference attempts
+    const tree = this.parseSource(source, language)
+    if (!tree)
+      return this.fuzzyFallback(calleeSymbol)
+
+    // Try local variable type inference first: x = Foo(); x.method()
+    const localTypeName = this.findLocalVarType(tree.rootNode, language, receiver)
+    if (localTypeName) {
+      const result = this.findMethodInMRO(localTypeName, calleeSymbol)
+      if (result)
+        return result
+    }
+
+    // Try attribute type inference: self.helper = Bar(); self.helper.method()
+    const attrTypeName = this.findAttributeType(tree.rootNode, language, receiver)
+    if (attrTypeName) {
+      const result = this.findMethodInMRO(attrTypeName, calleeSymbol)
+      if (result)
+        return result
+    }
+
+    return this.fuzzyFallback(calleeSymbol)
   }
 
   private fuzzyFallback(methodName: string): string | null {
     if (COMMON_METHOD_BLOCKLIST.has(methodName))
       return null
     const classes = this.methodIndex.get(methodName)
-    if (!classes || classes.length !== 1)
+    if (classes?.length !== 1)
       return null
     return `${classes[0]}.${methodName}`
   }

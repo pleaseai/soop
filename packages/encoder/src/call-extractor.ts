@@ -138,22 +138,25 @@ export class CallExtractor {
 
   // ===================== TypeScript / JavaScript =====================
 
+  private extractTSMemberCall(fn: Parser.SyntaxNode): CallInfo {
+    const objNode = fn.childForFieldName('object')
+    const propNode = fn.childForFieldName('property')
+    if (!propNode)
+      return { symbol: null }
+    const symbol = propNode.text
+    if (!objNode)
+      return { symbol, receiverKind: 'none' }
+    return { symbol, ...this.classifyReceiver(objNode) }
+  }
+
   private extractTSCall(node: Parser.SyntaxNode): CallInfo {
     if (node.type === 'call_expression') {
       const fn = node.childForFieldName('function')
       if (!fn)
         return { symbol: null }
 
-      if (fn.type === 'member_expression') {
-        const objNode = fn.childForFieldName('object')
-        const propNode = fn.childForFieldName('property')
-        if (!propNode)
-          return { symbol: null }
-        const symbol = propNode.text
-        if (!objNode)
-          return { symbol, receiverKind: 'none' }
-        return { symbol, ...this.classifyReceiver(objNode) }
-      }
+      if (fn.type === 'member_expression')
+        return this.extractTSMemberCall(fn)
 
       const symbol = this.resolveSymbol(fn)
       return symbol ? { symbol, receiverKind: 'none' } : { symbol: null }

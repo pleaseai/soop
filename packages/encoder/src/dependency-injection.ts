@@ -1,10 +1,10 @@
 import type { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
 import type { ASTParser, ParseResult } from '@pleaseai/rpg-utils/ast'
+import type { EntityNode, InheritanceRelation } from './dependency-graph'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { createLogger } from '@pleaseai/rpg-utils/logger'
 import { CallExtractor } from './call-extractor'
-import type { EntityNode, InheritanceRelation } from './dependency-graph'
 import { InheritanceExtractor } from './inheritance-extractor'
 import { SymbolResolver } from './symbol-resolver'
 import { TypeInferrer } from './type-inferrer'
@@ -125,6 +125,24 @@ export async function injectDependencies(
   }
 
   // Phase 4: Build TypeInferrer for type-aware call resolution
+  const typeInferrer = new TypeInferrer(buildEntityNodes(fileData), allInheritances)
+
+  // Phase 5: Extract and resolve call edges (type-aware first, then fallback)
+  // Note: createdEdges uses `${source}->${target}` as key to match the DB
+  // UNIQUE(source, target, type) constraint (all dependency edges share type='dependency').
+  // Import edges are created first and take priority over call/inherit edges.
+  await addCallEdges(rpg, fileData, callExtractor, symbolResolver, filePathToNodeId, createdEdges, typeInferrer)
+
+  // Phase 6: Create inheritance/implementation edges from pre-extracted relations
+  await addInheritanceEdgesFromRelations(rpg, allInheritances, symbolResolver, filePathToNodeId, knownFiles, createdEdges)
+}
+
+/**
+ * Collect EntityNode records (class name + methods) from all parsed files.
+ */
+function buildEntityNodes(
+  fileData: Array<{ parseResult: ParseResult }>,
+): EntityNode[] {
   const entityNodes: EntityNode[] = []
   for (const file of fileData) {
     const methodsByClass = new Map<string, string[]>()
@@ -141,16 +159,51 @@ export async function injectDependencies(
       }
     }
   }
-  const typeInferrer = new TypeInferrer(entityNodes, allInheritances)
+  return entityNodes
+}
 
-  // Phase 5: Extract and resolve call edges (type-aware first, then fallback)
-  // Note: createdEdges uses `${source}->${target}` as key to match the DB
-  // UNIQUE(source, target, type) constraint (all dependency edges share type='dependency').
-  // Import edges are created first and take priority over call/inherit edges.
-  await addCallEdges(rpg, fileData, callExtractor, symbolResolver, filePathToNodeId, knownFiles, createdEdges, typeInferrer)
+/**
+ * Resolve the target file and symbol for a single call site.
+ * Returns null targetFile when no cross-file target is found.
+ */
+function resolveCallTarget(
+  call: import('./dependency-graph').CallSite,
+  filePath: string,
+  sourceCode: string,
+  language: string,
+  typeInferrer: TypeInferrer,
+  symbolResolver: SymbolResolver,
+  knownFiles: Set<string>,
+): { targetFile: string | null, targetSymbol: string } {
+  let targetFile: string | null = null
+  let targetSymbol = call.calleeSymbol
+  // When type-aware resolution succeeds (even for same-file calls), skip SymbolResolver
+  // to avoid incorrect cross-file routing based on the bare method name.
+  let skipFallback = false
 
-  // Phase 6: Create inheritance/implementation edges from pre-extracted relations
-  await addInheritanceEdgesFromRelations(rpg, allInheritances, symbolResolver, filePathToNodeId, knownFiles, createdEdges)
+  if (call.receiverKind && call.receiverKind !== 'none') {
+    const qualifiedName = typeInferrer.resolveQualifiedCall(call, sourceCode, language)
+    if (qualifiedName) {
+      skipFallback = true
+      const className = qualifiedName.split('.')[0] ?? qualifiedName
+      const classCall = { ...call, calleeSymbol: className }
+      const classResolved = symbolResolver.resolveCall(classCall, knownFiles)
+      if (classResolved && classResolved.targetFile !== filePath) {
+        targetFile = classResolved.targetFile
+        targetSymbol = qualifiedName
+      }
+    }
+  }
+
+  if (!targetFile && !skipFallback) {
+    const resolved = symbolResolver.resolveCall(call, knownFiles)
+    if (resolved && resolved.targetFile !== filePath) {
+      targetFile = resolved.targetFile
+      targetSymbol = resolved.targetSymbol
+    }
+  }
+
+  return { targetFile, targetSymbol }
 }
 
 async function addCallEdges(
@@ -159,44 +212,22 @@ async function addCallEdges(
   callExtractor: CallExtractor,
   symbolResolver: SymbolResolver,
   filePathToNodeId: Map<string, string>,
-  knownFiles: Set<string>,
   createdEdges: Set<string>,
   typeInferrer: TypeInferrer,
 ): Promise<void> {
+  const knownFiles = new Set(filePathToNodeId.keys())
   for (const file of fileData) {
     const calls = callExtractor.extract(file.sourceCode, file.parseResult.language, file.filePath)
-
     for (const call of calls) {
-      let targetFile: string | null = null
-      let targetSymbol = call.calleeSymbol
-      // When type-aware resolution succeeds (even for same-file calls), skip SymbolResolver
-      // to avoid incorrect cross-file routing based on the bare method name.
-      let skipFallback = false
-
-      // Phase 5 (type-aware): Type-aware resolution via TypeInferrer (receiver-based calls only)
-      if (call.receiverKind && call.receiverKind !== 'none') {
-        const qualifiedName = typeInferrer.resolveQualifiedCall(call, file.sourceCode, file.parseResult.language)
-        if (qualifiedName) {
-          skipFallback = true
-          // Resolve the class name to find its defining file
-          const className = qualifiedName.split('.')[0] ?? qualifiedName
-          const classCall = { ...call, calleeSymbol: className }
-          const classResolved = symbolResolver.resolveCall(classCall, knownFiles)
-          if (classResolved && classResolved.targetFile !== file.filePath) {
-            targetFile = classResolved.targetFile
-            targetSymbol = qualifiedName
-          }
-        }
-      }
-
-      // Fallback: existing SymbolResolver logic (skipped when type-aware resolution succeeded)
-      if (!targetFile && !skipFallback) {
-        const resolved = symbolResolver.resolveCall(call, knownFiles)
-        if (resolved && resolved.targetFile !== file.filePath) {
-          targetFile = resolved.targetFile
-          targetSymbol = resolved.targetSymbol
-        }
-      }
+      const { targetFile, targetSymbol } = resolveCallTarget(
+        call,
+        file.filePath,
+        file.sourceCode,
+        file.parseResult.language,
+        typeInferrer,
+        symbolResolver,
+        knownFiles,
+      )
 
       if (!targetFile)
         continue
