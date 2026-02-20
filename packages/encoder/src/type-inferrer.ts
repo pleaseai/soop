@@ -221,9 +221,23 @@ export class TypeInferrer {
 
     if (receiverKind === 'variable') {
       if (receiver) {
-        const typeName = this.inferLocalVarType(source, language, receiver)
-        if (typeName) {
-          const mro = this.getMROChain(typeName)
+        // Try local variable type inference first: x = Foo(); x.method()
+        const localTypeName = this.inferLocalVarType(source, language, receiver)
+        if (localTypeName) {
+          const mro = this.getMROChain(localTypeName)
+          for (const cls of mro) {
+            const entity = this.classIndex.get(cls)
+            if (entity?.methods.includes(calleeSymbol)) {
+              return `${cls}.${calleeSymbol}`
+            }
+          }
+          return null
+        }
+
+        // Try attribute type inference: self.helper = Bar(); self.helper.method()
+        const attrTypeName = this.inferAttributeType(source, language, receiver)
+        if (attrTypeName) {
+          const mro = this.getMROChain(attrTypeName)
           for (const cls of mro) {
             const entity = this.classIndex.get(cls)
             if (entity?.methods.includes(calleeSymbol)) {

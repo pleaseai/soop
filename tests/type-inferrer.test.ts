@@ -165,6 +165,18 @@ describe('TypeInferrer', () => {
       }
       expect(inferrer.resolveQualifiedCall(callSite, code, 'python')).toBe('Animal.move')
     })
+
+    it('falls back to attribute type inference when local var not found', () => {
+      // self.helper = Dog() → self.helper.fetch() should resolve Dog.fetch
+      const code = `self.helper = Dog()`
+      const callSite = {
+        callerFile: 'f.py',
+        calleeSymbol: 'fetch',
+        receiverKind: 'variable' as const,
+        receiver: 'helper',
+      }
+      expect(inferrer.resolveQualifiedCall(callSite, code, 'python')).toBe('Dog.fetch')
+    })
   })
 
   describe('resolveQualifiedCall - fuzzy fallback', () => {
