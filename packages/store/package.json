@@ -16,7 +16,6 @@
     "./sqlite": "./src/sqlite/index.ts",
     "./surreal": "./src/surreal/index.ts",
     "./lancedb": "./src/lancedb/index.ts",
-    "./null-vector-store": "./src/null-vector-store.ts",
     "./local": "./src/local/index.ts"
   },
   "dependencies": {
