@@ -1,6 +1,7 @@
 import type { ClaudeCodeSettings } from 'ai-sdk-provider-claude-code'
 import type { CodexCliSettings } from 'ai-sdk-provider-codex-cli'
 import type { ZodType } from 'zod/v4'
+import { spawn } from 'node:child_process'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
@@ -118,8 +119,28 @@ function createProvider(provider: LLMProvider, apiKey?: string, claudeCodeSettin
       return createGoogleGenerativeAI({
         apiKey: apiKey ?? process.env.GOOGLE_API_KEY,
       })
-    case 'claude-code':
-      return createClaudeCode(claudeCodeSettings ? { defaultSettings: claudeCodeSettings } : undefined)
+    case 'claude-code': {
+      const settings: ClaudeCodeSettings = {
+        // Defaults for automated/non-interactive use
+        pathToClaudeCodeExecutable: process.env.CLAUDE_BIN ?? 'claude',
+        persistSession: false,
+        permissionMode: 'bypassPermissions',
+        ...claudeCodeSettings,
+        stderr: (data) => { log.debug('[claude stderr]', data.toString().trim()) },
+        spawnClaudeCodeProcess: (options) => {
+          // Remove CLAUDECODE and CLAUDE_CODE_SSE_PORT to allow running
+          // inside an existing Claude Code session without being blocked.
+          const { CLAUDECODE: _, CLAUDE_CODE_SSE_PORT: __, ...env } = options.env
+          return spawn(options.command, options.args, {
+            cwd: options.cwd,
+            env,
+            signal: options.signal,
+            stdio: ['pipe', 'pipe', 'pipe'],
+          })
+        },
+      }
+      return createClaudeCode({ defaultSettings: settings })
+    }
     case 'codex':
       return createCodexCli(codexSettings ? { defaultSettings: codexSettings } : undefined)
     default:
