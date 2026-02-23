@@ -326,9 +326,11 @@ async function initFromPrecomputedEmbeddings(
   // but indexing is done with pre-computed vectors.
   const mockEmbedding = new MockEmbedding(embeddingsData.config.dimension)
 
+  const vectorStore = new LocalVectorStore()
+  await vectorStore.open({ path: dbPath })
+
   const semanticSearch = new SemanticSearch({
-    dbPath,
-    tableName: 'rpg_nodes',
+    vectorStore,
     embedding: mockEmbedding,
   })
 
@@ -336,22 +338,15 @@ async function initFromPrecomputedEmbeddings(
   const nodes = await rpg.getNodes()
   const nodeMap = new Map(nodes.map(n => [n.id, n]))
 
-  const { VectorStore } = await import('@pleaseai/rpg-utils/vector')
-  const vectorStore = new VectorStore({
-    dbPath,
-    tableName: 'rpg_nodes',
-    dimension: embeddingsData.config.dimension,
-  })
-
   const docs = Array.from(vectors.entries())
     .filter(([id]) => nodeMap.has(id))
     .map(([id, vector]) => {
       const node = nodeMap.get(id)!
       return {
         id,
-        text: `${node.feature.description} ${(node.feature.keywords ?? []).join(' ')} ${node.metadata?.path ?? ''}`,
-        vector,
+        embedding: vector,
         metadata: {
+          text: `${node.feature.description} ${(node.feature.keywords ?? []).join(' ')} ${node.metadata?.path ?? ''}`,
           entityType: node.metadata?.entityType,
           path: node.metadata?.path,
         },
@@ -359,9 +354,8 @@ async function initFromPrecomputedEmbeddings(
     })
 
   if (docs.length > 0) {
-    await vectorStore.add(docs)
+    await vectorStore.upsertBatch(docs)
   }
-  await vectorStore.close()
 
   log.success(
     `Pre-computed embeddings loaded: ${docs.length} vectors (${embeddingsData.config.provider}/${embeddingsData.config.model})`,
