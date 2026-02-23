@@ -1,0 +1,42 @@
+# Vendor reference implementations
+vendor/
+
+# Evaluation suite
+agent-evals/
+
+# Test fixtures (large repos)
+tests/
+
+# Claude Code config
+.claude/
+
+# Please AI session data
+.please/
+
+# GitHub workflows
+.github/
+
+# RPG data files
+.rpg/
+
+# Documentation / paper sources
+docs/
+
+# Git submodules config
+.gitmodules
+
+# MCP config
+.mcp.json
+
+# Release-please manifest
+.release-please-manifest.json
+release-please-config.json
+
+# Turborepo
+.turbo/
+turbo.json
+
+# Dev config files
+vitest.config.ts
+eslint.config.js
+tsconfig.json
