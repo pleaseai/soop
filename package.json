@@ -40,7 +40,18 @@
     "@pleaseai/rpg-tools": "workspace:*",
     "@pleaseai/rpg-zerorepo": "workspace:*",
     "@pleaseai/rpg-mcp": "workspace:*",
-    "@pleaseai/rpg-cli": "workspace:*"
+    "@pleaseai/rpg-cli": "workspace:*",
+    "tree-sitter": "^0.21.1",
+    "tree-sitter-go": "0.21.2",
+    "tree-sitter-java": "0.21.0",
+    "tree-sitter-python": "^0.21.0",
+    "tree-sitter-rust": "0.21.0",
+    "tree-sitter-typescript": "^0.21.2"
+  },
+  "optionalDependencies": {
+    "@lancedb/lancedb": "^0.13.0",
+    "@surrealdb/node": "^2.6.0",
+    "better-sqlite3": "^12.6.2"
   },
   "peerDependencies": {
     "zod": "^3.25.0 || ^4.0.0"
@@ -57,15 +68,9 @@
     "ai": "^6.0.70",
     "ai-sdk-provider-claude-code": "^3.4.0",
     "ai-sdk-provider-codex-cli": "^1.0.5",
-    "better-sqlite3": "^12.6.2",
     "commander": "^14.0.3",
     "eslint": "^9.39.2",
     "eslint-plugin-import-x": "^4.16.1",
-    "tree-sitter-go": "0.21.2",
-    "tree-sitter-java": "0.21.0",
-    "tree-sitter-python": "^0.21.0",
-    "tree-sitter-rust": "0.21.0",
-    "tree-sitter-typescript": "^0.21.2",
     "turbo": "^2.8.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
