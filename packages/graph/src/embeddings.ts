@@ -89,7 +89,12 @@ function float32ToFloat16Bits(value: number): number {
     if ((newFrac & 0x1FFF) > 0x1000 || ((newFrac & 0x1FFF) === 0x1000 && (newFrac & 0x2000))) {
       newFrac += 0x2000
     }
-    return (sign << 15) | ((newFrac >>> 13) & 0x3FF)
+    const mantissa = newFrac >>> 13
+    if (mantissa >= 0x400) {
+      // Round-up overflowed from largest subnormal into normal range
+      return (sign << 15) | (1 << 10)
+    }
+    return (sign << 15) | mantissa
   }
 
   // Round to nearest even

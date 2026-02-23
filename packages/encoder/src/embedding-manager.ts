@@ -134,11 +134,14 @@ export class EmbeddingManager {
 
   /**
    * Build the text string for a node using the configured template.
+   * Uses single-pass replacement to avoid template injection from field values.
    */
   private buildText(node: { feature: { description: string, keywords?: string[] }, metadata?: { path?: string } }): string {
-    return this.config.textTemplate
-      .replace('{description}', node.feature.description)
-      .replace('{keywords}', (node.feature.keywords ?? []).join(' '))
-      .replace('{path}', node.metadata?.path ?? '')
+    const replacements: Record<string, string> = {
+      '{description}': node.feature.description,
+      '{keywords}': (node.feature.keywords ?? []).join(' '),
+      '{path}': node.metadata?.path ?? '',
+    }
+    return this.config.textTemplate.replace(/\{description\}|\{keywords\}|\{path\}/g, match => replacements[match] ?? match)
   }
 }

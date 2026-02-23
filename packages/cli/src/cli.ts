@@ -102,7 +102,7 @@ program
 
       const result = await encoder.encode()
 
-      const headSha = options.stamp || options.embed
+      const headSha = options.stamp
         ? stampRpgWithHead(result.rpg, repoPath)
         : undefined
       if (options.stamp && headSha) {
@@ -113,9 +113,10 @@ program
 
       // Generate embeddings if requested
       if (options.embed) {
+        const embedSha = headSha ?? getHeadCommitSha(path.resolve(repoPath))
         const embeddings = await generateEmbeddings(
           result.rpg,
-          headSha ?? getHeadCommitSha(path.resolve(repoPath)),
+          embedSha,
           options.embedModel,
         )
         await writeEmbeddingsFile(embeddings, options.embedOutput)
@@ -545,23 +546,33 @@ function parseEmbedModelString(modelStr: string): ParsedEmbedModel {
   const model = modelParts.join('/') || providerPart!
 
   switch (providerPart) {
-    case 'voyage-ai':
+    case 'voyage-ai': {
+      const voyageApiKey = process.env.VOYAGE_API_KEY
+      if (!voyageApiKey) {
+        throw new Error('VOYAGE_API_KEY environment variable is required for voyage-ai embeddings')
+      }
       return {
         providerName: 'VoyageAI',
         model,
         baseURL: 'https://api.voyageai.com/v1',
-        apiKey: process.env.VOYAGE_API_KEY ?? '',
+        apiKey: voyageApiKey,
         dimension: 1024,
         space: 'voyage-v4',
       }
-    case 'openai':
+    }
+    case 'openai': {
+      const openaiApiKey = process.env.OPENAI_API_KEY
+      if (!openaiApiKey) {
+        throw new Error('OPENAI_API_KEY environment variable is required for openai embeddings')
+      }
       return {
         providerName: 'OpenAI',
         model,
         baseURL: 'https://api.openai.com/v1',
-        apiKey: process.env.OPENAI_API_KEY ?? '',
+        apiKey: openaiApiKey,
         dimension: model === 'text-embedding-3-large' ? 3072 : 1536,
       }
+    }
     default:
       return {
         providerName: providerPart!,

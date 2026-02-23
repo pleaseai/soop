@@ -63,7 +63,7 @@ describe('float16 codec', () => {
   })
 
   it('handles special values', () => {
-    const values = [0.0, -0.0, Infinity, -Infinity]
+    const values = [0.0, -0.0, Infinity, -Infinity, Number.NaN]
     const encoded = float32ToBase64Float16(values)
     const decoded = base64Float16ToFloat32(encoded, values.length)
 
@@ -71,6 +71,7 @@ describe('float16 codec', () => {
     expect(Object.is(decoded[1], -0)).toBe(true)
     expect(decoded[2]).toBe(Infinity)
     expect(decoded[3]).toBe(-Infinity)
+    expect(Number.isNaN(decoded[4]!)).toBe(true)
   })
 
   it('handles very small values (subnormals)', () => {

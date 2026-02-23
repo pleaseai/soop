@@ -146,32 +146,35 @@ export function registerSyncCommand(program: Command): void {
             // Read the local RPG to get node metadata for content field
             const localJson = await readFile(localGraphPath, 'utf-8')
             const localRpg = await RepositoryPlanningGraph.fromJSON(localJson)
-            const nodes = await localRpg.getNodes()
-            const nodeMap = new Map(nodes.map(n => [n.id, n]))
+            try {
+              const nodes = await localRpg.getNodes()
+              const nodeMap = new Map(nodes.map(n => [n.id, n]))
 
-            const docs = Array.from(vectors.entries())
-              .filter(([id]) => nodeMap.has(id))
-              .map(([id, vector]) => {
-                const node = nodeMap.get(id)!
-                return {
-                  id,
-                  text: `${node.feature.description} ${(node.feature.keywords ?? []).join(' ')} ${node.metadata?.path ?? ''}`,
-                  vector,
-                  metadata: {
-                    entityType: node.metadata?.entityType,
-                    path: node.metadata?.path,
-                  },
-                }
-              })
+              const docs = Array.from(vectors.entries())
+                .filter(([id]) => nodeMap.has(id))
+                .map(([id, vector]) => {
+                  const node = nodeMap.get(id)!
+                  return {
+                    id,
+                    text: `${node.feature.description} ${(node.feature.keywords ?? []).join(' ')} ${node.metadata?.path ?? ''}`,
+                    vector,
+                    metadata: {
+                      entityType: node.metadata?.entityType,
+                      path: node.metadata?.path,
+                    },
+                  }
+                })
 
-            if (docs.length > 0) {
-              await vectorStore.add(docs)
-              log.success(`Pre-computed embeddings loaded: ${docs.length} vectors (${embeddings.config.model})`)
-              embeddingsLoaded = true
+              if (docs.length > 0) {
+                await vectorStore.add(docs)
+                log.success(`Pre-computed embeddings loaded: ${docs.length} vectors (${embeddings.config.model})`)
+                embeddingsLoaded = true
+              }
             }
-
-            await vectorStore.close()
-            await localRpg.close()
+            finally {
+              await vectorStore.close()
+              await localRpg.close()
+            }
           }
           catch (error) {
             log.warn(

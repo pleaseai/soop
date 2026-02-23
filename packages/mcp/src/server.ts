@@ -1,3 +1,4 @@
+import type { Embedding } from '@pleaseai/rpg-encoder/embedding'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
@@ -306,6 +307,62 @@ async function initSemanticSearch(
 }
 
 /**
+ * Create an embedding provider for search queries, based on the config stored in embeddings.json.
+ *
+ * For `transformers` provider, uses HuggingFaceEmbedding with the stored model.
+ * For `voyage-ai`, prefers a real Voyage AI call (if VOYAGE_API_KEY is set) then falls back
+ * to local voyage-4-nano, which shares the same embedding space per CLAUDE.md.
+ * For `openai`, uses the OpenAI API if OPENAI_API_KEY is set.
+ * All other providers fall back to local voyage-4-nano with a warning.
+ */
+async function createEmbeddingForSearch(config: {
+  provider: string
+  model: string
+  dimension: number
+  space?: string
+}): Promise<Embedding> {
+  const { HuggingFaceEmbedding: HFEmbedding, AISDKEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
+
+  if (config.provider === 'transformers') {
+    return new HFEmbedding({ model: config.model })
+  }
+
+  if (config.provider === 'voyage-ai' || config.space?.startsWith('voyage')) {
+    const apiKey = process.env.VOYAGE_API_KEY
+    if (apiKey) {
+      const { createOpenAI } = await import('@ai-sdk/openai')
+      const voyageProvider = createOpenAI({ apiKey, baseURL: 'https://api.voyageai.com/v1' })
+      return new AISDKEmbedding({
+        model: voyageProvider.embedding(config.model),
+        dimension: config.dimension,
+        providerName: 'VoyageAI',
+      })
+    }
+    log.info('VOYAGE_API_KEY not set — using local voyage-4-nano for query embedding (compatible embedding space)')
+    return new HFEmbedding({ model: 'voyageai/voyage-4-nano' })
+  }
+
+  if (config.provider === 'openai') {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (apiKey) {
+      const { createOpenAI } = await import('@ai-sdk/openai')
+      const openaiProvider = createOpenAI({ apiKey })
+      return new AISDKEmbedding({
+        model: openaiProvider.embedding(config.model),
+        dimension: config.dimension,
+        providerName: 'OpenAI',
+      })
+    }
+    log.warn('OPENAI_API_KEY not set — falling back to local voyage-4-nano (different embedding space, search quality may be degraded)')
+  }
+  else {
+    log.warn(`Unsupported embedding provider "${config.provider}" — falling back to local voyage-4-nano`)
+  }
+
+  return new HFEmbedding({ model: 'voyageai/voyage-4-nano' })
+}
+
+/**
  * Initialize semantic search from pre-computed embeddings.json.
  * Loads float16 vectors into LanceDB without HuggingFace model loading.
  */
@@ -316,7 +373,6 @@ async function initFromPrecomputedEmbeddings(
   dbPath: string,
 ): Promise<SemanticSearch> {
   const { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } = await import('@pleaseai/rpg-graph/embeddings')
-  const { MockEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
 
   log.start('Loading pre-computed embeddings...')
   const embeddingsContent = await readFile(embeddingsPath, 'utf-8')
@@ -325,17 +381,16 @@ async function initFromPrecomputedEmbeddings(
     : parseEmbeddings(embeddingsContent)
   const vectors = decodeAllEmbeddings(embeddingsData)
 
-  // Use a MockEmbedding with matching dimension for the SemanticSearch wrapper.
-  // Search queries will still use embedBatch for query vectors,
-  // but indexing is done with pre-computed vectors.
-  const mockEmbedding = new MockEmbedding(embeddingsData.config.dimension)
+  // Create a real embedding provider for query-time use.
+  // This must produce vectors in the same space as the pre-computed document embeddings.
+  const queryEmbedding = await createEmbeddingForSearch(embeddingsData.config)
 
   const vectorStore = new LocalVectorStore()
   await vectorStore.open({ path: dbPath })
 
   const semanticSearch = new SemanticSearch({
     vectorStore,
-    embedding: mockEmbedding,
+    embedding: queryEmbedding,
   })
 
   // Build documents with pre-computed vectors

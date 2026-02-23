@@ -52,7 +52,7 @@ jobs:
               }
               # Re-generate embeddings after evolve if API key is available
               if [ -n "$VOYAGE_API_KEY" ]; then
-                rpg embed --rpg .rpg/graph.json --stamp || true
+                rpg embed --rpg .rpg/graph.json --stamp
               fi
             fi
           fi
