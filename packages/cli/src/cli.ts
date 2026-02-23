@@ -21,7 +21,7 @@ import { registerSyncCommand } from './commands/sync'
 
 const log = createLogger('CLI')
 
-config({ path: ['.env.local', '.env'] })
+config({ path: ['.env.local', '.env'], quiet: true })
 
 program
   .name('rpg')
