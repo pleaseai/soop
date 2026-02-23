@@ -30,10 +30,13 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
         run: |
-          EMBED_FLAG=""
+          # Choose embedding model: Voyage API if key available, local nano otherwise
           if [ -n "$VOYAGE_API_KEY" ]; then
-          EMBED_FLAG="--embed"
+            EMBED_MODEL="voyage-ai/voyage-4"
+          else
+            EMBED_MODEL="transformers/voyageai/voyage-4-nano"
           fi
+          EMBED_FLAG="--embed --embed-model $EMBED_MODEL"
 
           if [ ! -f ".rpg/graph.json" ]; then
             echo "No existing graph — running full encode"
@@ -50,10 +53,8 @@ jobs:
                 echo "Evolve failed, falling back to full encode"
                 rpg encode . -o .rpg/graph.json --stamp $EMBED_FLAG
               }
-              # Re-generate embeddings after evolve if API key is available
-              if [ -n "$VOYAGE_API_KEY" ]; then
-                rpg embed --rpg .rpg/graph.json --stamp || true
-              fi
+              # Re-generate embeddings after evolve
+              rpg embed --rpg .rpg/graph.json --model $EMBED_MODEL --stamp || true
             fi
           fi
 
