@@ -32,7 +32,7 @@ jobs:
         run: |
           EMBED_FLAG=""
           if [ -n "$VOYAGE_API_KEY" ]; then
-            EMBED_FLAG="--embed"
+          EMBED_FLAG="--embed"
           fi
 
           if [ ! -f ".rpg/graph.json" ]; then

@@ -50,7 +50,7 @@ program
   .option('--no-llm', 'Disable LLM (use heuristic extraction)')
   .option('--stamp', 'Stamp config.github.commit with HEAD SHA after encoding')
   .option('--embed', 'Generate embeddings file after encoding')
-  .option('--embed-model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3)')
+  .option('--embed-model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local HuggingFace models (e.g., transformers/voyageai/voyage-4-nano)')
   .option('--embed-output <path>', 'Embeddings output file path', '.rpg/embeddings.json')
   .option('--verbose', 'Show detailed progress')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
@@ -373,7 +373,7 @@ program
   .command('embed')
   .description('Generate embeddings file from an RPG')
   .requiredOption('--rpg <file>', 'RPG file path')
-  .option('--model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3)')
+  .option('--model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local models (e.g., transformers/voyageai/voyage-4-nano)')
   .option('-o, --output <file>', 'Output file path', '.rpg/embeddings.json')
   .option('--stamp', 'Stamp embeddings commit with HEAD SHA')
   .action(
@@ -458,6 +458,7 @@ const GIT_LFS_THRESHOLD = 10 * 1024 * 1024
 
 /**
  * Generate embeddings for an RPG using the specified model.
+ * Supports API-based providers (voyage-ai/, openai/) and local transformers (transformers/).
  */
 async function generateEmbeddings(
   rpg: RepositoryPlanningGraph,
@@ -465,10 +466,29 @@ async function generateEmbeddings(
   embedModelStr?: string,
 ): Promise<SerializedEmbeddings> {
   const { EmbeddingManager } = await import('@pleaseai/rpg-encoder/embedding-manager')
+
+  const modelStr = embedModelStr ?? 'voyage-ai/voyage-code-3'
+  const [providerPart] = modelStr.split('/')
+
+  if (providerPart === 'transformers') {
+    // Local HuggingFace model via @huggingface/transformers (ONNX)
+    const { HuggingFaceEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
+    const modelId = modelStr.slice('transformers/'.length)
+    const embedding = new HuggingFaceEmbedding({ model: modelId })
+
+    const manager = new EmbeddingManager(embedding, {
+      provider: 'transformers',
+      model: modelId,
+      dimension: embedding.getDimension(),
+    })
+
+    return manager.indexAll(rpg, commit)
+  }
+
   const { createOpenAI } = await import('@ai-sdk/openai')
   const { AISDKEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
 
-  const parsed = parseEmbedModelString(embedModelStr ?? 'voyage-ai/voyage-code-3')
+  const parsed = parseEmbedModelString(modelStr)
 
   const provider = createOpenAI({
     baseURL: parsed.baseURL,
