@@ -3,11 +3,15 @@
   "version": "0.1.5",
   "description": "Repository Planning Graph - A unified framework for repository understanding and generation",
   "type": "module",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist/",
+    "packages/*/package.json"
+  ],
+  "main": "dist/src/index.mjs",
+  "types": "dist/src/index.d.mts",
   "bin": {
-    "rpg": "dist/packages/cli/src/cli.js",
-    "rpg-mcp": "dist/packages/mcp/src/server.js"
+    "rpg": "dist/packages/cli/src/cli.mjs",
+    "rpg-mcp": "dist/packages/mcp/src/server.mjs"
   },
   "workspaces": [
     "packages/*"
@@ -15,8 +19,7 @@
   "scripts": {
     "dev": "bun run --watch packages/cli/src/cli.ts",
     "mcp": "bun run packages/mcp/src/server.ts",
-    "build": "bun build src/index.ts packages/cli/src/cli.ts packages/mcp/src/server.ts --outdir dist --target node --external better-sqlite3 --external @lancedb/lancedb --external @surrealdb/node --external tree-sitter --external tree-sitter-typescript --external tree-sitter-python --external tree-sitter-rust --external tree-sitter-go --external tree-sitter-java && npm run build:fix-shebang && npm run build:copy-assets",
-    "build:fix-shebang": "sed -i.bak 's|#!/usr/bin/env bun|#!/usr/bin/env node|g' dist/packages/cli/src/cli.js dist/packages/mcp/src/server.js && rm -f dist/packages/cli/src/cli.js.bak dist/packages/mcp/src/server.js.bak",
+    "build": "tsdown && bun run build:copy-assets",
     "build:copy-assets": "mkdir -p dist/packages/cli/templates && cp packages/cli/src/templates/*.yml dist/packages/cli/templates/",
     "test": "vitest run",
     "test:unit": "vitest run --project=unit",
@@ -72,6 +75,7 @@
     "commander": "^14.0.3",
     "eslint": "^9.39.2",
     "eslint-plugin-import-x": "^4.16.1",
+    "tsdown": "^0.20.3",
     "turbo": "^2.8.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
@@ -86,7 +90,7 @@
     "software-engineering",
     "ast"
   ],
-  "author": "Minsu Lee <amondnet@gmail.com>",
+  "author": "Minsu Lee <amond@amond.net>",
   "license": "MIT",
   "repository": {
     "type": "git",
