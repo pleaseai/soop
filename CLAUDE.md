@@ -370,18 +370,31 @@ RPG encoding uses LLM for semantic feature extraction. Options:
 
 ## Embedding Options
 
-| Provider | Model | Dimension | Cost |
-|----------|-------|-----------|------|
-| HuggingFace (local) | MongoDB/mdbr-leaf-ir | 768 | Free |
-| HuggingFace (local) | MongoDB/mdbr-leaf-mt | 1024 | Free |
-| OpenAI | text-embedding-3-small | 1536 | $0.02/1M |
-| OpenAI | text-embedding-3-large | 3072 | $0.13/1M |
+CLI flag: `--embed-model <provider/model>` (encode/embed commands)
+
+| Provider | Model | CLI prefix | Dimension | Cost | Notes |
+|----------|-------|-----------|-----------|------|-------|
+| Voyage AI | voyage-4 | `voyage-ai/voyage-4` | 1024 | $0.06/1M | **Default (CI)** — balanced quality/cost |
+| Voyage AI | voyage-4-large | `voyage-ai/voyage-4-large` | 1024 | $0.12/1M | Best quality, MoE architecture |
+| Voyage AI | voyage-4-lite | `voyage-ai/voyage-4-lite` | 1024 | $0.02/1M | Low latency, query-time use |
+| HuggingFace (local) | voyageai/voyage-4-nano | `transformers/voyageai/voyage-4-nano` | 1024 | Free | **Default (local)** — open-weight, Apache 2.0 |
+| HuggingFace (local) | MongoDB/mdbr-leaf-ir | `transformers/MongoDB/mdbr-leaf-ir` | 768 | Free | Information retrieval |
+| HuggingFace (local) | MongoDB/mdbr-leaf-mt | `transformers/MongoDB/mdbr-leaf-mt` | 1024 | Free | Multi-task |
+| OpenAI | text-embedding-3-small | `openai/text-embedding-3-small` | 1536 | $0.02/1M | |
+| OpenAI | text-embedding-3-large | `openai/text-embedding-3-large` | 3072 | $0.13/1M | |
+
+All Voyage 4 models (including local `voyage-4-nano`) share the same embedding space — documents and queries can use different models interchangeably.
+
+### CI Workflow Model Selection
+
+The `rpg init --ci` template automatically selects the embedding model:
+
+- `VOYAGE_API_KEY` set → `voyage-ai/voyage-4`
+- `VOYAGE_API_KEY` not set → `transformers/voyageai/voyage-4-nano` (free, no API key required)
 
 ### Alternative Embedding Models (Not Yet Implemented)
 
 | Provider | Model | Dimension | Cost | Notes |
 |----------|-------|-----------|------|-------|
-| Voyage AI | voyage-code-3 | 1024 | $0.18/1M | Code retrieval SOTA |
-| Voyage AI | voyage-4 | 1024 | $0.10/1M | Shared embedding space, MoE |
 | Google | gemini-embedding-001 | 3072 | Free | MTEB Multilingual #1 |
 | Jina AI | jina-embeddings-v3 | 1024 | $0.02/1M | Paper baseline (Agentless) |

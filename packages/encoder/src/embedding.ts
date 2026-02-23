@@ -352,6 +352,13 @@ export class MockEmbedding extends Embedding {
 export type HuggingFaceDtype = 'fp32' | 'fp16' | 'q8' | 'q4' | 'q4f16'
 
 /**
+ * Pooling strategy for HuggingFace models
+ * - 'sentence_embedding': use outputs.sentence_embedding directly (MongoDB LEAF models)
+ * - 'mean_pooling': apply mean pooling over last_hidden_state with attention mask (Voyage models)
+ */
+export type HuggingFacePoolingStrategy = 'sentence_embedding' | 'mean_pooling'
+
+/**
  * HuggingFace embedding configuration
  */
 export interface HuggingFaceEmbeddingConfig {
@@ -363,10 +370,12 @@ export interface HuggingFaceEmbeddingConfig {
   queryPrefix?: string
   /** Custom cache directory for model weights */
   cacheDir?: string
+  /** Pooling strategy (default: auto-detected from model registry) */
+  poolingStrategy?: HuggingFacePoolingStrategy
 }
 
 /**
- * Supported LEAF models and their specifications
+ * Supported HuggingFace models and their specifications
  */
 const HUGGINGFACE_MODELS: Record<
   string,
@@ -375,6 +384,7 @@ const HUGGINGFACE_MODELS: Record<
     maxTokens: number
     description: string
     queryPrefix?: string
+    poolingStrategy: HuggingFacePoolingStrategy
   }
 > = {
   'MongoDB/mdbr-leaf-ir': {
@@ -382,12 +392,21 @@ const HUGGINGFACE_MODELS: Record<
     maxTokens: 512,
     description: 'LEAF model optimized for information retrieval and semantic search (DEFAULT)',
     queryPrefix: 'Represent this sentence for searching relevant passages: ',
+    poolingStrategy: 'sentence_embedding',
   },
   'MongoDB/mdbr-leaf-mt': {
     dimension: 1024,
     maxTokens: 512,
     description: 'LEAF multi-task model for classification, clustering, and sentence similarity',
     queryPrefix: undefined,
+    poolingStrategy: 'sentence_embedding',
+  },
+  'voyageai/voyage-4-nano': {
+    dimension: 1024,
+    maxTokens: 32000,
+    description: 'Voyage 4 Nano — open-weight multilingual embedding model (180M params, Matryoshka: 2048/1024/512/256)',
+    queryPrefix: undefined,
+    poolingStrategy: 'mean_pooling',
   },
 }
 
@@ -413,6 +432,7 @@ export class HuggingFaceEmbedding extends Embedding {
   private tokenizer: AutoTokenizerType | null = null
   private readonly dimension: number = 768
   private readonly config: HuggingFaceEmbeddingConfig
+  private readonly poolingStrategy: HuggingFacePoolingStrategy
   private modelLoading: Promise<void> | null = null
   private transformersModule: TransformersModule | null = null
 
@@ -425,16 +445,19 @@ export class HuggingFaceEmbedding extends Embedding {
       cacheDir: config.cacheDir,
     }
 
-    // Set dimension and query prefix based on model
+    // Set dimension, query prefix, and pooling strategy based on model
     const modelId = this.config.model ?? 'MongoDB/mdbr-leaf-ir'
     const modelInfo = HUGGINGFACE_MODELS[modelId]
     if (modelInfo) {
       this.dimension = modelInfo.dimension
       this.maxTokens = modelInfo.maxTokens
-      // Use model-specific query prefix if not overridden
       if (this.config.queryPrefix === undefined) {
         this.config.queryPrefix = modelInfo.queryPrefix
       }
+      this.poolingStrategy = config.poolingStrategy ?? modelInfo.poolingStrategy
+    }
+    else {
+      this.poolingStrategy = config.poolingStrategy ?? 'sentence_embedding'
     }
   }
 
@@ -445,9 +468,39 @@ export class HuggingFaceEmbedding extends Embedding {
       maxTokens: number
       description: string
       queryPrefix?: string
+      poolingStrategy: HuggingFacePoolingStrategy
     }
   > {
     return { ...HUGGINGFACE_MODELS }
+  }
+
+  /**
+   * Apply mean pooling over last_hidden_state using attention mask, then L2-normalize.
+   * Used for Voyage-style models that output raw token embeddings.
+   */
+  private meanPoolSingle(hiddenStates: number[][], mask: number[]): number[] {
+    const dim = hiddenStates[0]!.length
+    const pooled = new Array<number>(dim).fill(0)
+    let maskSum = 0
+
+    for (let i = 0; i < hiddenStates.length; i++) {
+      const m = mask[i] ?? 0
+      if (m > 0) {
+        const row = hiddenStates[i]!
+        for (let j = 0; j < dim; j++) {
+          pooled[j]! += row[j]! * m
+        }
+        maskSum += m
+      }
+    }
+
+    const denom = Math.max(maskSum, 1e-9)
+    const normed = pooled.map(v => v / denom)
+
+    // L2 normalize
+    const norm = Math.sqrt(normed.reduce((s, v) => s + v * v, 0))
+    const normDenom = Math.max(norm, 1e-9)
+    return normed.map(v => v / normDenom)
   }
 
   private async getTransformersModule(): Promise<TransformersModule> {
@@ -536,11 +589,22 @@ export class HuggingFaceEmbedding extends Embedding {
 
       const outputs = await this.model(inputs)
 
-      if (!outputs.sentence_embedding) {
-        throw new Error('Model did not return sentence_embedding')
-      }
+      let embedding: number[]
 
-      const embedding = outputs.sentence_embedding.tolist()[0] as number[]
+      if (this.poolingStrategy === 'mean_pooling') {
+        if (!outputs.last_hidden_state) {
+          throw new Error('Model did not return last_hidden_state for mean_pooling strategy')
+        }
+        const hiddenStates = (outputs.last_hidden_state.tolist() as number[][][])[0]!
+        const mask = (inputs.attention_mask.tolist() as number[][])[0]!
+        embedding = this.meanPoolSingle(hiddenStates, mask)
+      }
+      else {
+        if (!outputs.sentence_embedding) {
+          throw new Error('Model did not return sentence_embedding')
+        }
+        embedding = (outputs.sentence_embedding.tolist() as number[][])[0]!
+      }
 
       return {
         vector: embedding,
@@ -578,11 +642,22 @@ export class HuggingFaceEmbedding extends Embedding {
 
       const outputs = await this.model(inputs)
 
-      if (!outputs.sentence_embedding) {
-        throw new Error('Model did not return sentence_embedding')
-      }
+      let embeddings: number[][]
 
-      const embeddings = outputs.sentence_embedding.tolist() as number[][]
+      if (this.poolingStrategy === 'mean_pooling') {
+        if (!outputs.last_hidden_state) {
+          throw new Error('Model did not return last_hidden_state for mean_pooling strategy')
+        }
+        const allHidden = outputs.last_hidden_state.tolist() as number[][][]
+        const allMasks = inputs.attention_mask.tolist() as number[][]
+        embeddings = allHidden.map((hidden, i) => this.meanPoolSingle(hidden, allMasks[i]!))
+      }
+      else {
+        if (!outputs.sentence_embedding) {
+          throw new Error('Model did not return sentence_embedding')
+        }
+        embeddings = outputs.sentence_embedding.tolist() as number[][]
+      }
 
       return embeddings.map(embedding => ({
         vector: embedding,

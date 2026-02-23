@@ -15,8 +15,9 @@
   "scripts": {
     "dev": "bun run --watch packages/cli/src/cli.ts",
     "mcp": "bun run packages/mcp/src/server.ts",
-    "build": "bun build src/index.ts packages/cli/src/cli.ts packages/mcp/src/server.ts --outdir dist --target node --external better-sqlite3 --external @lancedb/lancedb --external @surrealdb/node --external tree-sitter --external tree-sitter-typescript --external tree-sitter-python --external tree-sitter-rust --external tree-sitter-go --external tree-sitter-java && npm run build:fix-shebang",
+    "build": "bun build src/index.ts packages/cli/src/cli.ts packages/mcp/src/server.ts --outdir dist --target node --external better-sqlite3 --external @lancedb/lancedb --external @surrealdb/node --external tree-sitter --external tree-sitter-typescript --external tree-sitter-python --external tree-sitter-rust --external tree-sitter-go --external tree-sitter-java && npm run build:fix-shebang && npm run build:copy-assets",
     "build:fix-shebang": "sed -i.bak 's|#!/usr/bin/env bun|#!/usr/bin/env node|g' dist/packages/cli/src/cli.js dist/packages/mcp/src/server.js && rm -f dist/packages/cli/src/cli.js.bak dist/packages/mcp/src/server.js.bak",
+    "build:copy-assets": "mkdir -p dist/packages/cli/templates && cp packages/cli/src/templates/*.yml dist/packages/cli/templates/",
     "test": "vitest run",
     "test:unit": "vitest run --project=unit",
     "test:integration": "vitest run --project=integration",
@@ -40,7 +41,18 @@
     "@pleaseai/rpg-tools": "workspace:*",
     "@pleaseai/rpg-zerorepo": "workspace:*",
     "@pleaseai/rpg-mcp": "workspace:*",
-    "@pleaseai/rpg-cli": "workspace:*"
+    "@pleaseai/rpg-cli": "workspace:*",
+    "tree-sitter": "^0.21.1",
+    "tree-sitter-go": "0.21.2",
+    "tree-sitter-java": "0.21.0",
+    "tree-sitter-python": "^0.21.0",
+    "tree-sitter-rust": "0.21.0",
+    "tree-sitter-typescript": "^0.21.2"
+  },
+  "optionalDependencies": {
+    "@lancedb/lancedb": "^0.13.0",
+    "@surrealdb/node": "^2.6.0",
+    "better-sqlite3": "^12.6.2"
   },
   "peerDependencies": {
     "zod": "^3.25.0 || ^4.0.0"
@@ -55,17 +67,11 @@
     "@vitest/coverage-v8": "^4.0.18",
     "@vitest/ui": "^4.0.18",
     "ai": "^6.0.70",
-    "ai-sdk-provider-claude-code": "^3.4.0",
+    "ai-sdk-provider-claude-code": "^3.4.2",
     "ai-sdk-provider-codex-cli": "^1.0.5",
-    "better-sqlite3": "^12.6.2",
     "commander": "^14.0.3",
     "eslint": "^9.39.2",
     "eslint-plugin-import-x": "^4.16.1",
-    "tree-sitter-go": "0.21.2",
-    "tree-sitter-java": "0.21.0",
-    "tree-sitter-python": "^0.21.0",
-    "tree-sitter-rust": "0.21.0",
-    "tree-sitter-typescript": "^0.21.2",
     "turbo": "^2.8.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",

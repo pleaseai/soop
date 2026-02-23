@@ -239,6 +239,36 @@ describe('repositoryPlanningGraph', () => {
     expect(results[0]?.id).toBe('auth')
   })
 
+  it('serialize sorts nodes by id', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'sort-test' })
+
+    await rpg.addHighLevelNode({ id: 'zoo', feature: { description: 'zoo module' } })
+    await rpg.addHighLevelNode({ id: 'alpha', feature: { description: 'alpha module' } })
+    await rpg.addHighLevelNode({ id: 'middle', feature: { description: 'middle module' } })
+
+    const serialized = await rpg.serialize()
+    const ids = (serialized.nodes as Array<{ id: string }>).map(n => n.id)
+    expect(ids).toEqual([...ids].sort((a, b) => a.localeCompare(b)))
+  })
+
+  it('serialize sorts edges by source then target', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'sort-test' })
+
+    await rpg.addHighLevelNode({ id: 'b', feature: { description: 'b' } })
+    await rpg.addHighLevelNode({ id: 'a', feature: { description: 'a' } })
+    await rpg.addHighLevelNode({ id: 'c', feature: { description: 'c' } })
+
+    await rpg.addFunctionalEdge({ source: 'b', target: 'c' })
+    await rpg.addFunctionalEdge({ source: 'a', target: 'c' })
+    await rpg.addFunctionalEdge({ source: 'a', target: 'b' })
+
+    const serialized = await rpg.serialize()
+    const pairs = (serialized.edges as Array<{ source: string; target: string }>).map(
+      e => `${e.source}→${e.target}`,
+    )
+    expect(pairs).toEqual([...pairs].sort((x, y) => x.localeCompare(y)))
+  })
+
   it('serializes and deserializes', async () => {
     const rpg = await RepositoryPlanningGraph.create({
       name: 'test-repo',

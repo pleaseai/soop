@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths-ignore:
       - .rpg/graph.json
-      - .rpg/embeddings.jsonl
+      - .rpg/embeddings.json
 
 permissions:
   contents: write
@@ -30,13 +30,10 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
         run: |
-          # Choose embedding model: Voyage API if key available, local nano otherwise
+          EMBED_FLAG=""
           if [ -n "$VOYAGE_API_KEY" ]; then
-            EMBED_MODEL="voyage-ai/voyage-4"
-          else
-            EMBED_MODEL="transformers/voyageai/voyage-4-nano"
+            EMBED_FLAG="--embed"
           fi
-          EMBED_FLAG="--embed --embed-model $EMBED_MODEL"
 
           if [ ! -f ".rpg/graph.json" ]; then
             echo "No existing graph — running full encode"
@@ -53,8 +50,10 @@ jobs:
                 echo "Evolve failed, falling back to full encode"
                 rpg encode . -o .rpg/graph.json --stamp $EMBED_FLAG
               }
-              # Re-generate embeddings after evolve
-              rpg embed --rpg .rpg/graph.json --model $EMBED_MODEL --stamp || true
+              # Re-generate embeddings after evolve if API key is available
+              if [ -n "$VOYAGE_API_KEY" ]; then
+                rpg embed --rpg .rpg/graph.json --stamp
+              fi
             fi
           fi
 
@@ -63,8 +62,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .rpg/graph.json
-          if [ -f ".rpg/embeddings.jsonl" ]; then
-            git add .rpg/embeddings.jsonl
+          if [ -f ".rpg/embeddings.json" ]; then
+            git add .rpg/embeddings.json
           fi
           if git diff --cached --quiet; then
             echo "No changes to commit"

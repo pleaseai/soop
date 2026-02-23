@@ -10,6 +10,8 @@ export interface LocalState {
   baseCommit: string
   branch: string
   lastSync: string
+  /** Whether pre-computed embeddings were loaded */
+  embeddingsLoaded?: boolean
 }
 
 export function registerSyncCommand(program: Command): void {
@@ -118,11 +120,76 @@ export function registerSyncCommand(program: Command): void {
           log.info('On default branch — synced canonical graph to local')
         }
 
-        // 6. Update local state
+        // 6. Load pre-computed embeddings into local vector DB if available
+        let embeddingsLoaded = false
+        const embeddingsPathJsonl = path.join(rpgDir, 'embeddings.jsonl')
+        const embeddingsPathJson = path.join(rpgDir, 'embeddings.json')
+        const embeddingsPath = existsSync(embeddingsPathJsonl) ? embeddingsPathJsonl : embeddingsPathJson
+        if (existsSync(embeddingsPath)) {
+          try {
+            const { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } = await import('@pleaseai/rpg-graph/embeddings')
+            const embeddingsContent = await readFile(embeddingsPath, 'utf-8')
+            const embeddings = embeddingsPath.endsWith('.jsonl')
+              ? parseEmbeddingsJsonl(embeddingsContent)
+              : parseEmbeddings(embeddingsContent)
+            const vectors = decodeAllEmbeddings(embeddings)
+
+            // Load into LanceDB vector store
+            const { VectorStore } = await import('@pleaseai/rpg-utils/vector')
+            const vectorDbPath = path.join(localDir, 'vectors')
+            const vectorStore = new VectorStore({
+              dbPath: vectorDbPath,
+              tableName: 'rpg_nodes',
+              dimension: embeddings.config.dimension,
+            })
+
+            // Read the local RPG to get node metadata for content field
+            const localJson = await readFile(localGraphPath, 'utf-8')
+            const localRpg = await RepositoryPlanningGraph.fromJSON(localJson)
+            try {
+              const nodes = await localRpg.getNodes()
+              const nodeMap = new Map(nodes.map(n => [n.id, n]))
+
+              const docs = Array.from(vectors.entries())
+                .filter(([id]) => nodeMap.has(id))
+                .map(([id, vector]) => {
+                  const node = nodeMap.get(id)!
+                  return {
+                    id,
+                    text: `${node.feature.description} ${(node.feature.keywords ?? []).join(' ')} ${node.metadata?.path ?? ''}`,
+                    vector,
+                    metadata: {
+                      entityType: node.metadata?.entityType,
+                      path: node.metadata?.path,
+                    },
+                  }
+                })
+
+              if (docs.length > 0) {
+                await vectorStore.add(docs)
+                log.success(`Pre-computed embeddings loaded: ${docs.length} vectors (${embeddings.config.model})`)
+                embeddingsLoaded = true
+              }
+            }
+            finally {
+              await vectorStore.close()
+              await localRpg.close()
+            }
+          }
+          catch (error) {
+            log.warn(
+              `Failed to load pre-computed embeddings: ${error instanceof Error ? error.message : String(error)}`,
+            )
+            log.warn('Falling back to on-demand embedding generation')
+          }
+        }
+
+        // 7. Update local state
         const newState: LocalState = {
           baseCommit: canonicalCommit ?? headSha,
           branch: currentBranch,
           lastSync: new Date().toISOString(),
+          embeddingsLoaded,
         }
         await writeFile(localStatePath, JSON.stringify(newState, null, 2))
 

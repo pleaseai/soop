@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import type { SemanticOptions } from '@pleaseai/rpg-encoder/semantic'
+import type { SerializedEmbeddings } from '@pleaseai/rpg-graph/embeddings'
 
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { RPGEncoder } from '@pleaseai/rpg-encoder'
 import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
+import { serializeEmbeddingsJsonl } from '@pleaseai/rpg-graph/embeddings'
 import { ExploreRPG, FetchNode, SearchNode } from '@pleaseai/rpg-tools'
 import { getHeadCommitSha } from '@pleaseai/rpg-utils/git-helpers'
 import { parseModelString } from '@pleaseai/rpg-utils/llm'
@@ -19,7 +21,7 @@ import { registerSyncCommand } from './commands/sync'
 
 const log = createLogger('CLI')
 
-config({ path: ['.env.local', '.env'] })
+config({ path: ['.env.local', '.env'], quiet: true })
 
 program
   .name('rpg')
@@ -47,6 +49,9 @@ program
   .option('-m, --model <provider/model>', 'LLM provider/model (e.g., codex/gpt-5.3-codex, claude-code/haiku, openai/gpt-5.2, google)')
   .option('--no-llm', 'Disable LLM (use heuristic extraction)')
   .option('--stamp', 'Stamp config.github.commit with HEAD SHA after encoding')
+  .option('--embed', 'Generate embeddings file after encoding')
+  .option('--embed-model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local HuggingFace models (e.g., transformers/voyageai/voyage-4-nano)')
+  .option('--embed-output <path>', 'Embeddings output file path', '.rpg/embeddings.jsonl')
   .option('--verbose', 'Show detailed progress')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
   .option('--max-batch-tokens <tokens>', 'Maximum tokens per batch (default: 50000)')
@@ -63,6 +68,9 @@ program
         model?: string
         llm?: boolean
         stamp?: boolean
+        embed?: boolean
+        embedModel?: string
+        embedOutput: string
         verbose?: boolean
         minBatchTokens?: string
         maxBatchTokens?: string
@@ -94,12 +102,25 @@ program
 
       const result = await encoder.encode()
 
-      if (options.stamp) {
-        const headSha = stampRpgWithHead(result.rpg, repoPath)
+      const headSha = options.stamp
+        ? stampRpgWithHead(result.rpg, repoPath)
+        : undefined
+      if (options.stamp && headSha) {
         log.info(`Stamped commit: ${headSha}`)
       }
 
       await writeFile(options.output, await result.rpg.toJSON())
+
+      // Generate embeddings if requested
+      if (options.embed) {
+        const embedSha = headSha ?? getHeadCommitSha(path.resolve(repoPath))
+        const embeddings = await generateEmbeddings(
+          result.rpg,
+          embedSha,
+          options.embedModel,
+        )
+        await writeEmbeddingsFile(embeddings, options.embedOutput)
+      }
 
       const stats = await result.rpg.getStats()
 
@@ -348,6 +369,34 @@ program
     console.log(commit)
   })
 
+// Embed command (standalone)
+program
+  .command('embed')
+  .description('Generate embeddings file from an RPG')
+  .requiredOption('--rpg <file>', 'RPG file path')
+  .option('--model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local models (e.g., transformers/voyageai/voyage-4-nano)')
+  .option('-o, --output <file>', 'Output file path', '.rpg/embeddings.jsonl')
+  .option('--stamp', 'Stamp embeddings commit with HEAD SHA')
+  .action(
+    async (options: {
+      rpg: string
+      model?: string
+      output: string
+      stamp?: boolean
+    }) => {
+      const json = await readFile(options.rpg, 'utf-8')
+      const rpg = await RepositoryPlanningGraph.fromJSON(json)
+      const repoPath = rpg.getConfig().rootPath ?? '.'
+
+      const commitSha = options.stamp
+        ? getHeadCommitSha(path.resolve(repoPath))
+        : (rpg.getConfig().github?.commit ?? getHeadCommitSha(path.resolve(repoPath)))
+
+      const embeddings = await generateEmbeddings(rpg, commitSha, options.model)
+      await writeEmbeddingsFile(embeddings, options.output)
+    },
+  )
+
 /**
  * Stamp RPG config with the current HEAD commit SHA.
  * Returns the stamped SHA.
@@ -402,6 +451,136 @@ function buildSemanticOptions(
     useLLM: llm !== false,
     ...(parsedMin !== undefined ? { minBatchTokens: parsedMin } : {}),
     ...(parsedMax !== undefined ? { maxBatchTokens: parsedMax } : {}),
+  }
+}
+
+/** Git LFS size warning threshold (10MB) */
+const GIT_LFS_THRESHOLD = 10 * 1024 * 1024
+
+/**
+ * Generate embeddings for an RPG using the specified model.
+ * Supports API-based providers (voyage-ai/, openai/) and local transformers (transformers/).
+ */
+async function generateEmbeddings(
+  rpg: RepositoryPlanningGraph,
+  commit: string,
+  embedModelStr?: string,
+): Promise<SerializedEmbeddings> {
+  const { EmbeddingManager } = await import('@pleaseai/rpg-encoder/embedding-manager')
+
+  const modelStr = embedModelStr ?? 'voyage-ai/voyage-code-3'
+  const [providerPart] = modelStr.split('/')
+
+  if (providerPart === 'transformers') {
+    // Local HuggingFace model via @huggingface/transformers (ONNX)
+    const { HuggingFaceEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
+    const modelId = modelStr.slice('transformers/'.length)
+    const embedding = new HuggingFaceEmbedding({ model: modelId })
+
+    const manager = new EmbeddingManager(embedding, {
+      provider: 'transformers',
+      model: modelId,
+      dimension: embedding.getDimension(),
+    })
+
+    return manager.indexAll(rpg, commit)
+  }
+
+  const { createOpenAI } = await import('@ai-sdk/openai')
+  const { AISDKEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
+
+  const parsed = parseEmbedModelString(modelStr)
+
+  const provider = createOpenAI({
+    baseURL: parsed.baseURL,
+    apiKey: parsed.apiKey,
+  })
+
+  const embedding = new AISDKEmbedding({
+    model: provider.embedding(parsed.model),
+    dimension: parsed.dimension,
+    providerName: parsed.providerName,
+  })
+
+  const manager = new EmbeddingManager(embedding, {
+    provider: parsed.providerName,
+    model: parsed.model,
+    dimension: parsed.dimension,
+    space: parsed.space,
+  })
+
+  return manager.indexAll(rpg, commit)
+}
+
+/**
+ * Write embeddings to file with size warning.
+ */
+async function writeEmbeddingsFile(embeddings: SerializedEmbeddings, outputPath: string): Promise<void> {
+  const content = serializeEmbeddingsJsonl(embeddings)
+  await writeFile(outputPath, content)
+
+  const size = Buffer.byteLength(content)
+  const sizeMB = (size / (1024 * 1024)).toFixed(1)
+  log.success(`Embeddings written: ${outputPath} (${sizeMB}MB, ${embeddings.embeddings.length} nodes)`)
+
+  if (size > GIT_LFS_THRESHOLD) {
+    log.warn(`embeddings.jsonl is ${sizeMB}MB. Consider using Git LFS:`)
+    log.warn(`  git lfs track "${outputPath}"`)
+  }
+}
+
+interface ParsedEmbedModel {
+  providerName: string
+  model: string
+  baseURL: string
+  apiKey: string
+  dimension: number
+  space?: string
+}
+
+/**
+ * Parse embed model string like "voyage-ai/voyage-code-3" or "openai/text-embedding-3-small"
+ */
+function parseEmbedModelString(modelStr: string): ParsedEmbedModel {
+  const [providerPart, ...modelParts] = modelStr.split('/')
+  const model = modelParts.join('/') || providerPart!
+
+  switch (providerPart) {
+    case 'voyage-ai': {
+      const voyageApiKey = process.env.VOYAGE_API_KEY
+      if (!voyageApiKey) {
+        throw new Error('VOYAGE_API_KEY environment variable is required for voyage-ai embeddings')
+      }
+      return {
+        providerName: 'VoyageAI',
+        model,
+        baseURL: 'https://api.voyageai.com/v1',
+        apiKey: voyageApiKey,
+        dimension: 1024,
+        space: 'voyage-v4',
+      }
+    }
+    case 'openai': {
+      const openaiApiKey = process.env.OPENAI_API_KEY
+      if (!openaiApiKey) {
+        throw new Error('OPENAI_API_KEY environment variable is required for openai embeddings')
+      }
+      return {
+        providerName: 'OpenAI',
+        model,
+        baseURL: 'https://api.openai.com/v1',
+        apiKey: openaiApiKey,
+        dimension: model === 'text-embedding-3-large' ? 3072 : 1536,
+      }
+    }
+    default:
+      return {
+        providerName: providerPart!,
+        model,
+        baseURL: process.env.EMBEDDING_BASE_URL ?? 'https://api.openai.com/v1',
+        apiKey: process.env.EMBEDDING_API_KEY ?? process.env.OPENAI_API_KEY ?? '',
+        dimension: 1024,
+      }
   }
 }
 
