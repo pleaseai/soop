@@ -254,8 +254,10 @@ async function initSemanticSearch(
 ): Promise<SemanticSearch> {
   const dbPath = join(dirname(rpgPath), `${rpgPath}.vectors`)
 
-  // Check for pre-computed embeddings
-  const embeddingsPath = join(dirname(rpgPath), 'embeddings.json')
+  // Check for pre-computed embeddings (.jsonl preferred, .json as fallback)
+  const embeddingsPathJsonl = join(dirname(rpgPath), 'embeddings.jsonl')
+  const embeddingsPathJson = join(dirname(rpgPath), 'embeddings.json')
+  const embeddingsPath = existsSync(embeddingsPathJsonl) ? embeddingsPathJsonl : embeddingsPathJson
   if (existsSync(embeddingsPath)) {
     try {
       return await initFromPrecomputedEmbeddings(rpg, rpgPath, embeddingsPath, dbPath)
@@ -313,12 +315,14 @@ async function initFromPrecomputedEmbeddings(
   embeddingsPath: string,
   dbPath: string,
 ): Promise<SemanticSearch> {
-  const { parseEmbeddings, decodeAllEmbeddings } = await import('@pleaseai/rpg-graph/embeddings')
+  const { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } = await import('@pleaseai/rpg-graph/embeddings')
   const { MockEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
 
   log.start('Loading pre-computed embeddings...')
-  const embeddingsJson = await readFile(embeddingsPath, 'utf-8')
-  const embeddingsData = parseEmbeddings(embeddingsJson)
+  const embeddingsContent = await readFile(embeddingsPath, 'utf-8')
+  const embeddingsData = embeddingsPath.endsWith('.jsonl')
+    ? parseEmbeddingsJsonl(embeddingsContent)
+    : parseEmbeddings(embeddingsContent)
   const vectors = decodeAllEmbeddings(embeddingsData)
 
   // Use a MockEmbedding with matching dimension for the SemanticSearch wrapper.

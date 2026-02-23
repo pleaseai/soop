@@ -194,6 +194,7 @@ export function base64Float16ToFloat32(encoded: string, dimension: number): numb
 
 /**
  * Parse a JSON string into a validated SerializedEmbeddings object.
+ * @deprecated Use parseEmbeddingsJsonl() instead for new files (.rpg/embeddings.jsonl).
  */
 export function parseEmbeddings(json: string): SerializedEmbeddings {
   return SerializedEmbeddingsSchema.parse(JSON.parse(json))
@@ -201,9 +202,46 @@ export function parseEmbeddings(json: string): SerializedEmbeddings {
 
 /**
  * Serialize a SerializedEmbeddings object to a JSON string.
+ * @deprecated Use serializeEmbeddingsJsonl() instead for new files (.rpg/embeddings.jsonl).
  */
 export function serializeEmbeddings(data: SerializedEmbeddings): string {
   return JSON.stringify(data, null, 2)
+}
+
+/**
+ * Serialize a SerializedEmbeddings object to JSONL format.
+ *
+ * Line 1: metadata (version, config, commit)
+ * Line 2+: embedding entries sorted by id for stable git diffs
+ *
+ * @example
+ * {"version":"1.0.0","config":{...},"commit":"abc123"}
+ * {"id":"node-aaa","vector":"base64..."}
+ * {"id":"node-bbb","vector":"base64..."}
+ */
+export function serializeEmbeddingsJsonl(data: SerializedEmbeddings): string {
+  const { embeddings, ...meta } = data
+  const lines: string[] = [JSON.stringify(meta)]
+  const sorted = [...embeddings].sort((a, b) => a.id.localeCompare(b.id))
+  for (const entry of sorted) {
+    lines.push(JSON.stringify(entry))
+  }
+  return lines.join('\n')
+}
+
+/**
+ * Parse a JSONL string into a validated SerializedEmbeddings object.
+ *
+ * Expects line 1 as metadata and remaining lines as embedding entries.
+ */
+export function parseEmbeddingsJsonl(jsonl: string): SerializedEmbeddings {
+  const lines = jsonl.split('\n').filter(line => line.trim().length > 0)
+  if (lines.length === 0) {
+    throw new Error('Empty JSONL content')
+  }
+  const meta = JSON.parse(lines[0]!)
+  const embeddings = lines.slice(1).map(line => EmbeddingEntrySchema.parse(JSON.parse(line)))
+  return SerializedEmbeddingsSchema.parse({ ...meta, embeddings })
 }
 
 /**

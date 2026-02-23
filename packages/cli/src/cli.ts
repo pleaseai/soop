@@ -6,7 +6,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { RPGEncoder } from '@pleaseai/rpg-encoder'
 import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
-import { serializeEmbeddings } from '@pleaseai/rpg-graph/embeddings'
+import { serializeEmbeddingsJsonl } from '@pleaseai/rpg-graph/embeddings'
 import { ExploreRPG, FetchNode, SearchNode } from '@pleaseai/rpg-tools'
 import { getHeadCommitSha } from '@pleaseai/rpg-utils/git-helpers'
 import { parseModelString } from '@pleaseai/rpg-utils/llm'
@@ -51,7 +51,7 @@ program
   .option('--stamp', 'Stamp config.github.commit with HEAD SHA after encoding')
   .option('--embed', 'Generate embeddings file after encoding')
   .option('--embed-model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local HuggingFace models (e.g., transformers/voyageai/voyage-4-nano)')
-  .option('--embed-output <path>', 'Embeddings output file path', '.rpg/embeddings.json')
+  .option('--embed-output <path>', 'Embeddings output file path', '.rpg/embeddings.jsonl')
   .option('--verbose', 'Show detailed progress')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
   .option('--max-batch-tokens <tokens>', 'Maximum tokens per batch (default: 50000)')
@@ -374,7 +374,7 @@ program
   .description('Generate embeddings file from an RPG')
   .requiredOption('--rpg <file>', 'RPG file path')
   .option('--model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local models (e.g., transformers/voyageai/voyage-4-nano)')
-  .option('-o, --output <file>', 'Output file path', '.rpg/embeddings.json')
+  .option('-o, --output <file>', 'Output file path', '.rpg/embeddings.jsonl')
   .option('--stamp', 'Stamp embeddings commit with HEAD SHA')
   .action(
     async (options: {
@@ -515,7 +515,7 @@ async function generateEmbeddings(
  * Write embeddings to file with size warning.
  */
 async function writeEmbeddingsFile(embeddings: SerializedEmbeddings, outputPath: string): Promise<void> {
-  const content = serializeEmbeddings(embeddings)
+  const content = serializeEmbeddingsJsonl(embeddings)
   await writeFile(outputPath, content)
 
   const size = Buffer.byteLength(content)
@@ -523,7 +523,7 @@ async function writeEmbeddingsFile(embeddings: SerializedEmbeddings, outputPath:
   log.success(`Embeddings written: ${outputPath} (${sizeMB}MB, ${embeddings.embeddings.length} nodes)`)
 
   if (size > GIT_LFS_THRESHOLD) {
-    log.warn(`embeddings.json is ${sizeMB}MB. Consider using Git LFS:`)
+    log.warn(`embeddings.jsonl is ${sizeMB}MB. Consider using Git LFS:`)
     log.warn(`  git lfs track "${outputPath}"`)
   }
 }

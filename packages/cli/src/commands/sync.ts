@@ -122,12 +122,16 @@ export function registerSyncCommand(program: Command): void {
 
         // 6. Load pre-computed embeddings into local vector DB if available
         let embeddingsLoaded = false
-        const embeddingsPath = path.join(rpgDir, 'embeddings.json')
+        const embeddingsPathJsonl = path.join(rpgDir, 'embeddings.jsonl')
+        const embeddingsPathJson = path.join(rpgDir, 'embeddings.json')
+        const embeddingsPath = existsSync(embeddingsPathJsonl) ? embeddingsPathJsonl : embeddingsPathJson
         if (existsSync(embeddingsPath)) {
           try {
-            const { parseEmbeddings, decodeAllEmbeddings } = await import('@pleaseai/rpg-graph/embeddings')
-            const embeddingsJson = await readFile(embeddingsPath, 'utf-8')
-            const embeddings = parseEmbeddings(embeddingsJson)
+            const { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } = await import('@pleaseai/rpg-graph/embeddings')
+            const embeddingsContent = await readFile(embeddingsPath, 'utf-8')
+            const embeddings = embeddingsPath.endsWith('.jsonl')
+              ? parseEmbeddingsJsonl(embeddingsContent)
+              : parseEmbeddings(embeddingsContent)
             const vectors = decodeAllEmbeddings(embeddings)
 
             // Load into LanceDB vector store
