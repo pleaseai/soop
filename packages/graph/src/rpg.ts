@@ -463,9 +463,9 @@ export class RepositoryPlanningGraph {
     if (this.dataFlowEdges.length > 0) {
       result.dataFlowEdges = [...this.dataFlowEdges].sort(
         (a, b) =>
-          a.from.localeCompare(b.from) ||
-          a.to.localeCompare(b.to) ||
-          a.dataId.localeCompare(b.dataId),
+          a.from.localeCompare(b.from)
+          || a.to.localeCompare(b.to)
+          || a.dataId.localeCompare(b.dataId),
       )
     }
     return result

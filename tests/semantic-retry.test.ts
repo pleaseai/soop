@@ -4,10 +4,10 @@ import { describe, expect, it, vi } from 'vitest'
 
 describe('SemanticExtractor multi-iteration extraction', () => {
   describe('maxParseIterations option', () => {
-    it('has default maxParseIterations of 1 (backward compatible)', () => {
+    it('has default maxParseIterations of 2', () => {
       const extractor = new SemanticExtractor({ useLLM: false })
       // Verify default via behavior: accessing private options through cast
-      expect((extractor as any).options.maxParseIterations).toBe(1)
+      expect((extractor as any).options.maxParseIterations).toBe(2)
     })
 
     it('accepts custom maxParseIterations option', () => {

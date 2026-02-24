@@ -263,7 +263,7 @@ describe('repositoryPlanningGraph', () => {
     await rpg.addFunctionalEdge({ source: 'a', target: 'b' })
 
     const serialized = await rpg.serialize()
-    const pairs = (serialized.edges as Array<{ source: string; target: string }>).map(
+    const pairs = (serialized.edges as Array<{ source: string, target: string }>).map(
       e => `${e.source}→${e.target}`,
     )
     expect(pairs).toEqual([...pairs].sort((x, y) => x.localeCompare(y)))

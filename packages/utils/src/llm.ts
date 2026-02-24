@@ -302,11 +302,26 @@ export class LLMClient {
     if (schema) {
       const result = await this.callGenerateText(prompt, systemPrompt, Output.object({ schema }))
 
-      if (result.output == null) {
-        throw new Error('No structured output returned from model')
+      try {
+        return result.output as T
       }
+      catch {
+        // Structured output failed (non-'stop' finishReason from provider).
+        // Try regex-based JSON extraction from result.text as fallback.
+        const lastStep = result.steps?.[result.steps.length - 1]
+        const finishReason = lastStep?.finishReason ?? 'unknown'
+        log.debug(`Structured output unavailable (finishReason: ${finishReason}), trying text fallback`)
 
-      return result.output as T
+        if (result.text) {
+          const jsonMatch
+            = result.text.match(/```(?:json)?\n?([\s\S]*?)```/) || result.text.match(/\{[\s\S]*\}/)
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0])
+            return schema.parse(parsed) as T
+          }
+        }
+        throw new Error(`No structured output from model (finishReason: ${finishReason})`)
+      }
     }
 
     // Fallback: regex-based JSON extraction for callers without schema
