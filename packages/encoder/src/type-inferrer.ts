@@ -19,7 +19,7 @@ import { COMMON_METHOD_BLOCKLIST } from './type-inference-patterns'
 /**
  * Languages with manual AST traversal implementations in findLocalVarType / findAttributeType.
  */
-const INFERENCE_SUPPORTED_LANGUAGES = new Set(['python', 'typescript', 'javascript', 'java'])
+const INFERENCE_SUPPORTED_LANGUAGES = new Set(['python', 'typescript', 'javascript', 'java', 'csharp', 'kotlin', 'ruby', 'rust', 'go'])
 
 export class TypeInferrer {
   private readonly classIndex: Map<string, EntityNode>

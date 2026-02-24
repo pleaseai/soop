@@ -75,6 +75,12 @@ export class InheritanceExtractor {
       rs: 'rust',
       go: 'go',
       java: 'java',
+      cs: 'csharp',
+      rb: 'ruby',
+      kt: 'kotlin',
+      kts: 'kotlin',
+      cc: 'cpp',
+      cxx: 'cpp',
     }
     return aliases[language] ?? language
   }
@@ -100,6 +106,19 @@ export class InheritanceExtractor {
     else if (language === 'go') {
       this.extractFromGo(node, filePath, relations)
     }
+    else if (language === 'csharp') {
+      this.extractFromCSharp(node, filePath, relations)
+    }
+    else if (language === 'cpp') {
+      this.extractFromCpp(node, filePath, relations)
+    }
+    else if (language === 'ruby') {
+      this.extractFromRuby(node, filePath, relations)
+    }
+    else if (language === 'kotlin') {
+      this.extractFromKotlin(node, filePath, relations)
+    }
+    // C has no class inheritance; skip
 
     for (const child of node.children) {
       this.extractFromNode(child, filePath, language, relations)
@@ -373,6 +392,165 @@ export class InheritanceExtractor {
         }
       }
       break
+    }
+  }
+
+  /**
+   * C#: class_declaration / struct_declaration → base_list → base_type children
+   * First base_type is treated as superclass (inherit), rest as interfaces (implement)
+   */
+  private extractFromCSharp(
+    node: Parser.SyntaxNode,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
+    if (node.type !== 'class_declaration' && node.type !== 'struct_declaration') {
+      return
+    }
+
+    const childClass = this.getChildClassName(node)
+    if (!childClass) {
+      return
+    }
+
+    const baseList = node.children.find(c => c.type === 'base_list')
+    if (!baseList) {
+      return
+    }
+
+    const isStruct = node.type === 'struct_declaration'
+    let isFirst = true
+    for (const child of baseList.children) {
+      if (child.type === 'base_type') {
+        const typeNode = child.children.find(
+          c => c.type === 'identifier' || c.type === 'qualified_name' || c.type === 'generic_name',
+        )
+        const parentClass = typeNode?.text ?? child.text
+        if (parentClass) {
+          relations.push({
+            childFile: filePath,
+            childClass,
+            parentClass,
+            kind: !isStruct && isFirst ? 'inherit' : 'implement',
+          })
+          isFirst = false
+        }
+      }
+    }
+  }
+
+  /**
+   * C++: class_specifier → base_class_clause → base_specifier → type_identifier children
+   */
+  private extractFromCpp(
+    node: Parser.SyntaxNode,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
+    if (node.type !== 'class_specifier') {
+      return
+    }
+
+    const childClass = this.getChildClassName(node)
+    if (!childClass) {
+      return
+    }
+
+    const baseClause = node.children.find(c => c.type === 'base_class_clause')
+    if (!baseClause) {
+      return
+    }
+
+    for (const child of baseClause.children) {
+      if (child.type === 'base_specifier') {
+        const typeNode = child.children.find(
+          c => c.type === 'type_identifier' || c.type === 'qualified_identifier',
+        )
+        if (typeNode) {
+          relations.push({
+            childFile: filePath,
+            childClass,
+            parentClass: typeNode.text,
+            kind: 'inherit',
+          })
+        }
+      }
+    }
+  }
+
+  /**
+   * Ruby: class node → superclass field → identifier / constant
+   */
+  private extractFromRuby(
+    node: Parser.SyntaxNode,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
+    if (node.type !== 'class') {
+      return
+    }
+
+    const childClass = this.getChildClassName(node)
+    if (!childClass) {
+      return
+    }
+
+    const superclass = node.childForFieldName('superclass')
+    if (!superclass) {
+      return
+    }
+
+    // superclass field may be a constant or scope_resolution
+    const parentClass = superclass.text
+    if (parentClass) {
+      relations.push({
+        childFile: filePath,
+        childClass,
+        parentClass,
+        kind: 'inherit',
+      })
+    }
+  }
+
+  /**
+   * Kotlin: class_declaration → delegation_specifiers → delegation_specifier children
+   */
+  private extractFromKotlin(
+    node: Parser.SyntaxNode,
+    filePath: string,
+    relations: InheritanceRelation[],
+  ): void {
+    if (node.type !== 'class_declaration') {
+      return
+    }
+
+    const childClass = this.getChildClassName(node)
+    if (!childClass) {
+      return
+    }
+
+    const delegationSpecs = node.children.find(c => c.type === 'delegation_specifiers')
+    if (!delegationSpecs) {
+      return
+    }
+
+    for (const spec of delegationSpecs.children) {
+      if (spec.type === 'delegation_specifier') {
+        const isSuperclass = spec.children.some(c => c.type === 'constructor_invocation')
+        // user_type or constructor_invocation → type_identifier / user_type
+        const typeNode = spec.children.find(
+          c => c.type === 'user_type' || c.type === 'constructor_invocation',
+        )
+        const parentClass = typeNode?.text ?? spec.text
+        if (parentClass) {
+          relations.push({
+            childFile: filePath,
+            childClass,
+            parentClass,
+            kind: isSuperclass ? 'inherit' : 'implement',
+          })
+        }
+      }
     }
   }
 

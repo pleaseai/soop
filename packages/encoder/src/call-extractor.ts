@@ -103,6 +103,18 @@ export class CallExtractor {
     else if (language === 'go') {
       callInfo = this.extractGoCall(node)
     }
+    else if (language === 'csharp') {
+      callInfo = this.extractCSharpCall(node)
+    }
+    else if (language === 'c' || language === 'cpp') {
+      callInfo = this.extractCCppCall(node)
+    }
+    else if (language === 'ruby') {
+      callInfo = this.extractRubyCall(node)
+    }
+    else if (language === 'kotlin') {
+      callInfo = this.extractKotlinCall(node)
+    }
 
     if (callInfo.symbol) {
       calls.push({
@@ -281,6 +293,110 @@ export class CallExtractor {
     return { symbol: null }
   }
 
+  // ===================== C# =====================
+
+  private extractCSharpCall(node: Parser.SyntaxNode): CallInfo {
+    if (node.type === 'invocation_expression') {
+      const fn = node.childForFieldName('function')
+      if (!fn)
+        return { symbol: null }
+      // member_access_expression: obj.Method
+      if (fn.type === 'member_access_expression') {
+        const nameNode = fn.childForFieldName('name')
+        const objNode = fn.childForFieldName('object')
+        const symbol = nameNode?.text ?? null
+        if (!symbol)
+          return { symbol: null }
+        if (!objNode)
+          return { symbol, receiverKind: 'none' }
+        return { symbol, ...this.classifyReceiver(objNode) }
+      }
+      if (fn.type === 'identifier') {
+        return { symbol: fn.text, receiverKind: 'none' }
+      }
+      return { symbol: null }
+    }
+    if (node.type === 'object_creation_expression') {
+      const typeNode = node.childForFieldName('type')
+      const symbol = typeNode?.text ?? null
+      return symbol ? { symbol, receiverKind: 'none' } : { symbol: null }
+    }
+    return { symbol: null }
+  }
+
+  // ===================== C / C++ =====================
+
+  private extractCCppCall(node: Parser.SyntaxNode): CallInfo {
+    if (node.type !== 'call_expression')
+      return { symbol: null }
+    const fn = node.childForFieldName('function')
+    if (!fn)
+      return { symbol: null }
+
+    if (fn.type === 'identifier') {
+      return { symbol: fn.text, receiverKind: 'none' }
+    }
+    // field_expression: obj->method or obj.method
+    if (fn.type === 'field_expression') {
+      const argNode = fn.childForFieldName('argument')
+      const fieldNode = fn.childForFieldName('field')
+      const symbol = fieldNode?.text ?? null
+      if (!symbol)
+        return { symbol: null }
+      if (!argNode)
+        return { symbol, receiverKind: 'none' }
+      return { symbol, ...this.classifyReceiver(argNode) }
+    }
+    // qualified_identifier: Foo::bar
+    if (fn.type === 'qualified_identifier') {
+      const nameNode = fn.childForFieldName('name')
+      const symbol = nameNode?.text ?? null
+      return symbol ? { symbol, receiverKind: 'none' } : { symbol: null }
+    }
+    return { symbol: null }
+  }
+
+  // ===================== Ruby =====================
+
+  private extractRubyCall(node: Parser.SyntaxNode): CallInfo {
+    if (node.type !== 'call')
+      return { symbol: null }
+    const methodNode = node.childForFieldName('method')
+    const symbol = methodNode?.text ?? null
+    if (!symbol)
+      return { symbol: null }
+    const receiverNode = node.childForFieldName('receiver')
+    if (!receiverNode)
+      return { symbol, receiverKind: 'none' }
+    return { symbol, ...this.classifyReceiver(receiverNode) }
+  }
+
+  // ===================== Kotlin =====================
+
+  private extractKotlinCall(node: Parser.SyntaxNode): CallInfo {
+    if (node.type !== 'call_expression')
+      return { symbol: null }
+    const fn = node.childForFieldName('calleeExpression')
+    if (!fn)
+      return { symbol: null }
+
+    if (fn.type === 'simple_identifier') {
+      return { symbol: fn.text, receiverKind: 'none' }
+    }
+    // navigation_expression: obj.method
+    if (fn.type === 'navigation_expression') {
+      const objNode = fn.children[0]
+      const selectorNode = fn.children[2]
+      const symbol = selectorNode?.text ?? null
+      if (!symbol)
+        return { symbol: null }
+      if (!objNode)
+        return { symbol, receiverKind: 'none' }
+      return { symbol, ...this.classifyReceiver(objNode) }
+    }
+    return { symbol: null }
+  }
+
   // ===================== Symbol Resolution Helpers =====================
 
   /**
@@ -328,6 +444,15 @@ export class CallExtractor {
       'method_declaration',
       'function_item',
       'impl_item',
+      // C++
+      'class_specifier',
+      // Ruby
+      'class',
+      'module',
+      'method',
+      'singleton_method',
+      // Kotlin
+      'object_declaration',
     ]
 
     if (contextNodeTypes.includes(node.type)) {
