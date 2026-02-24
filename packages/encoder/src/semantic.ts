@@ -3,6 +3,7 @@ import { SemanticFeatureSchema as NodeSemanticFeatureSchema } from '@pleaseai/rp
 import { LLMClient } from '@pleaseai/rpg-utils/llm'
 import { createLogger } from '@pleaseai/rpg-utils/logger'
 import { z } from 'zod/v4'
+import { buildBatchClassPrompt, buildBatchFunctionPrompt } from './reorganization/prompts'
 import { estimateEntityTokens } from './token-counter'
 
 const log = createLogger('SemanticExtractor')
@@ -29,8 +30,14 @@ export interface SemanticOptions {
   minBatchTokens?: number
   /** Maximum tokens per batch - group entities until this limit (default: 50000) */
   maxBatchTokens?: number
-  /** Maximum parse iterations for retry on LLM extraction failure (default: 1, vendor uses 10) */
+  /** Maximum parse iterations for retry on LLM extraction failure (default: 3) */
   maxParseIterations?: number
+  /** Repository name (for LLM batch prompts) */
+  repoName?: string
+  /** Repository overview/info (for richer LLM prompts) */
+  repoInfo?: string
+  /** Maximum concurrent batch LLM requests (default: 4) */
+  maxConcurrentBatches?: number
 }
 
 /**
@@ -64,6 +71,36 @@ export interface EntityInput {
 }
 
 /**
+ * Sentinel key used in class batch result maps to store the synthesized class-level feature.
+ * Must match between extractClassBatch (creation) and processClassGroupBatches (consumption).
+ */
+const CLASS_FEATURE_KEY = '__class__' as const
+
+/**
+ * A class entity with its child methods for batched processing
+ */
+export interface ClassGroup {
+  classEntity: EntityInput
+  methodEntities: EntityInput[]
+}
+
+/**
+ * Run tasks with a concurrency limit
+ */
+async function runConcurrent<T>(tasks: (() => Promise<T>)[], limit: number): Promise<T[]> {
+  const results: T[] = []
+  let i = 0
+  async function worker() {
+    while (i < tasks.length) {
+      const idx = i++
+      results[idx] = await tasks[idx]!()
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker))
+  return results
+}
+
+/**
  * Semantic extractor using LLM or heuristics
  */
 export class SemanticExtractor {
@@ -77,7 +114,8 @@ export class SemanticExtractor {
       maxTokens: 2048,
       minBatchTokens: 10000,
       maxBatchTokens: 50000,
-      maxParseIterations: 2,
+      maxParseIterations: 3,
+      maxConcurrentBatches: 4,
       ...options,
     }
 
@@ -117,7 +155,7 @@ export class SemanticExtractor {
   async extract(input: EntityInput): Promise<SemanticFeature> {
     // Try LLM extraction if available
     if (this.llmClient && input.sourceCode) {
-      const maxIterations = this.options.maxParseIterations ?? 1
+      const maxIterations = this.options.maxParseIterations ?? 3
       for (let attempt = 1; attempt <= maxIterations; attempt++) {
         try {
           return await this.extractWithLLM(input)
@@ -140,24 +178,389 @@ export class SemanticExtractor {
   }
 
   /**
-   * Extract batch of entities (with token-aware batching for efficiency)
+   * Extract batch of entities (with grouped batching for classes/functions and multi-iteration retry)
    */
   async extractBatch(inputs: EntityInput[]): Promise<SemanticFeature[]> {
-    const results: SemanticFeature[] = []
+    // Build a map of index -> result for preserving order
+    const resultMap = new Map<number, SemanticFeature>()
 
-    // Create token-aware batches
-    const batches = this.createTokenAwareBatches(inputs)
+    // Separate entities by type
+    const classEntities = inputs.filter(e => e.type === 'class')
+    const methodEntities = inputs.filter(e => e.type === 'method')
+    const functionEntities = inputs.filter(e => e.type === 'function')
 
-    // Log batch information at debug level
-    log.debug(`Splitting ${inputs.length} entities into ${batches.length} token-aware batches`)
+    // Build class groups: each class with its child methods
+    const classGroups: ClassGroup[] = classEntities.map(classEntity => ({
+      classEntity,
+      methodEntities: methodEntities.filter(m => m.parent === classEntity.name),
+    }))
 
-    // Process each batch in parallel
-    for (const batch of batches) {
-      const batchResults = await Promise.all(batch.map(input => this.extract(input)))
-      results.push(...batchResults)
+    // Process if LLM is available
+    if (this.llmClient) {
+      // Process class groups with batch LLM
+      if (classGroups.length > 0) {
+        await this.processClassGroupBatches(classGroups, inputs, resultMap)
+      }
+
+      // Process standalone functions with batch LLM
+      if (functionEntities.length > 0) {
+        await this.processFunctionBatches(functionEntities, inputs, resultMap)
+      }
     }
 
-    return results
+    // Fall back to individual extraction for entities not yet in resultMap
+    const remainingEntities = inputs.filter((_, i) => !resultMap.has(i))
+    for (const entity of remainingEntities) {
+      const idx = inputs.indexOf(entity)
+      const feature = await this.extract(entity)
+      resultMap.set(idx, feature)
+    }
+
+    // Return results in original order; fall back to heuristic for any entity
+    // that was not placed in the map (e.g. if extract() threw unexpectedly)
+    return inputs.map((input, i) => resultMap.get(i) ?? this.extractWithHeuristic(input))
+  }
+
+  /**
+   * Process class groups using token-aware batching and parallel LLM calls
+   */
+  private async processClassGroupBatches(
+    classGroups: ClassGroup[],
+    allInputs: EntityInput[],
+    resultMap: Map<number, SemanticFeature>,
+  ): Promise<void> {
+    const batches = this.createClassGroupBatches(classGroups)
+    const maxConcurrent = this.options.maxConcurrentBatches ?? 4
+    const maxIterations = this.options.maxParseIterations ?? 3
+
+    log.debug(`Processing ${classGroups.length} class groups in ${batches.length} batches (concurrency: ${maxConcurrent})`)
+
+    const tasks = batches.map(batch => async () => {
+      let pendingGroups = batch
+      let iteration = 0
+
+      while (pendingGroups.length > 0 && iteration < maxIterations) {
+        iteration++
+        try {
+          const batchResult = await this.extractClassBatch(pendingGroups)
+          const stillMissing: ClassGroup[] = []
+
+          for (const group of pendingGroups) {
+            const { classEntity, methodEntities } = group
+            const classResult = batchResult.get(classEntity.name)
+
+            if (classResult instanceof Map) {
+              // Class with methods: methodMap has CLASS_FEATURE_KEY entry for the class itself
+              const classFeature = classResult.get(CLASS_FEATURE_KEY)
+              if (classFeature) {
+                const classIdx = allInputs.indexOf(classEntity)
+                if (classIdx !== -1) {
+                  resultMap.set(classIdx, classFeature)
+                }
+              }
+              else if (iteration < maxIterations) {
+                stillMissing.push({ classEntity, methodEntities: [] })
+              }
+
+              // Fill in method results
+              const missingMethods: EntityInput[] = []
+              for (const method of methodEntities) {
+                const methodFeature = classResult.get(method.name)
+                if (methodFeature) {
+                  const methodIdx = allInputs.indexOf(method)
+                  if (methodIdx !== -1) {
+                    resultMap.set(methodIdx, methodFeature)
+                  }
+                }
+                else if (iteration < maxIterations) {
+                  missingMethods.push(method)
+                }
+              }
+              // If some methods are missing and we have more iterations, retry just those methods
+              if (missingMethods.length > 0 && iteration < maxIterations) {
+                stillMissing.push({ classEntity: { ...classEntity, sourceCode: '' }, methodEntities: missingMethods })
+              }
+            }
+            else if (classResult !== undefined) {
+              // Data-only class (SemanticFeature)
+              const classIdx = allInputs.indexOf(classEntity)
+              if (classIdx !== -1) {
+                resultMap.set(classIdx, classResult)
+              }
+            }
+            else if (iteration < maxIterations) {
+              // No result for this class, retry
+              stillMissing.push(group)
+            }
+          }
+
+          pendingGroups = stillMissing
+        }
+        catch (error) {
+          const msg = error instanceof Error ? error.message : String(error)
+          log.warn(`Class batch iteration ${iteration}/${maxIterations} failed: ${msg}`)
+          this.warnings.push(`[SemanticExtractor] Class batch extraction failed (iteration ${iteration}/${maxIterations}): ${msg}. Affected entities will fall back to heuristic.`)
+          break
+        }
+      }
+    })
+
+    await runConcurrent(tasks, maxConcurrent)
+  }
+
+  /**
+   * Extract features for a batch of class groups using LLM.
+   * Returns a map: className -> (Map<methodName | CLASS_FEATURE_KEY, SemanticFeature> | SemanticFeature)
+   */
+  private async extractClassBatch(
+    classGroups: ClassGroup[],
+  ): Promise<Map<string, Map<string, SemanticFeature> | SemanticFeature>> {
+    const result = new Map<string, Map<string, SemanticFeature> | SemanticFeature>()
+
+    // Build combined source code for all class groups
+    const codeBlocks: string[] = []
+    for (const { classEntity, methodEntities } of classGroups) {
+      if (classEntity.sourceCode) {
+        codeBlocks.push(classEntity.sourceCode)
+      }
+      else if (methodEntities.length > 0) {
+        const parts = [`class ${classEntity.name} {`]
+        for (const method of methodEntities) {
+          if (method.sourceCode) {
+            parts.push(`  ${method.sourceCode}`)
+          }
+        }
+        parts.push('}')
+        codeBlocks.push(parts.join('\n'))
+      }
+    }
+
+    if (codeBlocks.length === 0) {
+      return result
+    }
+
+    const repoName = this.options.repoName ?? 'unknown'
+    const repoInfo = this.options.repoInfo ?? ''
+    const classesCode = codeBlocks.join('\n\n')
+
+    const { system, user } = buildBatchClassPrompt(repoName, repoInfo, classesCode)
+
+    try {
+      const llmResponse = await this.llmClient!.complete(user, system)
+      const parsed = this.parseBatchResponse(llmResponse.content)
+
+      for (const { classEntity, methodEntities } of classGroups) {
+        const classData = parsed[classEntity.name]
+        if (classData === undefined || classData === null) {
+          continue
+        }
+
+        if (Array.isArray(classData)) {
+          // Data-only class: array of feature strings
+          const stringFeatures = classData.filter((f): f is string => typeof f === 'string')
+          const feature = this.featureListToSemanticFeature(stringFeatures, classEntity.name, classEntity.filePath, 'class')
+          result.set(classEntity.name, feature)
+        }
+        else if (typeof classData === 'object') {
+          // Class with methods: object mapping methodName -> feature strings
+          const methodDataMap = classData as Record<string, unknown>
+          const methodMap = new Map<string, SemanticFeature>()
+          const classFeatureStrings: string[] = []
+
+          for (const [methodName, methodFeatures] of Object.entries(methodDataMap)) {
+            if (Array.isArray(methodFeatures)) {
+              const stringFeatures = methodFeatures.filter((f): f is string => typeof f === 'string')
+              const methodEntity = methodEntities.find(m => m.name === methodName)
+              const methodFeature = this.featureListToSemanticFeature(
+                stringFeatures,
+                methodName,
+                methodEntity?.filePath ?? classEntity.filePath,
+                'function',
+              )
+              methodMap.set(methodName, methodFeature)
+              if (classFeatureStrings.length === 0 && stringFeatures.length > 0) {
+                classFeatureStrings.push(...stringFeatures)
+              }
+            }
+          }
+
+          // Create a class-level feature synthesized from the method data
+          const classFeature = this.featureListToSemanticFeature(
+            classFeatureStrings,
+            classEntity.name,
+            classEntity.filePath,
+            'class',
+          )
+          methodMap.set(CLASS_FEATURE_KEY, classFeature)
+
+          result.set(classEntity.name, methodMap)
+        }
+      }
+    }
+    catch (error) {
+      const msg = error instanceof Error ? error.message : String(error)
+      log.warn(`Class batch LLM call failed: ${msg}`)
+    }
+
+    return result
+  }
+
+  /**
+   * Process standalone functions using token-aware batching and parallel LLM calls
+   */
+  private async processFunctionBatches(
+    functionEntities: EntityInput[],
+    allInputs: EntityInput[],
+    resultMap: Map<number, SemanticFeature>,
+  ): Promise<void> {
+    const batches = this.createTokenAwareBatches(functionEntities)
+    const maxConcurrent = this.options.maxConcurrentBatches ?? 4
+    const maxIterations = this.options.maxParseIterations ?? 3
+
+    log.debug(`Processing ${functionEntities.length} functions in ${batches.length} batches (concurrency: ${maxConcurrent})`)
+
+    const tasks = batches.map(batch => async () => {
+      let pendingFunctions = batch
+      let iteration = 0
+
+      while (pendingFunctions.length > 0 && iteration < maxIterations) {
+        iteration++
+        try {
+          const batchResult = await this.extractFunctionBatch(pendingFunctions)
+          const stillMissing: EntityInput[] = []
+
+          for (const funcEntity of pendingFunctions) {
+            const feature = batchResult.get(funcEntity)
+            if (feature) {
+              const idx = allInputs.indexOf(funcEntity)
+              if (idx !== -1) {
+                resultMap.set(idx, feature)
+              }
+            }
+            else if (iteration < maxIterations) {
+              stillMissing.push(funcEntity)
+            }
+          }
+
+          pendingFunctions = stillMissing
+        }
+        catch (error) {
+          const msg = error instanceof Error ? error.message : String(error)
+          log.warn(`Function batch iteration ${iteration}/${maxIterations} failed: ${msg}`)
+          this.warnings.push(`[SemanticExtractor] Function batch extraction failed (iteration ${iteration}/${maxIterations}): ${msg}. Affected entities will fall back to heuristic.`)
+          break
+        }
+      }
+    })
+
+    await runConcurrent(tasks, maxConcurrent)
+  }
+
+  /**
+   * Extract features for a batch of standalone functions using LLM.
+   * Returns a map: EntityInput -> SemanticFeature (keyed by entity reference to avoid name collisions)
+   */
+  private async extractFunctionBatch(
+    functionEntities: EntityInput[],
+  ): Promise<Map<EntityInput, SemanticFeature>> {
+    const result = new Map<EntityInput, SemanticFeature>()
+
+    const codeBlocks = functionEntities
+      .filter(e => e.sourceCode)
+      .map(e => e.sourceCode!)
+
+    if (codeBlocks.length === 0) {
+      return result
+    }
+
+    const repoName = this.options.repoName ?? 'unknown'
+    const repoInfo = this.options.repoInfo ?? ''
+    const functionsCode = codeBlocks.join('\n\n')
+
+    const { system, user } = buildBatchFunctionPrompt(repoName, repoInfo, functionsCode)
+
+    try {
+      const llmResponse = await this.llmClient!.complete(user, system)
+      const parsed = this.parseBatchResponse(llmResponse.content)
+
+      for (const funcEntity of functionEntities) {
+        const funcData = parsed[funcEntity.name]
+        if (Array.isArray(funcData)) {
+          const stringFeatures = funcData.filter((f): f is string => typeof f === 'string')
+          const feature = this.featureListToSemanticFeature(stringFeatures, funcEntity.name, funcEntity.filePath, 'function')
+          result.set(funcEntity, feature)
+        }
+      }
+    }
+    catch (error) {
+      const msg = error instanceof Error ? error.message : String(error)
+      log.warn(`Function batch LLM call failed: ${msg}`)
+    }
+
+    return result
+  }
+
+  /**
+   * Parse batch LLM response - extracts JSON from <solution> tags or raw text
+   */
+  private parseBatchResponse(text: string): Record<string, unknown> {
+    // Try to extract from <solution> block first
+    const solutionMatch = text.match(/<solution>\s*([\s\S]*?)\s*<\/solution>/)
+    if (solutionMatch) {
+      try {
+        return JSON.parse(solutionMatch[1]!) as Record<string, unknown>
+      }
+      catch (error) {
+        log.debug(`Failed to parse <solution> block as JSON: ${error instanceof Error ? error.message : String(error)}`)
+        // Fall through to raw JSON extraction
+      }
+    }
+
+    // Try to find JSON object in the text
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[0]) as Record<string, unknown>
+      }
+      catch (error) {
+        log.debug(`Failed to parse raw JSON from batch response: ${error instanceof Error ? error.message : String(error)}`)
+        // Fall through
+      }
+    }
+
+    log.warn('Could not parse batch response as JSON')
+    return {}
+  }
+
+  /**
+   * Convert a list of feature strings to a SemanticFeature
+   */
+  private featureListToSemanticFeature(
+    features: string[],
+    entityName: string,
+    filePath: string,
+    entityType: EntityInput['type'] = 'function',
+  ): SemanticFeature {
+    if (features.length === 0) {
+      return this.extractWithHeuristic({ type: entityType, name: entityName, filePath })
+    }
+
+    const primaryDescription = features[0]!
+    const subFeatures = features.slice(1).filter(f => f.length > 0)
+
+    const validated = this.validateFeatureName(primaryDescription)
+    const validatedSubFeatures = [
+      ...(validated.subFeatures ?? []),
+      ...subFeatures.map(sf => this.validateFeatureName(sf).description),
+    ]
+
+    const keywords = this.extractKeywords({ type: entityType, name: entityName, filePath })
+
+    return {
+      description: validated.description,
+      subFeatures: validatedSubFeatures.length > 0 ? validatedSubFeatures : undefined,
+      keywords,
+    }
   }
 
   /**
@@ -183,11 +586,9 @@ export class SemanticExtractor {
     const maxBatchTokens = this.options.maxBatchTokens ?? 50000
     const minBatchTokens = this.options.minBatchTokens ?? 10000
 
-    // Greedy grouping: fit entities into batches up to maxBatchTokens
     for (const entity of inputs) {
       const entityTokens = estimateEntityTokens(entity)
 
-      // If single entity exceeds max, isolate it
       if (entityTokens > maxBatchTokens) {
         if (currentBatch.length > 0) {
           batches.push(currentBatch)
@@ -200,7 +601,6 @@ export class SemanticExtractor {
         continue
       }
 
-      // If adding this entity exceeds max, start new batch
       if (currentBatch.length > 0 && currentTokens + entityTokens > maxBatchTokens) {
         batches.push(currentBatch)
         batchTokenCounts.push(currentTokens)
@@ -213,13 +613,78 @@ export class SemanticExtractor {
       }
     }
 
-    // Append remaining batch
     if (currentBatch.length > 0) {
       batches.push(currentBatch)
       batchTokenCounts.push(currentTokens)
     }
 
-    // Merge small last batch with previous batch if below minBatchTokens
+    if (batches.length > 1) {
+      const lastBatchTokens = batchTokenCounts[batchTokenCounts.length - 1]!
+      const prevBatchTokens = batchTokenCounts[batchTokenCounts.length - 2]!
+
+      if (lastBatchTokens < minBatchTokens && prevBatchTokens + lastBatchTokens <= maxBatchTokens) {
+        const lastBatch = batches[batches.length - 1]!
+        const previousBatch = batches[batches.length - 2]!
+        previousBatch.push(...lastBatch)
+        batchTokenCounts[batchTokenCounts.length - 2]! += lastBatchTokens
+        batches.pop()
+        batchTokenCounts.pop()
+      }
+    }
+
+    return batches
+  }
+
+  /**
+   * Create token-aware batches from class groups.
+   * Each group's token estimate is the sum of the class + all its methods.
+   */
+  private createClassGroupBatches(classGroups: ClassGroup[]): ClassGroup[][] {
+    if (classGroups.length === 0) {
+      return []
+    }
+
+    const batches: ClassGroup[][] = []
+    const batchTokenCounts: number[] = []
+    let currentBatch: ClassGroup[] = []
+    let currentTokens = 0
+
+    const maxBatchTokens = this.options.maxBatchTokens ?? 50000
+    const minBatchTokens = this.options.minBatchTokens ?? 10000
+
+    for (const group of classGroups) {
+      const groupTokens = estimateEntityTokens(group.classEntity)
+        + group.methodEntities.reduce((sum, m) => sum + estimateEntityTokens(m), 0)
+
+      if (groupTokens > maxBatchTokens) {
+        if (currentBatch.length > 0) {
+          batches.push(currentBatch)
+          batchTokenCounts.push(currentTokens)
+          currentBatch = []
+          currentTokens = 0
+        }
+        batches.push([group])
+        batchTokenCounts.push(groupTokens)
+        continue
+      }
+
+      if (currentBatch.length > 0 && currentTokens + groupTokens > maxBatchTokens) {
+        batches.push(currentBatch)
+        batchTokenCounts.push(currentTokens)
+        currentBatch = [group]
+        currentTokens = groupTokens
+      }
+      else {
+        currentBatch.push(group)
+        currentTokens += groupTokens
+      }
+    }
+
+    if (currentBatch.length > 0) {
+      batches.push(currentBatch)
+      batchTokenCounts.push(currentTokens)
+    }
+
     if (batches.length > 1) {
       const lastBatchTokens = batchTokenCounts[batchTokenCounts.length - 1]!
       const prevBatchTokens = batchTokenCounts[batchTokenCounts.length - 2]!
@@ -248,7 +713,6 @@ export class SemanticExtractor {
     fileName: string,
     filePath: string,
   ): Promise<SemanticFeature> {
-    // Empty children: fall back to file name
     if (childFeatures.length === 0) {
       const humanName = this.humanizeName(fileName)
       return {
@@ -257,20 +721,18 @@ export class SemanticExtractor {
       }
     }
 
-    // Try LLM aggregation if available
     if (this.llmClient) {
       try {
         return await this.aggregateWithLLM(childFeatures, fileName, filePath)
       }
       catch (error) {
         const msg = error instanceof Error ? error.message : String(error)
-        const warning = `[SemanticExtractor] LLM aggregation failed for ${fileName}: ${msg}. Falling back to heuristic.`
+        const warning = `LLM aggregation failed for ${fileName}: ${msg}. Falling back to heuristic.`
         this.warnings.push(warning)
-        console.warn(warning)
+        log.warn(warning)
       }
     }
 
-    // Heuristic aggregation
     return this.aggregateWithHeuristic(childFeatures, fileName)
   }
 
@@ -311,7 +773,6 @@ Follow the same naming rules: verb + object format, lowercase, no implementation
       return this.aggregateWithHeuristic(childFeatures, fileName)
     }
 
-    // Validate the response
     const validated = this.validateFeatureName(response.description)
     return {
       description: validated.description,
@@ -327,10 +788,8 @@ Follow the same naming rules: verb + object format, lowercase, no implementation
     childFeatures: SemanticFeature[],
     fileName: string,
   ): SemanticFeature {
-    // Collect all descriptions as sub-features, use a synthesized summary as primary
     const descriptions = childFeatures.map(f => f.description)
 
-    // Find the most common verb to use as the primary action
     const verbs = descriptions
       .map(d => d.split(/\s+/)[0])
       .filter((v): v is string => v !== undefined)
@@ -340,13 +799,11 @@ Follow the same naming rules: verb + object format, lowercase, no implementation
       verbCounts.set(verb, (verbCounts.get(verb) ?? 0) + 1)
     }
 
-    // Use the most frequent verb, or "provide" as default
     const primaryVerb = [...verbCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'provide'
 
     const humanName = this.humanizeName(fileName)
     const description = `${primaryVerb} ${humanName} functionality`
 
-    // Merge keywords from all children
     const keywords = this.mergeKeywords(childFeatures, fileName)
 
     return {
@@ -377,33 +834,36 @@ Follow the same naming rules: verb + object format, lowercase, no implementation
    */
   private async extractWithLLM(input: EntityInput): Promise<SemanticFeature> {
     const prompt = this.buildPrompt(input)
-    const systemPrompt = `You are a senior software analyst.
-Your goal is to analyze the given code entity and return its key semantic features -- what it does, not how it's implemented.
+    const systemPrompt = `You are a senior software analyst. Your task is to extract high-level semantic features from a code entity.
+
+## Key Goals
+- Focus on the purpose and high-level behavior of the entity - what it represents or manages in the system.
+- Summarize what the entity is responsible for at a high level, avoiding any implementation details.
 
 ## Feature Extraction Principles
-1. Focus on the purpose and behavior of the function -- what role it serves in the system.
+1. Focus on the purpose and behavior of the entity - what it represents or manages.
 2. Do NOT describe implementation details, variable names, or internal logic such as loops, conditionals, or data structures.
-3. If a function performs multiple responsibilities, break them down into separate features.
-4. Use the function's name, signature, and code to infer its intent.
-5. Only analyze the entity in the current input -- do not guess or invent other entities.
-6. Do not omit any function, including utility or helper functions.
+3. If an entity performs multiple responsibilities, break them down into separate features.
+4. Use the entity name, its code, and the surrounding context to infer meaning.
+5. Do not fabricate or invent behaviors not present in the code.
+6. Do not skip any defined behavior, including initialization, cleanup, and lifecycle methods.
 
 ## Feature Naming Rules
-1. Use verb + object format (e.g., "load config", "validate token").
+1. Use the "verb + object" format - e.g., "load config", "validate token"
 2. Use lowercase English only.
-3. Describe purpose not implementation (focus on what, not how).
-4. Each feature must express one single responsibility.
-5. If a method has multiple responsibilities, split into multiple atomic features.
-6. Keep features short and atomic (prefer 3-8 words; no full sentences; no punctuation).
-7. Avoid vague verbs ("handle", "process", "deal with"); prefer precise verbs ("load", "validate", "convert", "update", "serialize", "compute", "check", "transform").
-8. Avoid implementation details (no loops, conditionals, data structures, control flow).
-9. Avoid libraries/frameworks/formats (say "serialize data", not "pickle object" / "save to json").
-10. Prefer domain/system semantics over low-level actions ("manage session" > "update dict").
-11. Avoid chaining actions (don't write "initialize config and register globally"; split into separate features).
+3. Describe purpose, not implementation - focus on what the code does, not how.
+4. Each feature should express one single responsibility.
+5. If an entity performs multiple responsibilities, create multiple short features, each describing only one responsibility.
+6. Keep each feature short and atomic: prefer 3-8 words, no full sentences, no punctuation inside a feature.
+7. Avoid vague verbs: avoid "handle", "process", "deal with". Prefer "load", "validate", "convert", "update", "serialize", "compute", "check", "transform".
+8. Avoid implementation details: do not mention loops, conditionals, specific data structures, or control flow.
+9. Avoid mentioning specific libraries, frameworks, or formats. Say "serialize data" not "convert to JSON".
+10. Prefer domain or system semantic words over low-level technical actions: "manage session" not "update dict".
+11. Avoid chaining multiple actions: instead of "initialize config and register globally", use separate features.
 
-Always respond with valid JSON in this exact format:
+Always respond with valid JSON:
 {
-  "description": "primary verb + object feature (e.g., 'validate user credentials')",
+  "description": "primary verb + object feature",
   "subFeatures": ["additional atomic feature 1", "additional atomic feature 2"],
   "keywords": ["relevant", "search", "keywords"]
 }
@@ -435,7 +895,6 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
     }
 
     if (input.sourceCode) {
-      // Truncate long source code
       const maxSourceLength = 2000
       const truncatedSource
         = input.sourceCode.length > maxSourceLength
@@ -457,7 +916,6 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
     const description = this.generateDescription(input)
     const keywords = this.extractKeywords(input)
 
-    // Apply feature naming validation to heuristic output
     const validated = this.validateFeatureName(description)
     return {
       description: validated.description,
@@ -492,7 +950,6 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
   private generateFunctionDescription(name: string, _input: EntityInput): string {
     const lowerName = name.toLowerCase()
 
-    // Common verb patterns
     const verbPatterns: Array<[string, string]> = [
       ['get', 'retrieve'],
       ['set', 'set'],
@@ -549,7 +1006,6 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
       }
     }
 
-    // Default: use verb + object format with the name
     return `provide ${name} operation`
   }
 
@@ -586,7 +1042,6 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
   private extractKeywords(input: EntityInput): string[] {
     const keywords = new Set<string>()
 
-    // Add name parts
     const nameParts = input.name
       .replace(/([a-z])([A-Z])/g, '$1 $2')
       .replace(/[_-]/g, ' ')
@@ -598,15 +1053,12 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
       keywords.add(part)
     }
 
-    // Add type
     keywords.add(input.type)
 
-    // Add parent if exists
     if (input.parent) {
       keywords.add(input.parent.toLowerCase())
     }
 
-    // Add path parts
     const pathParts = input.filePath
       .split('/')
       .filter(p => p && p !== '.' && p !== '..')
@@ -742,7 +1194,7 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
     const filteredWords = words.filter(w => !SemanticExtractor.IMPLEMENTATION_KEYWORDS.has(w))
     desc = filteredWords.join(' ')
 
-    // Rule 6: Single responsibility check — split on all "and" connecting actions
+    // Rule 6: Single responsibility check - split on all "and" connecting actions
     let subFeatures: string[] | undefined
     const andParts = desc.split(' and ')
     if (andParts.length > 1) {
@@ -752,7 +1204,6 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
         .map(p => p.trim())
         .filter(p => p.length > 0)
         .filter(p => this.looksLikeAction(p))
-      // Only split if first part has >= 2 words and at least one rest part is a valid action
       if (first.split(/\s+/).length >= 2 && rest.length > 0) {
         desc = first
         subFeatures = rest
@@ -781,12 +1232,10 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
    * Validate and normalize LLM response
    */
   private validateFeature(feature: SemanticFeature, input: EntityInput): SemanticFeature {
-    // Ensure required fields exist
     if (!feature.description || typeof feature.description !== 'string') {
       feature.description = this.generateDescription(input)
     }
 
-    // Apply feature naming validation
     const validated = this.validateFeatureName(feature.description)
     feature.description = validated.description
     if (validated.subFeatures) {
@@ -797,7 +1246,6 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
       feature.keywords = this.extractKeywords(input)
     }
 
-    // Clean up keywords
     feature.keywords = feature.keywords
       .filter(k => typeof k === 'string' && k.length > 0)
       .map(k => k.toLowerCase().trim())

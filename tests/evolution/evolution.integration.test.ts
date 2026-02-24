@@ -60,10 +60,12 @@ describe('evolution integration', () => {
       expect(result).toHaveProperty('duration')
       expect(result).toHaveProperty('llmCalls')
       expect(result).toHaveProperty('errors')
+      expect(result).toHaveProperty('requiresFullEncode')
 
       expect(result.duration).toBeGreaterThan(0)
       expect(result.llmCalls).toBe(0) // useLLM: false
       expect(result.errors).toEqual([]) // no errors expected
+      expect(result.requiresFullEncode).toBe(false) // small fixture repo change should not trigger full re-encode
 
       // Step 4: Verify graph consistency after evolution
       const statsAfter = await rpg.getStats()
@@ -95,7 +97,9 @@ describe('evolution integration', () => {
       expect(result).toHaveProperty('deleted')
       expect(result).toHaveProperty('modified')
       expect(result).toHaveProperty('duration')
+      expect(result).toHaveProperty('requiresFullEncode')
       expect(result.duration).toBeGreaterThan(0)
+      expect(result.requiresFullEncode).toBe(false)
     },
   )
 

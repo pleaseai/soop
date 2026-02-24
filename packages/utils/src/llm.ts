@@ -1,6 +1,8 @@
+import type { ModelMessage } from 'ai'
 import type { ClaudeCodeSettings } from 'ai-sdk-provider-claude-code'
 import type { CodexCliSettings } from 'ai-sdk-provider-codex-cli'
 import type { ZodType } from 'zod/v4'
+import type { Memory } from './memory'
 import { spawn } from 'node:child_process'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -43,6 +45,14 @@ export interface LLMOptions {
 
 export type { ClaudeCodeSettings }
 export type { CodexCliSettings }
+
+/**
+ * Options for multi-turn `generate()` calls.
+ */
+export interface GenerateOptions {
+  /** Maximum number of attempts (including the first). Default: 3. */
+  maxRetries?: number
+}
 
 /**
  * LLM response
@@ -189,6 +199,22 @@ function validateProvider(name: string): LLMProvider {
     throw new Error(`Unknown LLM provider: "${name}". Valid providers: ${valid.join(', ')}`)
   }
   return name as LLMProvider
+}
+
+/**
+ * Detect context-length errors from various LLM providers.
+ */
+function isContextLengthError(error: unknown): boolean {
+  if (!(error instanceof Error))
+    return false
+  const msg = error.message.toLowerCase()
+  return (
+    msg.includes('context_length_exceeded')
+    || msg.includes('context length')
+    || msg.includes('too many tokens')
+    || msg.includes('token limit')
+    || msg.includes('maximum context')
+  )
 }
 
 /**
@@ -377,5 +403,137 @@ export class LLMClient {
    */
   resetUsageStats(): void {
     this.usageStats = { ...INITIAL_USAGE_STATS }
+  }
+
+  /**
+   * Shared helper for generateText calls using a messages array (multi-turn).
+   * Mirrors `callGenerateText` but uses `{ messages }` instead of `{ prompt, system }`.
+   */
+  private async callGenerateTextWithMessages(
+    messages: ModelMessage[],
+    output?: Parameters<typeof generateText>[0]['output'],
+  ): Promise<Awaited<ReturnType<typeof generateText>>> {
+    const modelId = this.options.model ?? DEFAULT_MODELS[this.options.provider]
+    const model = this.providerInstance(modelId)
+    const timeout = this.options.timeout ?? 120_000
+
+    let result: Awaited<ReturnType<typeof generateText>>
+    try {
+      result = await generateText({
+        model,
+        output,
+        messages,
+        maxOutputTokens: this.options.maxTokens,
+        temperature: this.options.temperature,
+        abortSignal: AbortSignal.timeout(timeout),
+      })
+    }
+    catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      log.error(`${modelId} error: ${err.message}`, err)
+      const totalLength = messages.reduce((sum, m) => {
+        const content = typeof m.content === 'string' ? m.content : JSON.stringify(m.content)
+        return sum + content.length
+      }, 0)
+      this.options.onError?.(err, { model: modelId, promptLength: totalLength })
+      throw err
+    }
+
+    const inputTokens = result.usage?.inputTokens ?? 0
+    const outputTokens = result.usage?.outputTokens ?? 0
+    this.usageStats.totalPromptTokens += inputTokens
+    this.usageStats.totalCompletionTokens += outputTokens
+    this.usageStats.totalTokens += inputTokens + outputTokens
+    this.usageStats.requestCount++
+
+    return result
+  }
+
+  /**
+   * Multi-turn completion using a `Memory` conversation history.
+   *
+   * Retries on transient errors (up to `maxRetries` total attempts).
+   * On context-length errors, truncates the oldest user-assistant pair and
+   * retries without consuming a retry count.
+   */
+  async generate(memory: Memory, options?: GenerateOptions): Promise<LLMResponse> {
+    const maxRetries = options?.maxRetries ?? 3
+    let messages = memory.toMessages()
+    let retries = 0
+
+    while (true) {
+      try {
+        const result = await this.callGenerateTextWithMessages(messages)
+        const modelId = this.options.model ?? DEFAULT_MODELS[this.options.provider]
+        return {
+          content: result.text,
+          usage: {
+            promptTokens: result.usage?.inputTokens ?? 0,
+            completionTokens: result.usage?.outputTokens ?? 0,
+            totalTokens: (result.usage?.inputTokens ?? 0) + (result.usage?.outputTokens ?? 0),
+          },
+          model: modelId,
+        }
+      }
+      catch (error) {
+        if (isContextLengthError(error)) {
+          const truncated = this.truncateContext(messages)
+          if (truncated !== null) {
+            messages = truncated
+            continue
+          }
+        }
+        retries++
+        if (retries >= maxRetries) {
+          throw error
+        }
+      }
+    }
+  }
+
+  /**
+   * Multi-turn structured JSON output using a `Memory` conversation history.
+   * When a Zod schema is provided, uses AI SDK's `Output.object()` for validated output.
+   * Falls back to regex-based JSON extraction when no schema is given.
+   */
+  async generateJSON<T>(memory: Memory, schema?: ZodType<T>): Promise<T> {
+    if (schema) {
+      const messages = memory.toMessages()
+      const result = await this.callGenerateTextWithMessages(messages, Output.object({ schema }))
+
+      if (result.output == null) {
+        throw new Error('No structured output returned from model')
+      }
+
+      return result.output as T
+    }
+
+    const response = await this.generate(memory)
+    const jsonMatch
+      = response.content.match(/```(?:json)?\n?([\s\S]*?)```/)
+        || response.content.match(/\{[\s\S]*\}/)
+
+    if (!jsonMatch) {
+      throw new Error('No JSON found in response')
+    }
+
+    return JSON.parse(jsonMatch[1] ?? jsonMatch[0]) as T
+  }
+
+  /**
+   * Remove the oldest user-assistant pair from the message list.
+   * Returns the trimmed list, or `null` if there is nothing to remove.
+   */
+  private truncateContext(messages: ModelMessage[]): ModelMessage[] | null {
+    const hasSystem = messages.length > 0 && messages[0]!.role === 'system'
+    const startIndex = hasSystem ? 1 : 0
+
+    for (let i = startIndex; i < messages.length - 1; i++) {
+      if (messages[i]!.role === 'user' && messages[i + 1]!.role === 'assistant') {
+        return [...messages.slice(0, i), ...messages.slice(i + 2)]
+      }
+    }
+
+    return null
   }
 }

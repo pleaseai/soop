@@ -1,5 +1,6 @@
 import { LLMClient, parseModelString } from '@pleaseai/rpg-utils/llm'
-import { describe, expect, it, vi } from 'vitest'
+import { Memory } from '@pleaseai/rpg-utils/memory'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod/v4'
 
 vi.mock('@ai-sdk/openai', () => ({
@@ -396,6 +397,231 @@ describe('LLMClient', () => {
       expect(stats.totalPromptTokens).toBe(0)
       expect(stats.totalCompletionTokens).toBe(0)
       expect(stats.requestCount).toBe(0)
+    })
+  })
+
+  describe('generate', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should call generateText with messages parameter', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'multi-turn response',
+        usage: { inputTokens: 10, outputTokens: 5 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addSystem('You are helpful.').addUser('Hello')
+
+      const result = await client.generate(memory)
+
+      expect(result.content).toBe('multi-turn response')
+      expect(result.model).toBe('gpt-4o')
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messages: expect.arrayContaining([
+            expect.objectContaining({ role: 'system' }),
+            expect.objectContaining({ role: 'user' }),
+          ]),
+        }),
+      )
+    })
+
+    it('should NOT pass prompt or system to generateText (uses messages instead)', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('test')
+
+      await client.generate(memory)
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.not.objectContaining({ prompt: expect.anything() }),
+      )
+    })
+
+    it('should retry on transient errors up to maxRetries times', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText)
+        .mockRejectedValueOnce(new Error('API error'))
+        .mockRejectedValueOnce(new Error('API error'))
+        .mockResolvedValueOnce({
+          text: 'recovered',
+          usage: { inputTokens: 5, outputTokens: 3 },
+        } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('test')
+
+      const result = await client.generate(memory, { maxRetries: 3 })
+      expect(result.content).toBe('recovered')
+      expect(vi.mocked(generateText)).toHaveBeenCalledTimes(3)
+    })
+
+    it('should throw after exhausting maxRetries', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockRejectedValue(new Error('persistent error'))
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('test')
+
+      await expect(client.generate(memory, { maxRetries: 2 })).rejects.toThrow('persistent error')
+      expect(vi.mocked(generateText)).toHaveBeenCalledTimes(2)
+    })
+
+    it('should truncate context on context_length_exceeded without consuming retry count', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText)
+        .mockRejectedValueOnce(new Error('context_length_exceeded'))
+        .mockResolvedValueOnce({
+          text: 'success after truncation',
+          usage: { inputTokens: 5, outputTokens: 3 },
+        } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      // With maxRetries=1, only 1 regular retry. Context truncation should NOT count.
+      const memory = new Memory({ contextWindow: 0 }) // unlimited so toMessages() returns all
+      memory.addSystem('sys').addUser('u1').addAssistant('a1').addUser('u2')
+
+      const result = await client.generate(memory, { maxRetries: 1 })
+      expect(result.content).toBe('success after truncation')
+      // Called twice: once with full context (fails), once with truncated (succeeds)
+      expect(vi.mocked(generateText)).toHaveBeenCalledTimes(2)
+    })
+
+    it('should throw when context cannot be truncated further on context error', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockRejectedValue(new Error('context_length_exceeded'))
+
+      const client = new LLMClient({ provider: 'openai' })
+      // Single user message — nothing to truncate
+      const memory = new Memory()
+      memory.addUser('single message')
+
+      await expect(client.generate(memory, { maxRetries: 2 })).rejects.toThrow('context_length_exceeded')
+    })
+
+    it('should accumulate usage stats across generate() calls', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText)
+        .mockResolvedValueOnce({
+          text: 'first',
+          usage: { inputTokens: 10, outputTokens: 5 },
+        } as any)
+        .mockResolvedValueOnce({
+          text: 'second',
+          usage: { inputTokens: 20, outputTokens: 8 },
+        } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const mem1 = new Memory()
+      mem1.addUser('first')
+      const mem2 = new Memory()
+      mem2.addUser('second')
+
+      await client.generate(mem1)
+      await client.generate(mem2)
+
+      const stats = client.getUsageStats()
+      expect(stats.totalPromptTokens).toBe(30)
+      expect(stats.totalCompletionTokens).toBe(13)
+      expect(stats.requestCount).toBe(2)
+    })
+  })
+
+  describe('generateJSON (multi-turn)', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should return structured output with schema', async () => {
+      const { generateText } = await import('ai')
+
+      const schema = z.object({ name: z.string(), count: z.number() })
+      vi.mocked(generateText).mockResolvedValueOnce({
+        output: { name: 'test', count: 3 },
+        usage: { inputTokens: 10, outputTokens: 5 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('extract entities')
+
+      const result = await client.generateJSON(memory, schema)
+      expect(result).toEqual({ name: 'test', count: 3 })
+    })
+
+    it('should pass messages (not prompt) to generateText for schema case', async () => {
+      const { generateText } = await import('ai')
+
+      const schema = z.object({ value: z.string() })
+      vi.mocked(generateText).mockResolvedValueOnce({
+        output: { value: 'ok' },
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('get value')
+
+      await client.generateJSON(memory, schema)
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messages: expect.any(Array),
+        }),
+      )
+    })
+
+    it('should throw when schema output is null', async () => {
+      const { generateText } = await import('ai')
+
+      const schema = z.object({ name: z.string() })
+      vi.mocked(generateText).mockResolvedValueOnce({
+        output: null,
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('extract')
+
+      await expect(client.generateJSON(memory, schema))
+        .rejects
+        .toThrow('No structured output returned from model')
+    })
+
+    it('should extract JSON from code block when no schema provided', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: '```json\n{"result": 42}\n```',
+        usage: { inputTokens: 5, outputTokens: 5 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('compute')
+
+      const result = await client.generateJSON<{ result: number }>(memory)
+      expect(result).toEqual({ result: 42 })
     })
   })
 

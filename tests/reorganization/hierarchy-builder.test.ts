@@ -4,9 +4,14 @@ import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph/rpg'
 import { describe, expect, it, vi } from 'vitest'
 
 function createMockLLMClient(response: { assignments: Record<string, string[]> }) {
+  const content = `<solution>${JSON.stringify(response)}</solution>`
   return {
-    complete: vi.fn(),
-    completeJSON: vi.fn().mockResolvedValue(response),
+    complete: vi.fn().mockResolvedValue({
+      content,
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+      model: 'test-model',
+    }),
+    completeJSON: vi.fn(),
     getProvider: vi.fn().mockReturnValue('google'),
     getModel: vi.fn().mockReturnValue('test-model'),
   }
@@ -252,7 +257,7 @@ describe('hierarchyBuilder', () => {
     expect(nodeIds).toContain('domain:Authentication/credential management/user verification')
   })
 
-  it('validates that paths must have exactly 3 levels', async () => {
+  it('silently skips paths that do not have exactly 3 levels', async () => {
     const rpg = await RepositoryPlanningGraph.create({ name: 'test' })
 
     for (const group of sampleFileGroups) {
@@ -272,11 +277,12 @@ describe('hierarchyBuilder', () => {
     }
 
     const mockClient = createMockLLMClient(invalidAssignments)
-
     const builder = new HierarchyBuilder(rpg, mockClient as any)
-    await expect(builder.build(['Authentication'], sampleFileGroups)).rejects.toThrow(
-      'expected exactly 3 levels',
-    )
+    // Invalid paths (not exactly 3 levels) are skipped — files go to Uncategorized
+    await builder.build(['Authentication'], sampleFileGroups)
+
+    const uncatArea = await rpg.getNode('domain:Uncategorized')
+    expect(uncatArea).toBeDefined()
   })
 
   it('all hierarchy nodes have semantic features', async () => {
