@@ -577,8 +577,9 @@ export class ASTParser {
     if (!pathNode)
       return null
 
-    // Strip surrounding quotes or angle brackets
-    const module = pathNode.text.replaceAll('"', '').replaceAll('<', '').replaceAll('>', '')
+    // Strip surrounding quotes or angle brackets using slice
+    const text = pathNode.text
+    const module = text.length >= 2 ? text.slice(1, -1) : text
     return module ? { module, names: [] } : null
   }
 
@@ -603,11 +604,12 @@ export class ASTParser {
     if (!argsNode)
       return null
 
-    for (const child of argsNode.children) {
-      if (child.type === 'string' || child.type === 'string_content') {
-        const raw = child.text.replaceAll('\'', '').replaceAll('"', '')
-        if (raw)
-          return { module: raw, names: [] }
+    const stringArg = argsNode.children.find(child => child.type === 'string')
+    if (stringArg && stringArg.text.length > 1) {
+      // string node text includes quotes, so we slice them.
+      const raw = stringArg.text.slice(1, -1)
+      if (raw) {
+        return { module: raw, names: [] }
       }
     }
 

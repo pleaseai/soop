@@ -385,8 +385,8 @@ export class CallExtractor {
     }
     // navigation_expression: obj.method
     if (fn.type === 'navigation_expression') {
-      const selectorNode = fn.childForFieldName('selectorExpression') ?? fn.children.at(-1)
-      const objNode = fn.childForFieldName('receiverExpression') ?? fn.children[0]
+      const objNode = fn.children[0]
+      const selectorNode = fn.children[2]
       const symbol = selectorNode?.text ?? null
       if (!symbol)
         return { symbol: null }
