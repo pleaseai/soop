@@ -358,7 +358,7 @@ export class SemanticExtractor {
         if (Array.isArray(classData)) {
           // Data-only class: array of feature strings
           const stringFeatures = classData.filter((f): f is string => typeof f === 'string')
-          const feature = this.featureListToSemanticFeature(stringFeatures, classEntity.name, classEntity.filePath)
+          const feature = this.featureListToSemanticFeature(stringFeatures, classEntity.name, classEntity.filePath, 'class')
           result.set(classEntity.name, feature)
         }
         else if (typeof classData === 'object') {
@@ -375,6 +375,7 @@ export class SemanticExtractor {
                 stringFeatures,
                 methodName,
                 methodEntity?.filePath ?? classEntity.filePath,
+                'function',
               )
               methodMap.set(methodName, methodFeature)
               if (classFeatureStrings.length === 0 && stringFeatures.length > 0) {
@@ -388,6 +389,7 @@ export class SemanticExtractor {
             classFeatureStrings,
             classEntity.name,
             classEntity.filePath,
+            'class',
           )
           methodMap.set(CLASS_FEATURE_KEY, classFeature)
 
@@ -428,7 +430,7 @@ export class SemanticExtractor {
           const stillMissing: EntityInput[] = []
 
           for (const funcEntity of pendingFunctions) {
-            const feature = batchResult.get(funcEntity.name)
+            const feature = batchResult.get(funcEntity)
             if (feature) {
               const idx = allInputs.indexOf(funcEntity)
               if (idx !== -1) {
@@ -456,12 +458,12 @@ export class SemanticExtractor {
 
   /**
    * Extract features for a batch of standalone functions using LLM.
-   * Returns a map: functionName -> SemanticFeature
+   * Returns a map: EntityInput -> SemanticFeature (keyed by entity reference to avoid name collisions)
    */
   private async extractFunctionBatch(
     functionEntities: EntityInput[],
-  ): Promise<Map<string, SemanticFeature>> {
-    const result = new Map<string, SemanticFeature>()
+  ): Promise<Map<EntityInput, SemanticFeature>> {
+    const result = new Map<EntityInput, SemanticFeature>()
 
     const codeBlocks = functionEntities
       .filter(e => e.sourceCode)
@@ -485,8 +487,8 @@ export class SemanticExtractor {
         const funcData = parsed[funcEntity.name]
         if (Array.isArray(funcData)) {
           const stringFeatures = funcData.filter((f): f is string => typeof f === 'string')
-          const feature = this.featureListToSemanticFeature(stringFeatures, funcEntity.name, funcEntity.filePath)
-          result.set(funcEntity.name, feature)
+          const feature = this.featureListToSemanticFeature(stringFeatures, funcEntity.name, funcEntity.filePath, 'function')
+          result.set(funcEntity, feature)
         }
       }
     }
@@ -537,9 +539,10 @@ export class SemanticExtractor {
     features: string[],
     entityName: string,
     filePath: string,
+    entityType: EntityInput['type'] = 'function',
   ): SemanticFeature {
     if (features.length === 0) {
-      return this.extractWithHeuristic({ type: 'function', name: entityName, filePath })
+      return this.extractWithHeuristic({ type: entityType, name: entityName, filePath })
     }
 
     const primaryDescription = features[0]!
@@ -551,7 +554,7 @@ export class SemanticExtractor {
       ...subFeatures.map(sf => this.validateFeatureName(sf).description),
     ]
 
-    const keywords = this.extractKeywords({ type: 'function', name: entityName, filePath })
+    const keywords = this.extractKeywords({ type: entityType, name: entityName, filePath })
 
     return {
       description: validated.description,

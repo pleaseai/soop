@@ -1,6 +1,9 @@
 import type { EntityType } from '@pleaseai/rpg-graph/node'
 import type { SemanticOptions } from '../semantic'
 
+/**
+ * Options for evolving an RPG with new commits
+ */
 export interface EvolutionOptions {
   /** Git commit range to evolve (e.g. `"HEAD~1..HEAD"`, `"abc123..def456"`) */
   commitRange: string
@@ -22,6 +25,9 @@ export interface EvolutionOptions {
   includeSource?: boolean
 }
 
+/**
+ * Result of an evolution operation
+ */
 export interface EvolutionResult {
   /** Number of new entities inserted */
   inserted: number

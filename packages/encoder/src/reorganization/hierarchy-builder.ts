@@ -202,9 +202,9 @@ export class HierarchyBuilder {
             && typeof parsed.assignments === 'object'
             && !Array.isArray(parsed.assignments)
           ) {
-            return parsed.assignments as Record<string, string[]>
+            return this.validateStringArrayValues(parsed.assignments)
           }
-          return parsed as Record<string, string[]>
+          return this.validateStringArrayValues(parsed)
         }
       }
       catch (error) {
@@ -219,11 +219,11 @@ export class HierarchyBuilder {
       try {
         const parsed = JSON.parse(jsonMatch[0])
         if (parsed.assignments && typeof parsed.assignments === 'object') {
-          return parsed.assignments as Record<string, string[]>
+          return this.validateStringArrayValues(parsed.assignments)
         }
         // Direct object (no wrapper key)
         if (typeof parsed === 'object' && !Array.isArray(parsed)) {
-          return parsed as Record<string, string[]>
+          return this.validateStringArrayValues(parsed)
         }
       }
       catch (error) {
@@ -233,6 +233,20 @@ export class HierarchyBuilder {
     }
 
     return {}
+  }
+
+  /**
+   * Validate that all values in a parsed object are string arrays.
+   * Filters out any non-array values to prevent TypeError at call sites.
+   */
+  private validateStringArrayValues(parsed: Record<string, unknown>): Record<string, string[]> {
+    const result: Record<string, string[]> = {}
+    for (const [key, value] of Object.entries(parsed)) {
+      if (Array.isArray(value)) {
+        result[key] = value.filter((item): item is string => typeof item === 'string')
+      }
+    }
+    return result
   }
 
   private validateAndFuzzyMatchPath(
@@ -266,9 +280,9 @@ export class HierarchyBuilder {
     if (prefixMatch)
       return `${prefixMatch}/${category}/${subcategory}`
 
-    // Substring match
+    // Substring match (require minimum length to avoid false positives with short strings)
     const subMatch = functionalAreas.find(
-      a => a.toLowerCase().includes(lowerArea) || lowerArea.includes(a.toLowerCase()),
+      a => (lowerArea.length >= 4 && a.toLowerCase().includes(lowerArea)) || (a.toLowerCase().length >= 4 && lowerArea.includes(a.toLowerCase())),
     )
     if (subMatch)
       return `${subMatch}/${category}/${subcategory}`
