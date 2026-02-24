@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/pleaseai/RPG/compare/v0.1.5...v0.1.6) (2026-02-24)
+
+
+### Bug Fixes
+
+* **publish:** bundle workspace packages inline, fix sync vector store, and enable npm provenance ([#96](https://github.com/pleaseai/RPG/issues/96)) ([b73033a](https://github.com/pleaseai/RPG/commit/b73033a964942e83053fb9a6cf435bb3b7d7bdff))
+
 ## [0.1.5](https://github.com/pleaseai/RPG/compare/v0.1.4...v0.1.5) (2026-02-23)
 
 
