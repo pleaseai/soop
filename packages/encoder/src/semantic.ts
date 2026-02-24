@@ -74,16 +74,16 @@ export class SemanticExtractor {
   constructor(options: SemanticOptions = {}) {
     this.options = {
       useLLM: true,
-      maxTokens: 1024,
+      maxTokens: 2048,
       minBatchTokens: 10000,
       maxBatchTokens: 50000,
-      maxParseIterations: 1,
+      maxParseIterations: 2,
       ...options,
     }
 
     // Initialize LLM client if enabled
     if (this.options.useLLM) {
-      const provider = this.options.provider ?? this.detectProvider()
+      const provider = this.options.provider
       if (provider) {
         this.llmClient = new LLMClient({
           provider,
@@ -109,23 +109,6 @@ export class SemanticExtractor {
    */
   getWarnings(): readonly string[] {
     return this.warnings
-  }
-
-  /**
-   * Detect available LLM provider from environment
-   * Priority: Google (free tier) > Anthropic > OpenAI
-   */
-  private detectProvider(): LLMProvider | null {
-    if (process.env.GOOGLE_API_KEY) {
-      return 'google'
-    }
-    if (process.env.ANTHROPIC_API_KEY) {
-      return 'anthropic'
-    }
-    if (process.env.OPENAI_API_KEY) {
-      return 'openai'
-    }
-    return null
   }
 
   /**
