@@ -418,6 +418,7 @@ export class InheritanceExtractor {
       return
     }
 
+    const isStruct = node.type === 'struct_declaration'
     let isFirst = true
     for (const child of baseList.children) {
       if (child.type === 'base_type') {
@@ -430,7 +431,7 @@ export class InheritanceExtractor {
             childFile: filePath,
             childClass,
             parentClass,
-            kind: isFirst ? 'inherit' : 'implement',
+            kind: !isStruct && isFirst ? 'inherit' : 'implement',
           })
           isFirst = false
         }
@@ -533,9 +534,9 @@ export class InheritanceExtractor {
       return
     }
 
-    let isFirst = true
     for (const spec of delegationSpecs.children) {
       if (spec.type === 'delegation_specifier') {
+        const isSuperclass = spec.children.some(c => c.type === 'constructor_invocation')
         // user_type or constructor_invocation → type_identifier / user_type
         const typeNode = spec.children.find(
           c => c.type === 'user_type' || c.type === 'constructor_invocation',
@@ -546,9 +547,8 @@ export class InheritanceExtractor {
             childFile: filePath,
             childClass,
             parentClass,
-            kind: isFirst ? 'inherit' : 'implement',
+            kind: isSuperclass ? 'inherit' : 'implement',
           })
-          isFirst = false
         }
       }
     }

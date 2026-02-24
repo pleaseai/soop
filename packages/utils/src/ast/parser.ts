@@ -626,6 +626,7 @@ export class ASTParser {
     const text = node.text
       .replace(/^import\s+/, '')
       .replace(/\.\*$/, '')
+      .replace(/\s+as\s+`?[\w$]+`?$/, '')
       .trim()
 
     return text ? { module: text, names: [] } : null
