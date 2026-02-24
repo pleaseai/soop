@@ -816,7 +816,8 @@ export class RPGEncoder {
       treesNames,
       treesInfo,
       summaryInvokes,
-      '', // crossCode - empty for now
+      // TODO: populate crossCode with actual cross-boundary code excerpts (currently always empty)
+      '',
     )
 
     try {
@@ -998,7 +999,7 @@ export class RPGEncoder {
 
     // Phase 2: Structural Reorganization
     log.info('Phase 2: Structural Reorganization...')
-    await this.buildFunctionalHierarchy(rpg, repoInfo)
+    await this.buildFunctionalHierarchy(rpg, repoInfo, warnings)
 
     // Phase 3: Artifact Grounding
     log.info('Phase 3.1: Metadata propagation...')
@@ -1222,6 +1223,7 @@ export class RPGEncoder {
   private async buildFunctionalHierarchy(
     rpg: RepositoryPlanningGraph,
     repoInfo?: string,
+    warnings: string[] = [],
   ): Promise<void> {
     const lowLevelNodes = await rpg.getLowLevelNodes()
     const fileGroups = this.buildFileFeatureGroups(lowLevelNodes)
@@ -1250,7 +1252,9 @@ export class RPGEncoder {
       functionalAreas = result.functionalAreas
     }
     catch (error) {
-      log.error(`Phase 2.1 failed: ${error instanceof Error ? error.message : String(error)}`)
+      const msg = `Phase 2.1 (Domain Discovery) failed: ${error instanceof Error ? error.message : String(error)}`
+      log.error(msg)
+      warnings.push(msg)
       return
     }
     log.info(`Phase 2.1: Found ${functionalAreas.length} functional areas: ${functionalAreas.join(', ')}`)
@@ -1262,7 +1266,9 @@ export class RPGEncoder {
       await hierarchyBuilder.build(functionalAreas, fileGroups, { repoInfo })
     }
     catch (error) {
-      log.error(`Phase 2.2 failed: ${error instanceof Error ? error.message : String(error)}`)
+      const msg = `Phase 2.2 (Hierarchical Construction) failed: ${error instanceof Error ? error.message : String(error)}`
+      log.error(msg)
+      warnings.push(msg)
       return
     }
     log.info('Phase 2.2: Done')

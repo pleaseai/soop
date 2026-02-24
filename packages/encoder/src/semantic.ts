@@ -78,11 +78,6 @@ export interface ClassGroup {
   methodEntities: EntityInput[]
 }
 
-/**
- * Result of a batch parse call from LLM
- * Maps entity name to feature(s)
- */
-export type BatchParseResult = Record<string, string[] | Record<string, string[]>>
 
 /**
  * Run tasks with a concurrency limit
