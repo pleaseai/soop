@@ -116,7 +116,7 @@ The project uses **Bun workspaces** with 8 packages under `packages/`. All packa
 
 ```
 packages/
-├── utils/     # Layer 0: AST parser, LLM interface, Vector DB (independent)
+├── utils/     # Layer 0: AST parser, LLM interface, git helpers, logger (independent)
 ├── store/     # Layer 0: Storage interfaces & implementations (independent)
 ├── graph/     # Layer 1: RPG data structures (→ store)
 ├── encoder/   # Layer 2: Code → RPG extraction (→ graph, utils)
@@ -193,13 +193,15 @@ The `@pleaseai/rpg-store` package provides the storage layer with decomposed int
 | `SurrealGraphStore` | `packages/store/src/surreal/` | `surrealdb` + `@surrealdb/node` embedded | BM25 search |
 | `LanceDBVectorStore` | `packages/store/src/lancedb/` | LanceDB (optional) | Vector similarity search |
 | `LocalVectorStore` | `packages/store/src/local/` | JSON file (zero-dependency) | Brute-force cosine similarity |
-| `DefaultContextStore` | `packages/store/src/default-context-store.ts` | Composite (SQLite + LanceDB) | Graph + Text + Vector |
+| `LocalGraphStore` | `packages/store/src/local/` | JSON file (zero-dependency) | — (SQLite fallback) |
+| `LocalTextSearchStore` | `packages/store/src/local/` | In-memory (zero-dependency) | Term-frequency word matching |
+| `DefaultContextStore` | `packages/store/src/default-context-store.ts` | SQLite + LocalVectorStore (LocalGraph fallback) | Graph + Text + Vector |
 
 **Import pattern** — store implementations are NOT re-exported from the barrel to avoid transitive native module loading:
 ```typescript
 import { SQLiteGraphStore } from '@pleaseai/rpg-store/sqlite'
 import { SurrealGraphStore } from '@pleaseai/rpg-store/surreal'
-import { LocalVectorStore } from '@pleaseai/rpg-store/local'   // zero-dependency default
+import { LocalVectorStore, LocalGraphStore, LocalTextSearchStore } from '@pleaseai/rpg-store/local' // zero-dependency defaults
 import { LanceDBVectorStore } from '@pleaseai/rpg-store/lancedb' // optional, requires @lancedb/lancedb
 import { DefaultContextStore } from '@pleaseai/rpg-store/default-context-store'
 ```
@@ -283,7 +285,7 @@ All git commit messages, code comments, GitHub issues, pull request titles/descr
 
 - **Bun workspaces**: Modular package structure with explicit dependency management, all `private: true`, single umbrella publish
 - **Vitest over Bun Test**: Jest compatibility for planned MCP server development
-- **LanceDB over ChromaDB**: No external server required, Bun-native, disk-based persistence — used in MCP/encoder for high-performance semantic search; `rpg sync` uses `LocalVectorStore` (zero-dependency JSON store) as the default for local embedding index
+- **LanceDB over ChromaDB**: No external server required, Bun-native, disk-based persistence — available as an optional high-performance vector store via `@pleaseai/rpg-store/lancedb`; `LocalVectorStore` (zero-dependency JSON store) is the current default everywhere, with LanceDB as an opt-in upgrade
 - **All workspace packages bundled inline**: `@pleaseai/rpg-*` are all `private: true` and not published to npm; tsdown `noExternal` bundles them into the CLI/MCP/library outputs so `npm install -g @pleaseai/rpg` works without 404 errors
 - **Paper-based implementation**: Original implementation based on research papers, not forked from Microsoft code
 - **Dual GraphStore backends**: SQLiteGraphStore (better-sqlite3) and SurrealGraphStore (native graph relations) in `@pleaseai/rpg-store` for evaluation
