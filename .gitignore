@@ -35,16 +35,18 @@ coverage/
 
 # RPG local data
 .rpg/local/
+.rpg/cache/
 
 # Bun
 bun.lockb
 /.claude/settings.local.json
 
 # Please AI session state
-.please/cache/
 .please/memory/
 .please/tasklist.json
 /rpg.json
 
 # Turborepo
 .turbo
+
+

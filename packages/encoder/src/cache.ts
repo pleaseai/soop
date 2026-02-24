@@ -51,7 +51,7 @@ export class SemanticCache {
 
   constructor(options: CacheOptions = {}) {
     this.options = {
-      cacheDir: options.cacheDir ?? '.please/cache',
+      cacheDir: options.cacheDir ?? '.rpg/cache',
       ttl: options.ttl ?? DEFAULT_TTL,
       enabled: options.enabled ?? true,
     }
