@@ -26,6 +26,13 @@ jobs:
       - name: Install RPG
         run: bun install -g @pleaseai/rpg
 
+      - name: Restore semantic cache
+        uses: actions/cache@v4
+        with:
+          path: .rpg/cache/semantic-cache.db*
+          key: semantic-cache-${{ github.sha }}
+          restore-keys: semantic-cache-
+
       - name: Encode or evolve RPG
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
