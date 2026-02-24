@@ -11,6 +11,7 @@
     "./ast/languages": "./src/ast/languages/index.ts",
     "./ast/types": "./src/ast/types.ts",
     "./llm": "./src/llm.ts",
+    "./memory": "./src/memory.ts",
     "./git-path": "./src/git-path.ts",
     "./git-helpers": "./src/git-helpers.ts",
     "./logger": "./src/logger.ts"
