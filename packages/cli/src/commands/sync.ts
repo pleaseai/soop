@@ -151,7 +151,13 @@ export function registerSyncCommand(program: Command): void {
             embeddingParsers = await import('@pleaseai/rpg-graph/embeddings')
           }
           catch (importError) {
-            log.error('Could not import @pleaseai/rpg-graph/embeddings — this indicates a packaging or build problem', importError)
+            const code = (importError as NodeJS.ErrnoException).code
+            if (code === 'MODULE_NOT_FOUND' || code === 'ERR_MODULE_NOT_FOUND') {
+              log.warn('Could not import @pleaseai/rpg-graph/embeddings — this indicates a packaging or build problem', importError)
+            }
+            else {
+              throw importError
+            }
           }
 
           if (embeddingParsers) {
