@@ -2,26 +2,50 @@ import type { EntityType } from '@pleaseai/rpg-graph/node'
 import type { SemanticOptions } from '../semantic'
 
 export interface EvolutionOptions {
+  /** Git commit range to evolve (e.g. `"HEAD~1..HEAD"`, `"abc123..def456"`) */
   commitRange: string
+  /** Absolute path to the repository root */
   repoPath: string
+  /** Cosine distance threshold for semantic drift to trigger node rerouting (default: 0.3) */
   driftThreshold?: number
+  /**
+   * Cosine distance threshold for full re-encode (default: 0.5).
+   * Must be >= driftThreshold — when changeRatio exceeds this value,
+   * the evolver returns `requiresFullEncode: true` instead of applying incremental changes.
+   */
   forceRegenerateThreshold?: number
+  /** Whether to use LLM for semantic feature re-extraction (default: false) */
   useLLM?: boolean
+  /** Options passed to the semantic extractor for modified entities */
   semantic?: SemanticOptions
+  /** Whether to include source code in ChangedEntity objects (default: false) */
   includeSource?: boolean
 }
 
 export interface EvolutionResult {
+  /** Number of new entities inserted */
   inserted: number
+  /** Number of entities deleted */
   deleted: number
+  /** Number of entities modified */
   modified: number
+  /** Number of modified entities rerouted to a different functional area */
   rerouted: number
+  /** Number of orphaned high-level nodes pruned from the graph */
   prunedNodes: number
+  /** Wall-clock duration of the evolution run in milliseconds */
   duration: number
+  /** Number of LLM API calls made during this evolution */
   llmCalls: number
+  /** Non-fatal errors encountered during evolution */
   errors: Array<{ entity: string, phase: string, error: string }>
+  /** Embedding store changes for incremental vector index updates */
   embeddingChanges?: { added: string[], removed: string[], modified: string[] }
-  requiresFullEncode?: boolean
+  /**
+   * True when changeRatio (totalChanges / nodeCount) exceeds forceRegenerateThreshold.
+   * When true, callers should discard the current graph and run a full `encode()` instead.
+   */
+  requiresFullEncode: boolean
 }
 
 export interface ChangedEntity {

@@ -98,15 +98,22 @@ describe('semantic Reorganization Integration', () => {
 
   function createMockLLMClient() {
     const domainContent = JSON.stringify(domainResponse)
+    // HierarchyBuilder wraps response in <solution> block for parsing
+    const hierarchyContent = `<solution>${JSON.stringify(hierarchyResponse)}</solution>`
+    let callCount = 0
     return {
-      // DomainDiscovery.discover() uses complete() with maxIterations=3 by default
-      complete: vi.fn().mockResolvedValue({
-        content: domainContent,
-        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
-        model: 'test-model',
+      // DomainDiscovery uses complete() with maxIterations=3 (first 3 calls)
+      // HierarchyBuilder also uses complete() for subsequent assignment calls
+      complete: vi.fn().mockImplementation(() => {
+        callCount++
+        const content = callCount <= 3 ? domainContent : hierarchyContent
+        return Promise.resolve({
+          content,
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          model: 'test-model',
+        })
       }),
-      // HierarchyBuilder uses completeJSON() for hierarchical construction
-      completeJSON: vi.fn().mockResolvedValue(hierarchyResponse),
+      completeJSON: vi.fn(),
       getProvider: vi.fn().mockReturnValue('google'),
       getModel: vi.fn().mockReturnValue('test-model'),
     }

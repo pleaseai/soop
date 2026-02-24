@@ -1,8 +1,9 @@
 import type { LLMClient } from '@pleaseai/rpg-utils/llm'
 import type { DomainDiscoveryResult, FileFeatureGroup } from './types'
-import { buildDomainDiscoveryPrompt, DomainDiscoveryResponseSchema } from './prompts'
+import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { buildDomainDiscoveryPrompt } from './prompts'
 
-export { DomainDiscoveryResponseSchema }
+const log = createLogger('DomainDiscovery')
 
 /**
  * Domain Discovery — identify functional areas from file-level features.
@@ -46,10 +47,9 @@ export class DomainDiscovery {
           allCandidates.push(areas)
         }
       }
-      catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-        // Log warning but continue to next iteration
-        console.warn(`Domain Discovery: iteration ${i + 1} failed — ${msg}`)
+      catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        log.warn(`Iteration ${i + 1} failed: ${msg}`)
       }
     }
 
@@ -76,8 +76,8 @@ export class DomainDiscovery {
           return this.validateAreas(parsed.functionalAreas)
         }
       }
-      catch {
-        // Not JSON — try line-by-line parsing
+      catch (error) {
+        log.debug(`Solution block is not JSON, trying line-by-line parsing: ${error instanceof Error ? error.message : String(error)}`)
         return this.validateAreas(content.split('\n').map(l => l.trim()).filter(Boolean))
       }
     }
@@ -91,7 +91,10 @@ export class DomainDiscovery {
           return this.validateAreas(parsed.functionalAreas)
         }
       }
-      catch { /* fall through */ }
+      catch (error) {
+        log.debug(`Failed to parse functionalAreas JSON: ${error instanceof Error ? error.message : String(error)}`)
+        // Fall through to array extraction
+      }
     }
 
     // Try JSON array directly
@@ -103,7 +106,10 @@ export class DomainDiscovery {
           return this.validateAreas(parsed)
         }
       }
-      catch { /* fall through */ }
+      catch (error) {
+        log.debug(`Failed to parse JSON array: ${error instanceof Error ? error.message : String(error)}`)
+        // Fall through
+      }
     }
 
     return []

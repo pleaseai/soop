@@ -45,6 +45,7 @@ export class RPGEvolver {
       duration: 0,
       llmCalls: 0,
       errors: [],
+      requiresFullEncode: false,
     }
 
     const diffResult = await this.diffParser.parse(this.options.commitRange)

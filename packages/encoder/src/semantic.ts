@@ -505,7 +505,8 @@ export class SemanticExtractor {
       try {
         return JSON.parse(solutionMatch[1]!) as Record<string, unknown>
       }
-      catch {
+      catch (error) {
+        log.debug(`Failed to parse <solution> block as JSON: ${error instanceof Error ? error.message : String(error)}`)
         // Fall through to raw JSON extraction
       }
     }
@@ -516,7 +517,8 @@ export class SemanticExtractor {
       try {
         return JSON.parse(jsonMatch[0]) as Record<string, unknown>
       }
-      catch {
+      catch (error) {
+        log.debug(`Failed to parse raw JSON from batch response: ${error instanceof Error ? error.message : String(error)}`)
         // Fall through
       }
     }
@@ -719,9 +721,9 @@ export class SemanticExtractor {
       }
       catch (error) {
         const msg = error instanceof Error ? error.message : String(error)
-        const warning = `[SemanticExtractor] LLM aggregation failed for ${fileName}: ${msg}. Falling back to heuristic.`
+        const warning = `LLM aggregation failed for ${fileName}: ${msg}. Falling back to heuristic.`
         this.warnings.push(warning)
-        console.warn(warning)
+        log.warn(warning)
       }
     }
 

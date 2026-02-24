@@ -1,7 +1,10 @@
 import type { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
 import type { LLMClient } from '@pleaseai/rpg-utils/llm'
 import type { FileFeatureGroup } from './types'
+import { createLogger } from '@pleaseai/rpg-utils/logger'
 import { buildHierarchicalConstructionPrompt } from './prompts'
+
+const log = createLogger('HierarchyBuilder')
 
 /**
  * Hierarchy Builder — construct 3-level semantic hierarchy from functional areas.
@@ -144,8 +147,9 @@ export class HierarchyBuilder {
         const response = await this.llmClient.complete(user, system)
         responseText = response.content
       }
-      catch {
-        // LLM call failed — break and handle unassigned in handleUnassignedFiles
+      catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        log.warn(`LLM assignment call failed (iteration ${iter + 1}/${maxIterations}): ${msg}. Breaking assignment loop.`)
         break
       }
 
@@ -203,8 +207,9 @@ export class HierarchyBuilder {
           return parsed as Record<string, string[]>
         }
       }
-      catch {
-        /* fall through */
+      catch (error) {
+        log.debug(`Failed to parse <solution> block as JSON: ${error instanceof Error ? error.message : String(error)}`)
+        // Fall through to raw JSON extraction
       }
     }
 
@@ -221,8 +226,9 @@ export class HierarchyBuilder {
           return parsed as Record<string, string[]>
         }
       }
-      catch {
-        /* fall through */
+      catch (error) {
+        log.debug(`Failed to parse raw JSON as assignments: ${error instanceof Error ? error.message : String(error)}`)
+        // Fall through
       }
     }
 

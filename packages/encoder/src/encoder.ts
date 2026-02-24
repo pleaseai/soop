@@ -563,7 +563,9 @@ export class RPGEncoder {
         readmeContent = await readFile(readmePath, 'utf-8')
         break
       }
-      catch { /* file not found */ }
+      catch (error) {
+        log.debug(`README not found at ${readmeName}: ${error instanceof Error ? error.message : String(error)}`)
+      }
     }
 
     // Build repo skeleton (file listing, truncated)
@@ -636,7 +638,9 @@ export class RPGEncoder {
             break
         }
       }
-      catch { /* skip unreadable */ }
+      catch (error) {
+        log.debug(`buildRepoSkeleton: skipping unreadable entry in ${dir}: ${error instanceof Error ? error.message : String(error)}`)
+      }
     }
 
     await walk(repoPath, '', 0)
@@ -655,9 +659,7 @@ export class RPGEncoder {
       return files
 
     const repoName = (this.repoPath.split('/').pop() ?? 'unknown').toLowerCase()
-    const skeleton = files
-      .map(f => path.relative(this.repoPath, f))
-      .join('\n')
+    const skeleton = await this.buildRepoSkeleton()
 
     const fileList = files
       .map(f => path.relative(this.repoPath, f))
@@ -1013,7 +1015,15 @@ export class RPGEncoder {
 
     // Phase 3b: Artifact Grounding - dependency injection
     log.info('Phase 3.2: Dependency injection...')
-    await injectDependencies(rpg, this.repoPath, this.astParser)
+    try {
+      await injectDependencies(rpg, this.repoPath, this.astParser)
+    }
+    catch (error) {
+      const msg = 'Dependency injection failed, continuing without dependency edges: '
+        + `${error instanceof Error ? error.message : String(error)}`
+      log.warn(msg)
+      warnings.push(msg)
+    }
 
     // Phase 3c: Data flow edge creation (section 3.2 inter-module + intra-module flows)
     log.info('Phase 3.3: Data flow detection...')
