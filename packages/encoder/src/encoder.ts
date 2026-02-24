@@ -495,7 +495,7 @@ export class RPGEncoder {
     // Initialize semantic extractor and cache
     this.semanticExtractor = new SemanticExtractor(this.options.semantic)
     this.cache = new SemanticCache({
-      cacheDir: path.join(this.repoPath, '.please', 'cache'),
+      cacheDir: path.join(this.repoPath, '.rpg', 'cache'),
       ...this.options.cache,
     })
 

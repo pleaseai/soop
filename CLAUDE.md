@@ -86,6 +86,8 @@ RPG uses a two-tier architecture for data management:
 .rpg/
   graph.json          # Canonical RPG (git committed, CI-managed)
   config.json         # Encode/sync settings (git committed)
+  cache/              # Semantic cache (gitignored)
+    semantic-cache.db # LLM response cache (SQLite, WAL mode)
   local/              # Local-only data (gitignored)
     graph.json        # Local evolved RPG copy
     vectors/          # Local vector embeddings (LocalVectorStore, JSON-based)
