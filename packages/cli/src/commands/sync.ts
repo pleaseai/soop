@@ -134,10 +134,17 @@ export function registerSyncCommand(program: Command): void {
               : parseEmbeddings(embeddingsContent)
             const vectors = decodeAllEmbeddings(embeddings)
 
-            // Load into LanceDB vector store
-            const { LanceDBVectorStore } = await import('@pleaseai/rpg-store/lancedb')
+            // Load into vector store (LanceDB if available, LocalVectorStore fallback)
             const vectorDbPath = path.join(localDir, 'vectors')
-            const vectorStore = new LanceDBVectorStore()
+            let vectorStore: import('@pleaseai/rpg-store/vector-store').VectorStore
+            try {
+              const { LanceDBVectorStore } = await import('@pleaseai/rpg-store/lancedb')
+              vectorStore = new LanceDBVectorStore()
+            }
+            catch {
+              const { LocalVectorStore } = await import('@pleaseai/rpg-store/local')
+              vectorStore = new LocalVectorStore()
+            }
             await vectorStore.open({
               path: vectorDbPath,
               tableName: 'rpg_nodes',
@@ -166,7 +173,13 @@ export function registerSyncCommand(program: Command): void {
                 })
 
               if (docs.length > 0) {
-                await vectorStore.upsertBatch(docs)
+                if (vectorStore.upsertBatch) {
+                  await vectorStore.upsertBatch(docs)
+                }
+                else {
+                  for (const doc of docs)
+                    await vectorStore.upsert(doc.id, doc.embedding, doc.metadata)
+                }
                 log.success(`Pre-computed embeddings loaded: ${docs.length} vectors (${embeddings.config.model})`)
                 embeddingsLoaded = true
               }
