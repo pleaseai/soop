@@ -39,17 +39,17 @@ jobs:
           if [ ! -f ".rpg/graph.json" ]; then
             echo "No existing graph — running full encode"
             mkdir -p .rpg
-            rpg encode . -o .rpg/graph.json --stamp $EMBED_FLAG
+            rpg encode . -o .rpg/graph.json --stamp -m google/gemini-3-flash-preview $EMBED_FLAG
           else
             LAST_COMMIT=$(rpg last-commit .rpg/graph.json 2>/dev/null || echo "")
             if [ -z "$LAST_COMMIT" ]; then
               echo "No commit stamp — running full encode"
-              rpg encode . -o .rpg/graph.json --stamp $EMBED_FLAG
+              rpg encode . -o .rpg/graph.json --stamp -m google/gemini-3-flash-preview $EMBED_FLAG
             else
               echo "Evolving from $LAST_COMMIT..HEAD"
-              rpg evolve --rpg .rpg/graph.json -c "$LAST_COMMIT..HEAD" --stamp || {
+              rpg evolve --rpg .rpg/graph.json -c "$LAST_COMMIT..HEAD" --stamp -m google/gemini-3-flash-preview || {
                 echo "Evolve failed, falling back to full encode"
-                rpg encode . -o .rpg/graph.json --stamp $EMBED_FLAG
+                rpg encode . -o .rpg/graph.json --stamp -m google/gemini-3-flash-preview $EMBED_FLAG
               }
               # Re-generate embeddings after evolve if API key is available
               if [ -n "$VOYAGE_API_KEY" ]; then
