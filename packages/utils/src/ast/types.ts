@@ -41,7 +41,7 @@ export interface ParseResult {
 /**
  * Supported language names
  */
-export type SupportedLanguage = 'typescript' | 'javascript' | 'python' | 'rust' | 'go' | 'java'
+export type SupportedLanguage = 'typescript' | 'javascript' | 'python' | 'rust' | 'go' | 'java' | 'csharp' | 'c' | 'cpp' | 'ruby' | 'kotlin'
 
 /**
  * Language configurations with parser and settings

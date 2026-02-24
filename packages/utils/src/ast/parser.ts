@@ -43,6 +43,17 @@ export class ASTParser {
       rs: 'rust',
       go: 'go',
       java: 'java',
+      cs: 'csharp',
+      c: 'c',
+      h: 'c',
+      cpp: 'cpp',
+      cc: 'cpp',
+      cxx: 'cpp',
+      hpp: 'cpp',
+      hxx: 'cpp',
+      rb: 'ruby',
+      kt: 'kotlin',
+      kts: 'kotlin',
     }
     return langMap[ext ?? ''] ?? 'unknown'
   }
@@ -71,7 +82,6 @@ export class ASTParser {
     const config = LANGUAGE_CONFIGS[language]
 
     try {
-      // Set language parser
       this.parser.setLanguage(
         config.parser as Parameters<typeof this.parser.setLanguage>[0],
       )
@@ -207,19 +217,57 @@ export class ASTParser {
       return typeNode?.text ?? null
     }
 
+    // For C function_definition - name is nested inside declarator chain
+    if (node.type === 'function_definition') {
+      const declarator = node.childForFieldName('declarator')
+      if (declarator) {
+        return this.extractCDeclaratorName(declarator)
+      }
+    }
+
     // For function/class declarations and method definitions
     const nameNode = node.childForFieldName('name')
     if (nameNode) {
       return nameNode.text
     }
 
-    // Alternative: look for identifier child
+    // Alternative: look for identifier / type_identifier / simple_identifier child
+    // (type_identifier and simple_identifier are used by Kotlin, C++, etc.)
     for (const child of node.children) {
-      if (child.type === 'identifier' || child.type === 'property_identifier') {
+      if (
+        child.type === 'identifier'
+        || child.type === 'property_identifier'
+        || child.type === 'type_identifier'
+        || child.type === 'simple_identifier'
+      ) {
         return child.text
       }
     }
 
+    return null
+  }
+
+  /**
+   * Recursively extract function name from C/C++ declarator chain.
+   * function_definition.declarator can be:
+   *   - function_declarator → declarator (identifier or pointer_declarator → ...)
+   *   - pointer_declarator → declarator → ...
+   */
+  private extractCDeclaratorName(node: Parser.SyntaxNode): string | null {
+    if (node.type === 'identifier') {
+      return node.text
+    }
+    // function_declarator has a 'declarator' field
+    const inner = node.childForFieldName('declarator')
+    if (inner) {
+      return this.extractCDeclaratorName(inner)
+    }
+    // fallback: look for identifier child
+    for (const child of node.children) {
+      if (child.type === 'identifier') {
+        return child.text
+      }
+    }
     return null
   }
 
@@ -279,7 +327,16 @@ export class ASTParser {
 
     let current = node.parent
     while (current) {
-      if (current.type === 'class_declaration' || current.type === 'class_definition' || current.type === 'impl_item') {
+      if (
+        current.type === 'class_declaration'
+        || current.type === 'class_definition'
+        || current.type === 'impl_item'
+        || current.type === 'class_specifier'
+        || current.type === 'struct_declaration'
+        || current.type === 'class'
+        || current.type === 'module'
+        || current.type === 'object_declaration'
+      ) {
         const nameNode = current.childForFieldName('name') ?? current.childForFieldName('type')
         return nameNode?.text
       }
@@ -326,6 +383,18 @@ export class ASTParser {
     }
     if (language === 'java') {
       return this.extractJavaImport(node)
+    }
+    if (language === 'csharp') {
+      return this.extractCSharpImport(node)
+    }
+    if (language === 'c' || language === 'cpp') {
+      return this.extractCCppImport(node)
+    }
+    if (language === 'ruby') {
+      return this.extractRubyImport(node)
+    }
+    if (language === 'kotlin') {
+      return this.extractKotlinImport(node)
     }
     return this.extractJSImport(node)
   }
@@ -477,6 +546,87 @@ export class ASTParser {
 
     // import_declaration without import_spec_list (skip, handled by recursion)
     return null
+  }
+
+  /**
+   * Extract C# using directive (e.g. using System.IO; using static Foo; using Alias = Bar;)
+   */
+  private extractCSharpImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+    if (node.type !== 'using_directive')
+      return null
+
+    // Strip 'using', optional 'static', optional 'alias =', and trailing semicolon
+    const text = node.text
+      .replace(/^using\s+/, '')
+      .replace(/^static\s+/, '')
+      .replace(/;$/, '')
+      .replace(/^\w+\s*=\s*/, '') // strip alias
+      .trim()
+
+    return text ? { module: text, names: [] } : null
+  }
+
+  /**
+   * Extract C/C++ #include directive (e.g. #include <stdio.h> or #include "myheader.h")
+   */
+  private extractCCppImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+    if (node.type !== 'preproc_include')
+      return null
+
+    const pathNode = node.childForFieldName('path')
+    if (!pathNode)
+      return null
+
+    // Strip surrounding quotes or angle brackets
+    const module = pathNode.text.replaceAll('"', '').replaceAll('<', '').replaceAll('>', '')
+    return module ? { module, names: [] } : null
+  }
+
+  /**
+   * Extract Ruby require/require_relative calls
+   * Only 'call' nodes whose function is 'require' or 'require_relative' are included.
+   */
+  private extractRubyImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+    if (node.type !== 'call')
+      return null
+
+    const methodNode = node.childForFieldName('method')
+    if (!methodNode)
+      return null
+
+    const methodName = methodNode.text
+    if (methodName !== 'require' && methodName !== 'require_relative')
+      return null
+
+    // Arguments are in the 'arguments' field; find the string argument
+    const argsNode = node.childForFieldName('arguments')
+    if (!argsNode)
+      return null
+
+    for (const child of argsNode.children) {
+      if (child.type === 'string' || child.type === 'string_content') {
+        const raw = child.text.replaceAll('\'', '').replaceAll('"', '')
+        if (raw)
+          return { module: raw, names: [] }
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Extract Kotlin import header (e.g. import com.example.Foo)
+   */
+  private extractKotlinImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+    if (node.type !== 'import_header')
+      return null
+
+    const text = node.text
+      .replace(/^import\s+/, '')
+      .replace(/\.\*$/, '')
+      .trim()
+
+    return text ? { module: text, names: [] } : null
   }
 
   /**

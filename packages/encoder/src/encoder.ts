@@ -169,7 +169,27 @@ export async function discoverFiles(
     throw new Error(`Repository path does not exist: ${repoPath}`)
   }
 
-  const includePatterns = opts?.include ?? ['**/*.ts', '**/*.js', '**/*.py']
+  const includePatterns = opts?.include ?? [
+    '**/*.ts',
+    '**/*.tsx',
+    '**/*.js',
+    '**/*.jsx',
+    '**/*.py',
+    '**/*.rs',
+    '**/*.go',
+    '**/*.java',
+    '**/*.cs',
+    '**/*.c',
+    '**/*.h',
+    '**/*.cpp',
+    '**/*.cc',
+    '**/*.cxx',
+    '**/*.hpp',
+    '**/*.hxx',
+    '**/*.rb',
+    '**/*.kt',
+    '**/*.kts',
+  ]
   const excludePatterns = opts?.exclude ?? [
     '**/node_modules/**',
     '**/dist/**',
@@ -494,7 +514,27 @@ export class RPGEncoder {
     this.options = {
       repoPath,
       includeSource: false,
-      include: ['**/*.ts', '**/*.js', '**/*.py'],
+      include: [
+        '**/*.ts',
+        '**/*.tsx',
+        '**/*.js',
+        '**/*.jsx',
+        '**/*.py',
+        '**/*.rs',
+        '**/*.go',
+        '**/*.java',
+        '**/*.cs',
+        '**/*.c',
+        '**/*.h',
+        '**/*.cpp',
+        '**/*.cc',
+        '**/*.cxx',
+        '**/*.hpp',
+        '**/*.hxx',
+        '**/*.rb',
+        '**/*.kt',
+        '**/*.kts',
+      ],
       exclude: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
       maxDepth: 10,
       ...options,

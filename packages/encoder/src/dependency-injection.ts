@@ -26,7 +26,7 @@ export function resolveImportPath(
   const sourceDir = path.dirname(sourceFile)
   const resolvedPath = path.normalize(path.join(sourceDir, modulePath))
 
-  const extensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '']
+  const extensions = ['.ts', '.tsx', '.js', '.jsx', '.py', '.rs', '.go', '.java', '.cs', '.c', '.cpp', '.cc', '.h', '.hpp', '.rb', '.kt', '.kts', '']
   const candidates: string[] = []
 
   for (const ext of extensions) {
