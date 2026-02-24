@@ -40,6 +40,7 @@ export default defineConfig([
     inlineOnly: false,
   },
   // CLI binary: dist/packages/cli/src/cli.mjs (standalone, bundles all pure-JS deps)
+  // noExternal ensures @pleaseai/* workspace packages are bundled inline (private, not on npm)
   {
     entry: { 'packages/cli/src/cli': './packages/cli/src/cli.ts' },
     format: 'esm',
@@ -47,9 +48,11 @@ export default defineConfig([
     dts: false,
     outDir: 'dist',
     external,
+    noExternal: [/^@pleaseai\//],
     inlineOnly: false,
   },
   // MCP server binary: dist/packages/mcp/src/server.mjs (standalone)
+  // noExternal ensures @pleaseai/* workspace packages are bundled inline (private, not on npm)
   {
     entry: { 'packages/mcp/src/server': './packages/mcp/src/server.ts' },
     format: 'esm',
@@ -57,6 +60,7 @@ export default defineConfig([
     dts: false,
     outDir: 'dist',
     external,
+    noExternal: [/^@pleaseai\//],
     banner: { js: '#!/usr/bin/env node' },
     inlineOnly: false,
   },

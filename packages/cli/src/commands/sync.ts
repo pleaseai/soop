@@ -135,10 +135,11 @@ export function registerSyncCommand(program: Command): void {
             const vectors = decodeAllEmbeddings(embeddings)
 
             // Load into LanceDB vector store
-            const { VectorStore } = await import('@pleaseai/rpg-utils/vector')
+            const { LanceDBVectorStore } = await import('@pleaseai/rpg-store/lancedb')
             const vectorDbPath = path.join(localDir, 'vectors')
-            const vectorStore = new VectorStore({
-              dbPath: vectorDbPath,
+            const vectorStore = new LanceDBVectorStore()
+            await vectorStore.open({
+              path: vectorDbPath,
               tableName: 'rpg_nodes',
               dimension: embeddings.config.dimension,
             })
@@ -152,12 +153,11 @@ export function registerSyncCommand(program: Command): void {
 
               const docs = Array.from(vectors.entries())
                 .filter(([id]) => nodeMap.has(id))
-                .map(([id, vector]) => {
+                .map(([id, embedding]) => {
                   const node = nodeMap.get(id)!
                   return {
                     id,
-                    text: `${node.feature.description} ${(node.feature.keywords ?? []).join(' ')} ${node.metadata?.path ?? ''}`,
-                    vector,
+                    embedding,
                     metadata: {
                       entityType: node.metadata?.entityType,
                       path: node.metadata?.path,
@@ -166,7 +166,7 @@ export function registerSyncCommand(program: Command): void {
                 })
 
               if (docs.length > 0) {
-                await vectorStore.add(docs)
+                await vectorStore.upsertBatch(docs)
                 log.success(`Pre-computed embeddings loaded: ${docs.length} vectors (${embeddings.config.model})`)
                 embeddingsLoaded = true
               }

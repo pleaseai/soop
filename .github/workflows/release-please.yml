@@ -44,5 +44,5 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bunx turbo run build
       # Trusted publishing - no token needed, provenance auto-generated
-      # Enable after configuring trusted publisher on npmjs.com
-      # - run: npm publish --access public
+      # Requires trusted publisher configured on npmjs.com
+      - run: npm publish --access public --provenance
