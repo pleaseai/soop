@@ -97,13 +97,16 @@ describe('semantic Reorganization Integration', () => {
   }
 
   function createMockLLMClient() {
-    let callCount = 0
+    const domainContent = JSON.stringify(domainResponse)
     return {
-      complete: vi.fn(),
-      completeJSON: vi.fn().mockImplementation(() => {
-        callCount++
-        return Promise.resolve(callCount === 1 ? domainResponse : hierarchyResponse)
+      // DomainDiscovery.discover() uses complete() with maxIterations=3 by default
+      complete: vi.fn().mockResolvedValue({
+        content: domainContent,
+        usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+        model: 'test-model',
       }),
+      // HierarchyBuilder uses completeJSON() for hierarchical construction
+      completeJSON: vi.fn().mockResolvedValue(hierarchyResponse),
       getProvider: vi.fn().mockReturnValue('google'),
       getModel: vi.fn().mockReturnValue('test-model'),
     }
@@ -129,7 +132,10 @@ describe('semantic Reorganization Integration', () => {
     const discovery = new DomainDiscovery(mockClient as any)
     const { functionalAreas } = await discovery.discover(fileGroups)
 
-    expect(functionalAreas).toEqual(['GraphInfrastructure', 'SemanticEncoding', 'CoreUtilities'])
+    expect(functionalAreas).toContain('GraphInfrastructure')
+    expect(functionalAreas).toContain('SemanticEncoding')
+    expect(functionalAreas).toContain('CoreUtilities')
+    expect(functionalAreas).toHaveLength(3)
 
     // Step 2: Hierarchical Construction
     const builder = new HierarchyBuilder(rpg, mockClient as any)

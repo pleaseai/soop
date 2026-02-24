@@ -22,6 +22,7 @@ import { injectDependencies } from './dependency-injection'
 import { RPGEvolver } from './evolution/evolve'
 import { ArtifactGrounder } from './grounding'
 import { DomainDiscovery, HierarchyBuilder } from './reorganization'
+import { buildAnalyzeDataFlowPrompt, buildExcludeFilesPrompt, buildGenerateRepoInfoPrompt } from './reorganization/prompts'
 import { SemanticExtractor } from './semantic'
 
 const log = createLogger('RPGEncoder')
@@ -47,6 +48,12 @@ export interface EncoderOptions {
   semantic?: SemanticOptions
   /** Cache options */
   cache?: CacheOptions
+  /** Pre-computed repository info (skip LLM call if provided) */
+  repoInfo?: string
+  /** Whether to generate repo info using LLM at encode start (default: true when LLM enabled) */
+  generateRepoInfo?: boolean
+  /** Whether to use LLM to exclude irrelevant files (default: false to avoid accidental exclusions) */
+  excludeWithLLM?: boolean
 }
 
 /**
@@ -468,6 +475,7 @@ interface ExtractionResult {
   fileToChildEdges: Array<{ source: string, target: string }>
   parseResult: ParseResult
   sourceCode?: string
+  relativePath: string
 }
 
 export class RPGEncoder {
@@ -541,6 +549,332 @@ export class RPGEncoder {
   }
 
   /**
+   * Generate a concise repository overview using the LLM.
+   * Falls back to README excerpt or repo name when LLM is unavailable.
+   */
+  private async generateRepoInfo(): Promise<string> {
+    const repoName = (this.repoPath.split('/').pop() ?? 'unknown').toLowerCase()
+
+    // Read README if available
+    let readmeContent = ''
+    for (const readmeName of ['README.md', 'README.rst', 'README.txt', 'README']) {
+      try {
+        const readmePath = path.join(this.repoPath, readmeName)
+        readmeContent = await readFile(readmePath, 'utf-8')
+        break
+      }
+      catch { /* file not found */ }
+    }
+
+    // Build repo skeleton (file listing, truncated)
+    const skeleton = await this.buildRepoSkeleton()
+
+    if (!this.llmClient) {
+      // No LLM — return basic info from README or repo name
+      return readmeContent.slice(0, 500) || `Repository: ${repoName}`
+    }
+
+    const { system, user } = buildGenerateRepoInfoPrompt(repoName, skeleton, readmeContent)
+
+    const maxAttempts = 3
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await this.llmClient.complete(user, system)
+        const text = response.content
+
+        // Extract from <solution> block with code fences
+        const solutionMatch = text.match(/<solution>\s*```?\s*([\s\S]*?)\s*```?\s*<\/solution>/)
+        if (solutionMatch)
+          return solutionMatch[1]!.trim()
+
+        // Try raw solution block without code fences
+        const rawSolution = text.match(/<solution>\s*([\s\S]*?)\s*<\/solution>/)
+        if (rawSolution)
+          return rawSolution[1]!.trim()
+
+        // Return raw text if no block found
+        return text.trim()
+      }
+      catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        if (attempt < maxAttempts) {
+          log.debug(`Repo info generation attempt ${attempt}/${maxAttempts} failed: ${msg}. Retrying...`)
+          continue
+        }
+        log.warn(`Repo info generation failed after ${maxAttempts} attempts: ${msg}. Using fallback.`)
+      }
+    }
+
+    return readmeContent.slice(0, 500) || `Repository: ${repoName}`
+  }
+
+  /**
+   * Build a file-tree skeleton of the repository (up to maxLines lines, depth 3).
+   */
+  private async buildRepoSkeleton(maxLines = 200): Promise<string> {
+    const lines: string[] = []
+    const repoPath = this.repoPath
+
+    async function walk(dir: string, prefix: string, depth: number): Promise<void> {
+      if (depth > 3 || lines.length >= maxLines)
+        return
+      try {
+        const entries = await readdir(dir)
+        for (const entry of entries.sort()) {
+          if (entry.startsWith('.') || entry === 'node_modules' || entry === 'dist')
+            continue
+          const fullPath = path.join(dir, entry)
+          const s = await stat(fullPath)
+          if (s.isDirectory()) {
+            lines.push(`${prefix}${entry}/`)
+            await walk(fullPath, `${prefix}  `, depth + 1)
+          }
+          else {
+            lines.push(`${prefix}${entry}`)
+          }
+          if (lines.length >= maxLines)
+            break
+        }
+      }
+      catch { /* skip unreadable */ }
+    }
+
+    await walk(repoPath, '', 0)
+    return lines.join('\n')
+  }
+
+  /**
+   * Use LLM multi-vote to exclude irrelevant files from analysis.
+   * Files excluded by at least 2 out of 3 independent LLM votes are removed.
+   */
+  private async excludeIrrelevantFiles(
+    files: string[],
+    repoInfo: string | undefined,
+  ): Promise<string[]> {
+    if (!this.llmClient || files.length === 0)
+      return files
+
+    const repoName = (this.repoPath.split('/').pop() ?? 'unknown').toLowerCase()
+    const skeleton = files
+      .map(f => path.relative(this.repoPath, f))
+      .join('\n')
+
+    const fileList = files
+      .map(f => path.relative(this.repoPath, f))
+      .join('\n')
+
+    const { system, user } = buildExcludeFilesPrompt(
+      repoName,
+      repoInfo ?? '',
+      skeleton,
+      fileList,
+    )
+
+    // Multi-vote: 3 independent LLM calls, keep files excluded by majority (>=2/3)
+    const voteResults: Set<string>[] = []
+
+    for (let vote = 0; vote < 3; vote++) {
+      try {
+        const response = await this.llmClient.complete(user, system)
+        const excluded = this.parseExcludedPaths(response.content)
+        voteResults.push(excluded)
+      }
+      catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        log.warn(`File exclusion vote ${vote + 1}/3 failed: ${msg}`)
+        voteResults.push(new Set()) // Empty vote = keep all
+      }
+    }
+
+    // Keep only files excluded by >=2/3 votes
+    const toExclude = new Set<string>()
+    const allExcluded = [
+      ...new Set([...voteResults[0]!, ...voteResults[1]!, ...voteResults[2]!]),
+    ]
+    for (const excluded of allExcluded) {
+      const voteCount = voteResults.filter(v => v.has(excluded)).length
+      if (voteCount >= 2)
+        toExclude.add(excluded)
+    }
+
+    if (toExclude.size > 0) {
+      log.info(`LLM file exclusion: removing ${toExclude.size} files: ${[...toExclude].join(', ')}`)
+    }
+
+    return files.filter((f) => {
+      const rel = path.relative(this.repoPath, f)
+      return !this.isPathExcluded(rel, toExclude)
+    })
+  }
+
+  private parseExcludedPaths(text: string): Set<string> {
+    const excluded = new Set<string>()
+
+    // Extract from <solution> block
+    const solutionMatch = text.match(/<solution>\s*```?\s*([\s\S]*?)\s*```?\s*<\/solution>/)
+    const content = solutionMatch ? solutionMatch[1] : text
+
+    if (content) {
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim()
+        if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('//')) {
+          excluded.add(trimmed)
+        }
+      }
+    }
+
+    return excluded
+  }
+
+  private isPathExcluded(relativePath: string, excluded: Set<string>): boolean {
+    const normalized = relativePath.replaceAll('\\', '/')
+    for (const excl of excluded) {
+      const normalizedExcl = excl.replaceAll('\\', '/').replace(/\/$/, '')
+      if (normalized === normalizedExcl)
+        return true
+      if (normalized.startsWith(`${normalizedExcl}/`))
+        return true
+    }
+    return false
+  }
+
+  /**
+   * Deduplicate file-level feature descriptions across extraction results.
+   * If two files share the same description, append a numeric suffix to make them unique.
+   */
+  private deduplicateFileSummaries(
+    extractionResults: Array<{ entities: ExtractedEntity[] }>,
+  ): void {
+    const usedDescriptions = new Set<string>()
+
+    for (const result of extractionResults) {
+      const fileEntity = result.entities.find(e => e.metadata.entityType === 'file')
+      if (!fileEntity)
+        continue
+
+      const desc = fileEntity.feature.description
+      if (!usedDescriptions.has(desc)) {
+        usedDescriptions.add(desc)
+      }
+      else {
+        // Append suffix to make unique
+        let suffix = 1
+        let candidate = `${desc}_${suffix}`
+        while (usedDescriptions.has(candidate)) {
+          suffix++
+          candidate = `${desc}_${suffix}`
+        }
+        fileEntity.feature.description = candidate
+        usedDescriptions.add(candidate)
+      }
+    }
+  }
+
+  /**
+   * Analyze cross-area data flows using LLM and add DataFlowEdges between high-level nodes.
+   */
+  private async analyzeCrossAreaDataFlows(
+    rpg: RepositoryPlanningGraph,
+    repoInfo: string | undefined,
+  ): Promise<void> {
+    if (!this.llmClient)
+      return
+
+    // Get all high-level nodes (functional areas - L0 nodes with domain: prefix)
+    const highLevelNodes = await rpg.getHighLevelNodes()
+    const areaNodes = highLevelNodes.filter(n => n.id.startsWith('domain:') && !n.id.includes('/'))
+
+    if (areaNodes.length < 2)
+      return // Need at least 2 areas for cross-area flows
+
+    const treesNames = areaNodes.map(n => n.id.replace('domain:', ''))
+
+    // Build trees info (what each area contains)
+    const treesInfo = areaNodes
+      .map(n => `${n.id.replace('domain:', '')}: ${n.feature.description}`)
+      .join('\n')
+
+    // Get dependency edges to find cross-area invocations
+    const depEdges = await rpg.getDependencyEdges()
+
+    // Map edges to their functional areas (limit for prompt size)
+    const crossAreaInvokes: string[] = []
+    for (const edge of depEdges.slice(0, 100)) {
+      crossAreaInvokes.push(`${edge.source} -> ${edge.target}`)
+    }
+    const summaryInvokes = crossAreaInvokes.join('\n') || 'No dependency edges found'
+
+    const repoName = (this.repoPath.split('/').pop() ?? 'unknown').toLowerCase()
+    const skeleton = treesNames.join('\n')
+
+    const { system, user } = buildAnalyzeDataFlowPrompt(
+      repoName,
+      repoInfo ?? treesInfo,
+      skeleton,
+      treesNames,
+      treesInfo,
+      summaryInvokes,
+      '', // crossCode - empty for now
+    )
+
+    try {
+      const response = await this.llmClient.complete(user, system)
+      const edges = this.parseDataFlowEdges(response.content, treesNames)
+
+      for (const edge of edges) {
+        await rpg.addDataFlowEdge(edge)
+      }
+
+      log.info(`Cross-area data flow: added ${edges.length} semantic flow edges`)
+    }
+    catch (error) {
+      const msg = error instanceof Error ? error.message : String(error)
+      log.warn(`Cross-area data flow analysis failed: ${msg}`)
+    }
+  }
+
+  private parseDataFlowEdges(
+    text: string,
+    validTreeNames: string[],
+  ): Array<{ from: string, to: string, dataId: string, dataType: string }> {
+    // Extract from <solution> block
+    const solutionMatch = text.match(/<solution>\s*([\s\S]*?)\s*<\/solution>/)
+    const content = solutionMatch ? solutionMatch[1] : text
+
+    // Try to parse JSON array
+    const arrayMatch = content?.match(/\[[\s\S]*\]/)
+    if (!arrayMatch)
+      return []
+
+    try {
+      const parsed = JSON.parse(arrayMatch[0])
+      if (!Array.isArray(parsed))
+        return []
+
+      const validNames = new Set(validTreeNames)
+      return parsed
+        .filter((e: unknown): e is { source: string, target: string, data_id?: string, dataId?: string, data_type?: string | string[], dataType?: string } =>
+          typeof e === 'object'
+          && e !== null
+          && typeof (e as { source?: unknown }).source === 'string'
+          && typeof (e as { target?: unknown }).target === 'string',
+        )
+        .filter(e => validNames.has(e.source) && validNames.has(e.target) && e.source !== e.target)
+        .map(e => ({
+          from: `domain:${e.source}`,
+          to: `domain:${e.target}`,
+          dataId: String(e.data_id ?? e.dataId ?? 'data'),
+          dataType: Array.isArray(e.data_type)
+            ? String(e.data_type[0] ?? 'unknown')
+            : String(e.data_type ?? e.dataType ?? 'unknown'),
+        }))
+    }
+    catch {
+      return []
+    }
+  }
+
+  /**
    * Encode the repository into an RPG
    */
   async encode(): Promise<EncodingResult> {
@@ -556,7 +890,16 @@ export class RPGEncoder {
 
     const rpg = await RepositoryPlanningGraph.create(config)
 
-    // Phase 1: Semantic Lifting (including file→child functional edges)
+    // Generate or use provided repo info (Area 2)
+    const repoInfo = this.options.repoInfo
+      ?? (this.options.generateRepoInfo !== false && this.llmClient
+        ? await this.generateRepoInfo()
+        : undefined)
+    if (repoInfo) {
+      log.info('Repo info: generated/provided')
+    }
+
+    // Phase 1: Semantic Lifting (including file->child functional edges)
     const warnings: string[] = []
     let files: string[]
     try {
@@ -579,14 +922,25 @@ export class RPGEncoder {
       log.warn(emptyMsg)
       warnings.push(emptyMsg)
     }
+
+    // Optionally exclude irrelevant files using LLM (Area 3)
+    if (this.options.excludeWithLLM && files.length > 0) {
+      log.info('Excluding irrelevant files using LLM...')
+      files = await this.excludeIrrelevantFiles(files, repoInfo)
+      log.info(`After LLM exclusion: ${files.length} files remaining`)
+    }
+
     let entitiesExtracted = 0
     const fileParseInfos: FileParseInfo[] = []
+
+    // Buffer all extraction results for deduplication before adding to graph (Area 5)
+    const allExtractionResults: ExtractionResult[] = []
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]!
       const displayPath = path.relative(this.repoPath, file)
       log.info(`[${i + 1}/${files.length}] ${displayPath}`)
-      let extraction: Awaited<ReturnType<typeof this.extractEntities>>
+      let extraction: ExtractionResult
       try {
         extraction = await this.extractEntities(file)
       }
@@ -596,8 +950,22 @@ export class RPGEncoder {
         warnings.push(msg)
         continue
       }
-      const { entities, fileToChildEdges, parseResult, sourceCode } = extraction
-      entitiesExtracted += entities.length
+
+      entitiesExtracted += extraction.entities.length
+      allExtractionResults.push(extraction)
+
+      // Save cache incrementally after each file (survives interruption)
+      await this.cache.save()
+    }
+
+    log.info(`Phase 1 done: ${this.cacheHits} cache hits, ${this.cacheMisses} cache misses`)
+
+    // Deduplicate file-level summaries before adding to graph (Area 5)
+    this.deduplicateFileSummaries(allExtractionResults)
+
+    // Add all entities to graph after deduplication
+    for (const extraction of allExtractionResults) {
+      const { entities, fileToChildEdges, parseResult, sourceCode, relativePath } = extraction
 
       // Add nodes
       for (const entity of entities) {
@@ -609,13 +977,12 @@ export class RPGEncoder {
         })
       }
 
-      // Add file→child functional edges (Phase 1, per paper §3.1)
+      // Add file->child functional edges (Phase 1, per paper section 3.1)
       for (const edge of fileToChildEdges) {
         await rpg.addFunctionalEdge(edge)
       }
 
       // Collect parse info for data flow detection
-      const relativePath = path.relative(this.repoPath, file)
       const fileEntity = entities.find(e => e.metadata.entityType === 'file')
       if (fileEntity && parseResult) {
         fileParseInfos.push({
@@ -625,16 +992,11 @@ export class RPGEncoder {
           sourceCode,
         })
       }
-
-      // Save cache incrementally after each file (survives interruption)
-      await this.cache.save()
     }
-
-    log.info(`Phase 1 done: ${this.cacheHits} cache hits, ${this.cacheMisses} cache misses`)
 
     // Phase 2: Structural Reorganization
     log.info('Phase 2: Structural Reorganization...')
-    await this.buildFunctionalHierarchy(rpg)
+    await this.buildFunctionalHierarchy(rpg, repoInfo)
 
     // Phase 3: Artifact Grounding
     log.info('Phase 3.1: Metadata propagation...')
@@ -649,11 +1011,11 @@ export class RPGEncoder {
       warnings.push(msg)
     }
 
-    // Phase 3b: Artifact Grounding — dependency injection
+    // Phase 3b: Artifact Grounding - dependency injection
     log.info('Phase 3.2: Dependency injection...')
     await injectDependencies(rpg, this.repoPath, this.astParser)
 
-    // Phase 3c: Data flow edge creation (§3.2 inter-module + intra-module flows)
+    // Phase 3c: Data flow edge creation (section 3.2 inter-module + intra-module flows)
     log.info('Phase 3.3: Data flow detection...')
     try {
       await this.injectDataFlows(rpg, fileParseInfos)
@@ -663,6 +1025,19 @@ export class RPGEncoder {
         + `${error instanceof Error ? error.message : String(error)}`
       log.warn(msg)
       warnings.push(msg)
+    }
+
+    // Phase 3d: Cross-area data flow analysis (Area 8)
+    if (this.llmClient) {
+      log.info('Phase 3.4: Cross-area data flow analysis...')
+      try {
+        await this.analyzeCrossAreaDataFlows(rpg, repoInfo)
+      }
+      catch (error) {
+        const msg = `Cross-area data flow analysis failed: ${error instanceof Error ? error.message : String(error)}`
+        log.warn(msg)
+        warnings.push(msg)
+      }
     }
 
     // Log LLM token usage statistics
@@ -749,13 +1124,19 @@ export class RPGEncoder {
     // Step 4: Add child entities
     entities.push(...childEntities)
 
-    // Step 5: Generate file→child edges for Phase 1
+    // Step 5: Generate file->child edges for Phase 1
     const fileToChildEdges = childEntities.map(child => ({
       source: fileId,
       target: child.id,
     }))
 
-    return { entities, fileToChildEdges, parseResult: extraction.parseResult, sourceCode: extraction.sourceCode }
+    return {
+      entities,
+      fileToChildEdges,
+      parseResult: extraction.parseResult,
+      sourceCode: extraction.sourceCode,
+      relativePath: extraction.relativePath,
+    }
   }
 
   /**
@@ -825,10 +1206,13 @@ export class RPGEncoder {
   /**
    * Build functional hierarchy using LLM-based semantic reorganization.
    *
-   * Implements paper §3.2: Domain Discovery + Hierarchical Construction.
+   * Implements paper section 3.2: Domain Discovery + Hierarchical Construction.
    * Replaces the old directory-mirroring approach with semantic 3-level paths.
    */
-  private async buildFunctionalHierarchy(rpg: RepositoryPlanningGraph): Promise<void> {
+  private async buildFunctionalHierarchy(
+    rpg: RepositoryPlanningGraph,
+    repoInfo?: string,
+  ): Promise<void> {
     const lowLevelNodes = await rpg.getLowLevelNodes()
     const fileGroups = this.buildFileFeatureGroups(lowLevelNodes)
 
@@ -847,12 +1231,12 @@ export class RPGEncoder {
       return
     }
 
-    // Step 1: Domain Discovery — identify functional areas
+    // Step 1: Domain Discovery - identify functional areas
     log.info(`Phase 2.1: Domain Discovery (${fileGroups.length} file groups)...`)
     const domainDiscovery = new DomainDiscovery(this.llmClient)
     let functionalAreas: string[]
     try {
-      const result = await domainDiscovery.discover(fileGroups)
+      const result = await domainDiscovery.discover(fileGroups, { repoInfo })
       functionalAreas = result.functionalAreas
     }
     catch (error) {
@@ -861,11 +1245,11 @@ export class RPGEncoder {
     }
     log.info(`Phase 2.1: Found ${functionalAreas.length} functional areas: ${functionalAreas.join(', ')}`)
 
-    // Step 2: Hierarchical Construction — build 3-level paths and link nodes
+    // Step 2: Hierarchical Construction - build 3-level paths and link nodes
     log.info('Phase 2.2: Hierarchical Construction...')
     const hierarchyBuilder = new HierarchyBuilder(rpg, this.llmClient)
     try {
-      await hierarchyBuilder.build(functionalAreas, fileGroups)
+      await hierarchyBuilder.build(functionalAreas, fileGroups, { repoInfo })
     }
     catch (error) {
       log.error(`Phase 2.2 failed: ${error instanceof Error ? error.message : String(error)}`)
@@ -934,7 +1318,7 @@ export class RPGEncoder {
    * Incrementally update RPG with commit-level changes.
    *
    * Delegates to RPGEvolver which implements the Evolution pipeline
-   * from RPG-Encoder §3 (Appendix A.2): Delete → Modify → Insert scheduling.
+   * from RPG-Encoder section 3 (Appendix A.2): Delete -> Modify -> Insert scheduling.
    */
   async evolve(
     rpg: RepositoryPlanningGraph,

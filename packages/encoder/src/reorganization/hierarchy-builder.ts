@@ -1,7 +1,7 @@
 import type { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
 import type { LLMClient } from '@pleaseai/rpg-utils/llm'
 import type { FileFeatureGroup } from './types'
-import { buildHierarchicalConstructionPrompt, HierarchicalConstructionResponseSchema } from './prompts'
+import { buildHierarchicalConstructionPrompt } from './prompts'
 
 /**
  * Hierarchy Builder — construct 3-level semantic hierarchy from functional areas.
@@ -11,6 +11,10 @@ import { buildHierarchicalConstructionPrompt, HierarchicalConstructionResponseSc
  * - Creates HighLevelNodes for each path segment
  * - Creates FunctionalEdges for the hierarchy
  * - Links file LowLevelNodes to their leaf HighLevelNodes
+ *
+ * Uses an iterative refinement loop: after each LLM call, newly assigned groups
+ * are removed from the remaining set, and further iterations proceed until all
+ * groups are assigned or no progress is made (stuck detection).
  */
 export class HierarchyBuilder {
   constructor(
@@ -18,8 +22,22 @@ export class HierarchyBuilder {
     private readonly llmClient: LLMClient,
   ) {}
 
-  async build(functionalAreas: string[], fileGroups: FileFeatureGroup[]): Promise<void> {
-    const assignments = await this.getAssignments(functionalAreas, fileGroups)
+  async build(
+    functionalAreas: string[],
+    fileGroups: FileFeatureGroup[],
+    options?: {
+      repoName?: string
+      repoInfo?: string
+      maxIterations?: number
+    },
+  ): Promise<void> {
+    const assignments = await this.getAssignments(
+      functionalAreas,
+      fileGroups,
+      options?.repoName,
+      options?.repoInfo,
+      options?.maxIterations ?? 10,
+    )
 
     // Build a map: groupLabel → file node IDs
     const groupToFileIds = new Map<string, string[]>()
@@ -104,37 +122,152 @@ export class HierarchyBuilder {
   private async getAssignments(
     functionalAreas: string[],
     fileGroups: FileFeatureGroup[],
+    repoName?: string,
+    repoInfo?: string,
+    maxIterations = 10,
   ): Promise<Record<string, string[]>> {
-    const { system, user } = buildHierarchicalConstructionPrompt(functionalAreas, fileGroups)
+    const allGroupLabels = new Set(fileGroups.map(g => g.groupLabel))
+    const assignedLabels = new Map<string, string>() // groupLabel → path
 
-    let response: { assignments: Record<string, string[]> }
-    try {
-      response = await this.llmClient.completeJSON(user, system, HierarchicalConstructionResponseSchema)
-    }
-    catch (err) {
-      throw new Error(
-        `Hierarchical Construction LLM call failed: ${err instanceof Error ? err.message : String(err)}`,
+    let remainingGroups = [...fileGroups]
+
+    for (let iter = 0; iter < maxIterations && remainingGroups.length > 0; iter++) {
+      const { system, user } = buildHierarchicalConstructionPrompt(
+        functionalAreas,
+        remainingGroups,
+        repoName,
+        repoInfo,
       )
-    }
 
-    this.validatePaths(response.assignments)
-    return response.assignments
-  }
-
-  private validatePaths(mapping: Record<string, string[]>): void {
-    for (const pathStr of Object.keys(mapping)) {
-      const segments = pathStr.split('/')
-      if (segments.length !== 3) {
-        throw new Error(
-          `Invalid hierarchy path "${pathStr}": expected exactly 3 levels (functional_area/category/subcategory), got ${segments.length}`,
-        )
+      let responseText: string
+      try {
+        const response = await this.llmClient.complete(user, system)
+        responseText = response.content
       }
-      for (const segment of segments) {
-        if (!segment || segment.trim().length === 0) {
-          throw new Error(`Invalid hierarchy path "${pathStr}": contains empty segment`)
+      catch {
+        // LLM call failed — break and handle unassigned in handleUnassignedFiles
+        break
+      }
+
+      const rawAssignments = this.parseAssignmentsFromResponse(responseText)
+
+      let assignedThisRound = 0
+      for (const [pathStr, groupLabels] of Object.entries(rawAssignments)) {
+        const validPath = this.validateAndFuzzyMatchPath(pathStr, functionalAreas)
+        if (!validPath)
+          continue
+
+        for (const label of groupLabels) {
+          if (allGroupLabels.has(label) && !assignedLabels.has(label)) {
+            assignedLabels.set(label, validPath)
+            assignedThisRound++
+          }
         }
       }
+
+      if (assignedThisRound === 0) {
+        // Stuck — nothing was assigned this iteration
+        break
+      }
+
+      // Update remaining groups
+      remainingGroups = fileGroups.filter(g => !assignedLabels.has(g.groupLabel))
     }
+
+    // Convert map to Record<path, labels[]>
+    const result: Record<string, string[]> = {}
+    for (const [label, path] of assignedLabels.entries()) {
+      if (!result[path])
+        result[path] = []
+      result[path].push(label)
+    }
+
+    return result
+  }
+
+  private parseAssignmentsFromResponse(text: string): Record<string, string[]> {
+    // Try <solution> block
+    const solutionMatch = text.match(/<solution>\s*([\s\S]*?)\s*<\/solution>/)
+    if (solutionMatch) {
+      try {
+        const parsed = JSON.parse(solutionMatch[1]!.trim())
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+          // Handle wrapper key "assignments"
+          if (
+            parsed.assignments
+            && typeof parsed.assignments === 'object'
+            && !Array.isArray(parsed.assignments)
+          ) {
+            return parsed.assignments as Record<string, string[]>
+          }
+          return parsed as Record<string, string[]>
+        }
+      }
+      catch {
+        /* fall through */
+      }
+    }
+
+    // Try JSON object with "assignments" key
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0])
+        if (parsed.assignments && typeof parsed.assignments === 'object') {
+          return parsed.assignments as Record<string, string[]>
+        }
+        // Direct object (no wrapper key)
+        if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return parsed as Record<string, string[]>
+        }
+      }
+      catch {
+        /* fall through */
+      }
+    }
+
+    return {}
+  }
+
+  private validateAndFuzzyMatchPath(
+    pathStr: string,
+    functionalAreas: string[],
+  ): string | null {
+    const segments = pathStr.split('/')
+    if (segments.length !== 3)
+      return null
+
+    const [area, category, subcategory] = segments
+    if (!area || !category || !subcategory)
+      return null
+    if (category.trim().length === 0 || subcategory.trim().length === 0)
+      return null
+
+    // Exact match
+    if (functionalAreas.includes(area))
+      return pathStr
+
+    // Case-insensitive match
+    const lowerArea = area.toLowerCase()
+    const exactCI = functionalAreas.find(a => a.toLowerCase() === lowerArea)
+    if (exactCI)
+      return `${exactCI}/${category}/${subcategory}`
+
+    // Prefix match
+    const prefixMatch = functionalAreas.find(
+      a => a.toLowerCase().startsWith(lowerArea) || lowerArea.startsWith(a.toLowerCase()),
+    )
+    if (prefixMatch)
+      return `${prefixMatch}/${category}/${subcategory}`
+
+    // Substring match
+    const subMatch = functionalAreas.find(
+      a => a.toLowerCase().includes(lowerArea) || lowerArea.includes(a.toLowerCase()),
+    )
+    if (subMatch)
+      return `${subMatch}/${category}/${subcategory}`
+
+    return null
   }
 
   private async handleUnassignedFiles(
