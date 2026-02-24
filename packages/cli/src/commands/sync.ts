@@ -134,21 +134,12 @@ export function registerSyncCommand(program: Command): void {
               : parseEmbeddings(embeddingsContent)
             const vectors = decodeAllEmbeddings(embeddings)
 
-            // Load into vector store (LanceDB if available, LocalVectorStore fallback)
+            // Load into LocalVectorStore (zero-dependency, disk-based fallback)
             const vectorDbPath = path.join(localDir, 'vectors')
-            let vectorStore: import('@pleaseai/rpg-store/vector-store').VectorStore
-            try {
-              const { LanceDBVectorStore } = await import('@pleaseai/rpg-store/lancedb')
-              vectorStore = new LanceDBVectorStore()
-            }
-            catch {
-              const { LocalVectorStore } = await import('@pleaseai/rpg-store/local')
-              vectorStore = new LocalVectorStore()
-            }
+            const { LocalVectorStore } = await import('@pleaseai/rpg-store/local')
+            const vectorStore: import('@pleaseai/rpg-store/vector-store').VectorStore = new LocalVectorStore()
             await vectorStore.open({
               path: vectorDbPath,
-              tableName: 'rpg_nodes',
-              dimension: embeddings.config.dimension,
             })
 
             // Read the local RPG to get node metadata for content field
