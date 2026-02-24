@@ -10,11 +10,9 @@ import { SemanticExtractor } from '../semantic'
 import { DiffParser } from './diff-parser'
 import { deleteNode, insertNode, processModification } from './operations'
 import { SemanticRouter } from './semantic-router'
-import { DEFAULT_DRIFT_THRESHOLD } from './types'
+import { DEFAULT_DRIFT_THRESHOLD, DEFAULT_FORCE_REGENERATE_THRESHOLD } from './types'
 
 const log = createLogger('RPGEvolver')
-
-const DEFAULT_FORCE_REGENERATE_THRESHOLD = 0.5
 
 export class RPGEvolver {
   private readonly rpg: RepositoryPlanningGraph
@@ -48,7 +46,17 @@ export class RPGEvolver {
       requiresFullEncode: false,
     }
 
-    const diffResult = await this.diffParser.parse(this.options.commitRange)
+    let diffResult: DiffResult
+    try {
+      diffResult = await this.diffParser.parse(this.options.commitRange)
+    }
+    catch (error) {
+      const msg = `Git diff parse failed for range '${this.options.commitRange}': ${error instanceof Error ? error.message : String(error)}`
+      log.error(msg)
+      result.errors.push({ entity: 'diff-parse', phase: 'initialization', error: msg })
+      result.duration = Date.now() - startTime
+      return result
+    }
 
     // Area 9: Judge Regenerate
     const allNodes = await this.rpg.getLowLevelNodes()

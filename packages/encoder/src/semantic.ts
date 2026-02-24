@@ -71,13 +71,18 @@ export interface EntityInput {
 }
 
 /**
+ * Sentinel key used in class batch result maps to store the synthesized class-level feature.
+ * Must match between extractClassBatch (creation) and processClassGroupBatches (consumption).
+ */
+const CLASS_FEATURE_KEY = '__class__' as const
+
+/**
  * A class entity with its child methods for batched processing
  */
 export interface ClassGroup {
   classEntity: EntityInput
   methodEntities: EntityInput[]
 }
-
 
 /**
  * Run tasks with a concurrency limit
@@ -211,8 +216,9 @@ export class SemanticExtractor {
       resultMap.set(idx, feature)
     }
 
-    // Return results in original order
-    return inputs.map((_, i) => resultMap.get(i)!)
+    // Return results in original order; fall back to heuristic for any entity
+    // that was not placed in the map (e.g. if extract() threw unexpectedly)
+    return inputs.map((input, i) => resultMap.get(i) ?? this.extractWithHeuristic(input))
   }
 
   /**
@@ -244,8 +250,8 @@ export class SemanticExtractor {
             const classResult = batchResult.get(classEntity.name)
 
             if (classResult instanceof Map) {
-              // Class with methods: methodMap has '__class__' entry for the class itself
-              const classFeature = classResult.get('__class__')
+              // Class with methods: methodMap has CLASS_FEATURE_KEY entry for the class itself
+              const classFeature = classResult.get(CLASS_FEATURE_KEY)
               if (classFeature) {
                 const classIdx = allInputs.indexOf(classEntity)
                 if (classIdx !== -1) {
@@ -293,6 +299,7 @@ export class SemanticExtractor {
         catch (error) {
           const msg = error instanceof Error ? error.message : String(error)
           log.warn(`Class batch iteration ${iteration}/${maxIterations} failed: ${msg}`)
+          this.warnings.push(`[SemanticExtractor] Class batch extraction failed (iteration ${iteration}/${maxIterations}): ${msg}. Affected entities will fall back to heuristic.`)
           break
         }
       }
@@ -303,7 +310,7 @@ export class SemanticExtractor {
 
   /**
    * Extract features for a batch of class groups using LLM.
-   * Returns a map: className -> (Map<methodName | '__class__', SemanticFeature> | SemanticFeature)
+   * Returns a map: className -> (Map<methodName | CLASS_FEATURE_KEY, SemanticFeature> | SemanticFeature)
    */
   private async extractClassBatch(
     classGroups: ClassGroup[],
@@ -382,7 +389,7 @@ export class SemanticExtractor {
             classEntity.name,
             classEntity.filePath,
           )
-          methodMap.set('__class__', classFeature)
+          methodMap.set(CLASS_FEATURE_KEY, classFeature)
 
           result.set(classEntity.name, methodMap)
         }
@@ -438,6 +445,7 @@ export class SemanticExtractor {
         catch (error) {
           const msg = error instanceof Error ? error.message : String(error)
           log.warn(`Function batch iteration ${iteration}/${maxIterations} failed: ${msg}`)
+          this.warnings.push(`[SemanticExtractor] Function batch extraction failed (iteration ${iteration}/${maxIterations}): ${msg}. Affected entities will fall back to heuristic.`)
           break
         }
       }

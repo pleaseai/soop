@@ -9,12 +9,12 @@ export interface EvolutionOptions {
   /** Cosine distance threshold for semantic drift to trigger node rerouting (default: 0.3) */
   driftThreshold?: number
   /**
-   * Cosine distance threshold for full re-encode (default: 0.5).
-   * Must be >= driftThreshold — when changeRatio exceeds this value,
+   * Change ratio threshold for full re-encode (default: 0.5).
+   * Computed as `totalChanges / nodeCount`. When this ratio exceeds the threshold,
    * the evolver returns `requiresFullEncode: true` instead of applying incremental changes.
    */
   forceRegenerateThreshold?: number
-  /** Whether to use LLM for semantic feature re-extraction (default: false) */
+  /** Whether to use LLM for semantic feature re-extraction (default: true) */
   useLLM?: boolean
   /** Options passed to the semantic extractor for modified entities */
   semantic?: SemanticOptions
@@ -49,6 +49,7 @@ export interface EvolutionResult {
 }
 
 export interface ChangedEntity {
+  /** Entity ID in the format `filePath:entityType:qualifiedName` */
   id: string
   filePath: string
   entityType: EntityType
@@ -77,3 +78,4 @@ export interface FileChange {
 }
 
 export const DEFAULT_DRIFT_THRESHOLD = 0.3
+export const DEFAULT_FORCE_REGENERATE_THRESHOLD = 0.5

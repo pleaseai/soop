@@ -872,7 +872,8 @@ export class RPGEncoder {
             : String(e.data_type ?? e.dataType ?? 'unknown'),
         }))
     }
-    catch {
+    catch (error) {
+      log.debug(`parseDataFlowEdges: failed to parse JSON array from LLM response: ${error instanceof Error ? error.message : String(error)}`)
       return []
     }
   }
@@ -962,6 +963,9 @@ export class RPGEncoder {
     }
 
     log.info(`Phase 1 done: ${this.cacheHits} cache hits, ${this.cacheMisses} cache misses`)
+
+    // Collect any LLM fallback warnings from the semantic extractor (e.g. batch failures)
+    warnings.push(...this.semanticExtractor.getWarnings())
 
     // Deduplicate file-level summaries before adding to graph (Area 5)
     this.deduplicateFileSummaries(allExtractionResults)
