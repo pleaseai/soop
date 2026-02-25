@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry run — build binaries but skip npm publish'
+        description: Dry run — build binaries but skip npm publish
         type: boolean
         default: false
 
