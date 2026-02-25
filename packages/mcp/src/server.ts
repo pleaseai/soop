@@ -24,8 +24,8 @@ import {
   ExploreInputSchema,
   FetchInputBaseSchema,
   FetchInputSchema,
-  RPG_TOOLS,
   SearchInputSchema,
+  SOOP_TOOLS,
   StatsInputSchema,
 } from './tools'
 
@@ -61,44 +61,44 @@ export function createMcpServer(
 
   // Register all RPG tools
   server.tool(
-    RPG_TOOLS.soop_search.name,
-    RPG_TOOLS.soop_search.description,
+    SOOP_TOOLS.soop_search.name,
+    SOOP_TOOLS.soop_search.description,
     SearchInputSchema.shape,
     async args =>
       wrapHandler(() => executeSearch(rpg, SearchInputSchema.parse(args), search)),
   )
 
   server.tool(
-    RPG_TOOLS.soop_fetch.name,
-    RPG_TOOLS.soop_fetch.description,
+    SOOP_TOOLS.soop_fetch.name,
+    SOOP_TOOLS.soop_fetch.description,
     FetchInputBaseSchema.shape,
     async (args: unknown) => wrapHandler(() => executeFetch(rpg, FetchInputSchema.parse(args), { rootPath })),
   )
 
   server.tool(
-    RPG_TOOLS.soop_explore.name,
-    RPG_TOOLS.soop_explore.description,
+    SOOP_TOOLS.soop_explore.name,
+    SOOP_TOOLS.soop_explore.description,
     ExploreInputSchema.shape,
     async args => wrapHandler(() => executeExplore(rpg, ExploreInputSchema.parse(args))),
   )
 
   server.tool(
-    RPG_TOOLS.soop_encode.name,
-    RPG_TOOLS.soop_encode.description,
+    SOOP_TOOLS.soop_encode.name,
+    SOOP_TOOLS.soop_encode.description,
     EncodeInputSchema.shape,
     async args => wrapHandler(() => executeEncode(EncodeInputSchema.parse(args))),
   )
 
   server.tool(
-    RPG_TOOLS.soop_evolve.name,
-    RPG_TOOLS.soop_evolve.description,
+    SOOP_TOOLS.soop_evolve.name,
+    SOOP_TOOLS.soop_evolve.description,
     EvolveInputSchema.shape,
     async args => wrapHandler(() => executeEvolve(rpg, EvolveInputSchema.parse(args))),
   )
 
   server.tool(
-    RPG_TOOLS.soop_stats.name,
-    RPG_TOOLS.soop_stats.description,
+    SOOP_TOOLS.soop_stats.name,
+    SOOP_TOOLS.soop_stats.description,
     StatsInputSchema.shape,
     async () => wrapHandler(() => executeStats(rpg)),
   )

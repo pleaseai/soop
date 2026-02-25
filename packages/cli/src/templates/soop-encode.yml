@@ -55,7 +55,7 @@ jobs:
                 repo encode . -o .soop/graph.json --stamp $EMBED_FLAG
               }
               # Re-generate embeddings after evolve
-              repo embed --rpg .soop/graph.json --model $EMBED_MODEL --stamp || true
+              repo embed --rpg .soop/graph.json --model $EMBED_MODEL --stamp
             fi
           fi
 

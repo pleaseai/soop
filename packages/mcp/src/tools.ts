@@ -99,7 +99,7 @@ export type StatsInput = z.infer<typeof StatsInputSchema>
 /**
  * MCP tool definitions for RPG operations
  */
-export const RPG_TOOLS = {
+export const SOOP_TOOLS = {
   soop_search: {
     name: 'soop_search',
     description:

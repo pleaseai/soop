@@ -25,8 +25,8 @@ export {
   executeStats,
   ExploreInputSchema,
   FetchInputSchema,
-  RPG_TOOLS,
   SearchInputSchema,
+  SOOP_TOOLS,
   StatsInputSchema,
 } from './tools'
 
