@@ -5,15 +5,15 @@
       "type": "node-workspace"
     }
   ],
+  "release-type": "node",
+  "changelog-path": "CHANGELOG.md",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": true,
+  "include-v-in-tag": true,
   "packages": {
     "packages/soop": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
       "include-component-in-tag": false,
-      "include-v-in-tag": true,
       "extra-files": [
         {
           "type": "json",
@@ -53,76 +53,36 @@
       ]
     },
     "packages/cli": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop-cli",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "include-component-in-tag": true,
-      "include-v-in-tag": true
+      "include-component-in-tag": true
     },
     "packages/encoder": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop-encoder",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "include-component-in-tag": true,
-      "include-v-in-tag": true
+      "include-component-in-tag": true
     },
     "packages/graph": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop-graph",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "include-component-in-tag": true,
-      "include-v-in-tag": true
+      "include-component-in-tag": true
     },
     "packages/mcp": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop-mcp",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "include-component-in-tag": true,
-      "include-v-in-tag": true
+      "include-component-in-tag": true
     },
     "packages/store": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop-store",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "include-component-in-tag": true,
-      "include-v-in-tag": true
+      "include-component-in-tag": true
     },
     "packages/tools": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop-tools",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "include-component-in-tag": true,
-      "include-v-in-tag": true
+      "include-component-in-tag": true
     },
     "packages/utils": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop-utils",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "include-component-in-tag": true,
-      "include-v-in-tag": true
+      "include-component-in-tag": true
     },
     "packages/zerorepo": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop-zerorepo",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "include-component-in-tag": true,
-      "include-v-in-tag": true
+      "include-component-in-tag": true
     }
   }
 }
