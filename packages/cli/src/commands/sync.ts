@@ -1,12 +1,12 @@
-import type { VectorStore } from '@pleaseai/rpg-store/vector-store'
 import type { Command } from 'commander'
+import type { VectorStore } from '@pleaseai/repo-store/vector-store'
 import { existsSync } from 'node:fs'
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { decodeAllEmbeddings, parseEmbeddings, parseEmbeddingsJsonl } from '@pleaseai/rpg-graph/embeddings'
-import { LocalVectorStore } from '@pleaseai/rpg-store/local'
-import { getCurrentBranch, getDefaultBranch, getHeadCommitSha, getMergeBase } from '@pleaseai/rpg-utils/git-helpers'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { LocalVectorStore } from '@pleaseai/repo-store/local'
+import { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } from '@pleaseai/repo-graph/embeddings'
+import { getCurrentBranch, getDefaultBranch, getHeadCommitSha, getMergeBase } from '@pleaseai/repo-utils/git-helpers'
+import { createLogger } from '@pleaseai/repo-utils/logger'
 
 const log = createLogger('sync')
 
@@ -26,15 +26,15 @@ export function registerSyncCommand(program: Command): void {
     .action(
       async (options: { force?: boolean }) => {
         const repoPath = process.cwd()
-        const rpgDir = path.join(repoPath, '.rpg')
-        const canonicalPath = path.join(rpgDir, 'graph.json')
-        const localDir = path.join(rpgDir, 'local')
+        const repoDir = path.join(repoPath, '.repo')
+        const canonicalPath = path.join(repoDir, 'graph.json')
+        const localDir = path.join(repoDir, 'local')
         const localGraphPath = path.join(localDir, 'graph.json')
         const localStatePath = path.join(localDir, 'state.json')
 
         // 1. Validate canonical graph exists
         if (!existsSync(canonicalPath)) {
-          log.error('.rpg/graph.json not found. Run "rpg init --encode" first.')
+          log.error('.repo/graph.json not found. Run "repo init --encode" first.')
           process.exit(1)
         }
 
@@ -56,7 +56,7 @@ export function registerSyncCommand(program: Command): void {
         }
 
         // 4. Read canonical graph to get base commit
-        const { RepositoryPlanningGraph } = await import('@pleaseai/rpg-graph')
+        const { RepositoryPlanningGraph } = await import('@pleaseai/repo-graph')
         const canonicalJson = await readFile(canonicalPath, 'utf-8')
         const canonicalRpg = await RepositoryPlanningGraph.fromJSON(canonicalJson)
         const canonicalCommit = canonicalRpg.getConfig().github?.commit
@@ -103,7 +103,7 @@ export function registerSyncCommand(program: Command): void {
             try {
               const localJson = await readFile(localGraphPath, 'utf-8')
               const localRpg = await RepositoryPlanningGraph.fromJSON(localJson)
-              const { RPGEncoder } = await import('@pleaseai/rpg-encoder')
+              const { RPGEncoder } = await import('@pleaseai/repo-encoder')
               const encoder = new RPGEncoder(repoPath)
               const result = await encoder.evolve(localRpg, { commitRange })
 
@@ -136,8 +136,8 @@ export function registerSyncCommand(program: Command): void {
 
         // 6. Load pre-computed embeddings into local vector DB if available
         let embeddingsLoaded = false
-        const embeddingsPathJsonl = path.join(rpgDir, 'embeddings.jsonl')
-        const embeddingsPathJson = path.join(rpgDir, 'embeddings.json')
+        const embeddingsPathJsonl = path.join(repoDir, 'embeddings.jsonl')
+        const embeddingsPathJson = path.join(repoDir, 'embeddings.json')
         const embeddingsPath = existsSync(embeddingsPathJsonl) ? embeddingsPathJsonl : embeddingsPathJson
         if (existsSync(embeddingsPath)) {
           const vectorDbPath = path.join(localDir, 'vectors')

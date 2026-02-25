@@ -2,8 +2,8 @@ import type { Command } from 'commander'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { getHeadCommitSha } from '@pleaseai/rpg-utils/git-helpers'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { getHeadCommitSha } from '@pleaseai/repo-utils/git-helpers'
+import { createLogger } from '@pleaseai/repo-utils/logger'
 
 const log = createLogger('init')
 
@@ -28,7 +28,7 @@ const DEFAULT_CONFIG: RPGProjectConfig = {
 export function registerInitCommand(program: Command): void {
   program
     .command('init')
-    .description('Initialize RPG in a repository')
+    .description('Initialize Repo Please in a repository')
     .argument('[path]', 'Repository path', '.')
     .option('--hooks', 'Install git hooks (post-merge, post-checkout)')
     .option('--ci', 'Generate GitHub Actions workflow file')
@@ -47,15 +47,15 @@ export function registerInitCommand(program: Command): void {
         try {
           const absPath = path.resolve(repoPath)
 
-          // 1. Create .rpg/ directory structure
-          const rpgDir = path.join(absPath, '.rpg')
-          const localDir = path.join(rpgDir, 'local')
+          // 1. Create .repo/ directory structure
+          const repoDir = path.join(absPath, '.repo')
+          const localDir = path.join(repoDir, 'local')
 
-          if (existsSync(path.join(rpgDir, 'config.json'))) {
-            log.warn('.rpg/config.json already exists, skipping config creation')
+          if (existsSync(path.join(repoDir, 'config.json'))) {
+            log.warn('.repo/config.json already exists, skipping config creation')
           }
           else {
-            await mkdir(rpgDir, { recursive: true })
+            await mkdir(repoDir, { recursive: true })
             const configToWrite: RPGProjectConfig = { ...DEFAULT_CONFIG }
             if (options.embed) {
               configToWrite.embedding = {
@@ -66,18 +66,18 @@ export function registerInitCommand(program: Command): void {
               }
             }
             await writeFile(
-              path.join(rpgDir, 'config.json'),
+              path.join(repoDir, 'config.json'),
               JSON.stringify(configToWrite, null, 2),
             )
-            log.success('Created .rpg/config.json')
+            log.success('Created .repo/config.json')
           }
 
-          // 2. Create .rpg/local/ directory
+          // 2. Create .repo/local/ directory
           await mkdir(path.join(localDir, 'vectors'), { recursive: true })
-          log.success('Created .rpg/local/ directory')
+          log.success('Created .repo/local/ directory')
 
-          // 3. Add .rpg/local/ to .gitignore
-          await ensureGitignoreEntry(absPath, '.rpg/local/')
+          // 3. Add .repo/local/ to .gitignore
+          await ensureGitignoreEntry(absPath, '.repo/local/')
 
           // 4. Install git hooks if requested
           if (options.hooks) {
@@ -92,7 +92,7 @@ export function registerInitCommand(program: Command): void {
 
           // 6. Run initial encode if requested
           if (options.encode) {
-            const { RPGEncoder } = await import('@pleaseai/rpg-encoder')
+            const { RPGEncoder } = await import('@pleaseai/repo-encoder')
             log.start('Running initial encode...')
             const encoder = new RPGEncoder(absPath)
             const result = await encoder.encode()
@@ -109,12 +109,12 @@ export function registerInitCommand(program: Command): void {
               },
             })
 
-            const outputPath = path.join(rpgDir, 'graph.json')
+            const outputPath = path.join(repoDir, 'graph.json')
             await writeFile(outputPath, await result.rpg.toJSON())
-            log.success(`Encoded ${result.filesProcessed} files → .rpg/graph.json`)
+            log.success(`Encoded ${result.filesProcessed} files → .repo/graph.json`)
           }
 
-          log.success('RPG initialized')
+          log.success('Repo Please initialized')
         }
         catch (error) {
           const msg = error instanceof Error ? error.message : String(error)
@@ -142,25 +142,25 @@ export async function ensureGitignoreEntry(repoPath: string, pattern: string): P
   }
 
   const separator = content.length > 0 && !content.endsWith('\n') ? '\n' : ''
-  const section = `${separator}\n# RPG local data\n${pattern}\n`
+  const section = `${separator}\n# Repo local data\n${pattern}\n`
   await writeFile(gitignorePath, content + section)
   log.success(`Added "${pattern}" to .gitignore`)
 }
 
 export async function generateCIWorkflow(repoPath: string): Promise<void> {
   const workflowDir = path.join(repoPath, '.github', 'workflows')
-  const workflowPath = path.join(workflowDir, 'rpg-encode.yml')
+  const workflowPath = path.join(workflowDir, 'repo-encode.yml')
 
   if (existsSync(workflowPath)) {
-    log.warn('.github/workflows/rpg-encode.yml already exists, skipping')
+    log.warn('.github/workflows/repo-encode.yml already exists, skipping')
     return
   }
 
   await mkdir(workflowDir, { recursive: true })
 
   // import.meta.dirname = packages/cli/src/commands/
-  // Template is at packages/cli/src/templates/rpg-encode.yml
-  const templatePath = path.join(import.meta.dirname, '..', 'templates', 'rpg-encode.yml')
+  // Template is at packages/cli/src/templates/repo-encode.yml
+  const templatePath = path.join(import.meta.dirname, '..', 'templates', 'repo-encode.yml')
   let template: string
   if (existsSync(templatePath)) {
     template = await readFile(templatePath, 'utf-8')
@@ -171,5 +171,5 @@ export async function generateCIWorkflow(repoPath: string): Promise<void> {
   }
 
   await writeFile(workflowPath, template)
-  log.success('Created .github/workflows/rpg-encode.yml')
+  log.success('Created .github/workflows/repo-encode.yml')
 }
