@@ -275,6 +275,7 @@ MIT License
 
 ## Related Projects
 
+- [RepoGraph](https://github.com/ozyyshr/RepoGraph) ([arXiv:2410.14684](https://arxiv.org/abs/2410.14684)) — Repository-level code graph module for AI software engineering (ICLR 2025); constructs dependency and reference graphs to provide LLMs with repository-wide navigation context, achieving state-of-the-art on SWE-bench among open-source frameworks
 - [Beads](https://github.com/steveyegge/beads) — Distributed, git-backed task tracking system for AI coding agents; provides persistent structured memory and dependency-aware task graphs for long-horizon agent workflows
 
 ## Acknowledgments
