@@ -37,8 +37,8 @@ coverage/
 *.rpg.json
 
 # Repo local data
-.repo/local/
-.repo/cache/
+.soop/local/
+.soop/cache/
 
 # Bun
 bun.lockb

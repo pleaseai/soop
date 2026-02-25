@@ -1,5 +1,5 @@
-import type { EntityInput } from '@pleaseai/repo-encoder/semantic'
-import { SemanticExtractor } from '@pleaseai/repo-encoder/semantic'
+import type { EntityInput } from '@pleaseai/soop-encoder/semantic'
+import { SemanticExtractor } from '@pleaseai/soop-encoder/semantic'
 import { describe, expect, it, vi } from 'vitest'
 
 describe('SemanticExtractor multi-iteration extraction', () => {

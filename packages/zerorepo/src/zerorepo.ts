@@ -1,4 +1,4 @@
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
 
 /**
  * Options for ZeroRepo generation

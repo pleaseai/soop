@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**repo please** is a TypeScript/Bun implementation of two research papers:
+**soop please** is a TypeScript/Bun implementation of two research papers:
 - **RPG-ZeroRepo**: Repository generation from specifications (Intent → Code)
 - **RPG-Encoder**: Repository understanding via graph encoding (Code → Intent)
 
 The core data structure is the **Repository Planning Graph (RPG)** - a hierarchical dual-view graph combining semantic features with structural metadata.
 
-> Note: "RPG" (Repository Planning Graph) as a concept name is preserved in class names (`RepositoryPlanningGraph`, `RPGEncoder`, etc.). Only the brand/CLI/package names have changed to "repo please" / `repo` / `@pleaseai/repo`.
+> Note: "RPG" (Repository Planning Graph) as a concept name is preserved in class names (`RepositoryPlanningGraph`, `RPGEncoder`, etc.). Only the brand/CLI/package names have changed to "soop please" / `repo` / `@pleaseai/soop`.
 
 ## Build & Development Commands
 
@@ -63,29 +63,29 @@ bun run typecheck
 # CLI (development)
 bun run packages/cli/src/cli.ts encode ./my_project
 
-# Initialize repo please in a repository
-repo init [path] [--hooks] [--ci] [--encode]
+# Initialize soop please in a repository
+soop init [path] [--hooks] [--ci] [--encode]
 
 # Sync canonical graph to local with incremental evolve
-repo sync [--force]
+soop sync [--force]
 
 # Stamp config.github.commit with current HEAD SHA
-repo stamp <repo-file>
+soop stamp <repo-file>
 
 # Print last encoded commit SHA
-repo last-commit <repo-file>
+soop last-commit <repo-file>
 ```
 
 ## Two-Tier RPG Data Management
 
-repo please uses a two-tier architecture for data management:
+soop please uses a two-tier architecture for data management:
 
-**Tier 1 (CI)**: On main push, `repo encode`/`repo evolve` runs in GitHub Actions and commits `.repo/graph.json` to git.
+**Tier 1 (CI)**: On main push, `soop encode`/`soop evolve` runs in GitHub Actions and commits `.soop/graph.json` to git.
 
-**Tier 2 (Local)**: `repo sync` copies the canonical graph to `.repo/local/`, applies incremental evolve for local branch changes, and builds vector indices. Local data is gitignored.
+**Tier 2 (Local)**: `soop sync` copies the canonical graph to `.soop/local/`, applies incremental evolve for local branch changes, and builds vector indices. Local data is gitignored.
 
 ```
-.repo/
+.soop/
   graph.json          # Canonical RPG (git committed, CI-managed)
   config.json         # Encode/sync settings (git committed)
   cache/              # Semantic cache (gitignored)
@@ -100,27 +100,27 @@ repo please uses a two-tier architecture for data management:
 
 ```bash
 # Initialize with CI workflow and git hooks
-repo init --ci --hooks --encode
+soop init --ci --hooks --encode
 
 # Or step by step:
-repo init                      # Create .repo/ structure
-repo encode . -o .repo/graph.json --stamp  # Initial encode
-repo sync                      # Copy to local + evolve
+soop init                      # Create .soop/ structure
+soop encode . -o .soop/graph.json --stamp  # Initial encode
+soop sync                      # Copy to local + evolve
 ```
 
 ### Commit tracking
 
-The `--stamp` flag on `encode`/`evolve` records the HEAD SHA in `config.github.commit`. The CI workflow uses `repo last-commit` to determine the commit range for incremental evolve.
+The `--stamp` flag on `encode`/`evolve` records the HEAD SHA in `config.github.commit`. The CI workflow uses `soop last-commit` to determine the commit range for incremental evolve.
 
 ## Architecture
 
 ### Workspace Structure
 
-The project uses **Bun workspaces** with a private monorepo root (`version: 0.0.0`) and 9 packages under `packages/`. The published package is `packages/repo` (`@pleaseai/repo`); all other packages are `private: true` and bundled inline.
+The project uses **Bun workspaces** with a private monorepo root (`version: 0.0.0`) and 9 packages under `packages/`. The published package is `packages/soop` (`@pleaseai/soop`); all other packages are `private: true` and bundled inline.
 
 ```
 packages/
-├── repo/      # Published: @pleaseai/repo (umbrella package, bin/repo, bin/repo-mcp)
+├── soop/      # Published: @pleaseai/soop (umbrella package, bin/soop, bin/soop-mcp)
 ├── utils/     # Layer 0: AST parser, LLM interface, git helpers, logger (independent)
 ├── store/     # Layer 0: Storage interfaces & implementations (independent)
 ├── graph/     # Layer 1: RPG data structures (→ store)
@@ -136,14 +136,14 @@ packages/
 Cross-package imports use workspace package names:
 ```typescript
 // Correct: workspace package imports
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import { ASTParser } from '@pleaseai/repo-utils/ast'
-import { RPGEncoder } from '@pleaseai/repo-encoder'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { ASTParser } from '@pleaseai/soop-utils/ast'
+import { RPGEncoder } from '@pleaseai/soop-encoder'
 
 // Sub-path exports are available for fine-grained imports:
-import { SQLiteGraphStore } from '@pleaseai/repo-store/sqlite'
-import { DataFlowEdgeSchema } from '@pleaseai/repo-graph/edge'
-import { SemanticSearch } from '@pleaseai/repo-encoder/semantic-search'
+import { SQLiteGraphStore } from '@pleaseai/soop-store/sqlite'
+import { DataFlowEdgeSchema } from '@pleaseai/soop-graph/edge'
+import { SemanticSearch } from '@pleaseai/soop-encoder/semantic-search'
 ```
 
 Within the same package, use relative imports:
@@ -167,14 +167,14 @@ import { DataFlowDetector } from './data-flow'
 
 | Package | Purpose |
 |---------|---------|
-| `@pleaseai/repo-utils` | AST parser (tree-sitter), LLM interface (OpenAI/Anthropic/Google), git helpers, logger |
-| `@pleaseai/repo-store` | Storage interfaces (GraphStore, VectorStore, TextSearchStore) & implementations (SQLite, SurrealDB, LanceDB) |
-| `@pleaseai/repo-graph` | RPG data structures (Node, Edge, RPG class) |
-| `@pleaseai/repo-encoder` | Code → RPG extraction (semantic lifting, structural reorganization, artifact grounding, evolution) |
-| `@pleaseai/repo-tools` | Agentic tools (SearchNode, FetchNode, ExploreRPG) for graph navigation |
-| `@pleaseai/repo-zerorepo` | Intent → Code generation (proposal construction, implementation planning, code generation) |
-| `@pleaseai/repo-mcp` | MCP server for Claude Code integration |
-| `@pleaseai/repo-cli` | CLI entry point |
+| `@pleaseai/soop-utils` | AST parser (tree-sitter), LLM interface (OpenAI/Anthropic/Google), git helpers, logger |
+| `@pleaseai/soop-store` | Storage interfaces (GraphStore, VectorStore, TextSearchStore) & implementations (SQLite, SurrealDB, LanceDB) |
+| `@pleaseai/soop-graph` | RPG data structures (Node, Edge, RPG class) |
+| `@pleaseai/soop-encoder` | Code → RPG extraction (semantic lifting, structural reorganization, artifact grounding, evolution) |
+| `@pleaseai/soop-tools` | Agentic tools (SearchNode, FetchNode, ExploreRPG) for graph navigation |
+| `@pleaseai/soop-zerorepo` | Intent → Code generation (proposal construction, implementation planning, code generation) |
+| `@pleaseai/soop-mcp` | MCP server for Claude Code integration |
+| `@pleaseai/soop-cli` | CLI entry point |
 
 ### Key Pipelines
 
@@ -190,7 +190,7 @@ import { DataFlowDetector } from './data-flow'
 
 ### Store Implementations
 
-The `@pleaseai/repo-store` package provides the storage layer with decomposed interfaces:
+The `@pleaseai/soop-store` package provides the storage layer with decomposed interfaces:
 
 | Store | Module | Engine | Search |
 |-------|--------|--------|--------|
@@ -204,11 +204,11 @@ The `@pleaseai/repo-store` package provides the storage layer with decomposed in
 
 **Import pattern** — store implementations are NOT re-exported from the barrel to avoid transitive native module loading:
 ```typescript
-import { SQLiteGraphStore } from '@pleaseai/repo-store/sqlite'
-import { SurrealGraphStore } from '@pleaseai/repo-store/surreal'
-import { LocalVectorStore, LocalGraphStore, LocalTextSearchStore } from '@pleaseai/repo-store/local' // zero-dependency defaults
-import { LanceDBVectorStore } from '@pleaseai/repo-store/lancedb' // optional, requires @lancedb/lancedb
-import { DefaultContextStore } from '@pleaseai/repo-store/default-context-store'
+import { SQLiteGraphStore } from '@pleaseai/soop-store/sqlite'
+import { SurrealGraphStore } from '@pleaseai/soop-store/surreal'
+import { LocalVectorStore, LocalGraphStore, LocalTextSearchStore } from '@pleaseai/soop-store/local' // zero-dependency defaults
+import { LanceDBVectorStore } from '@pleaseai/soop-store/lancedb' // optional, requires @lancedb/lancedb
+import { DefaultContextStore } from '@pleaseai/soop-store/default-context-store'
 ```
 
 ### Key Libraries
@@ -231,7 +231,7 @@ import { DefaultContextStore } from '@pleaseai/repo-store/default-context-store'
 
 ## MCP Server
 
-repo please provides an MCP (Model Context Protocol) server for Claude Code integration.
+soop please provides an MCP (Model Context Protocol) server for Claude Code integration.
 
 ### Running the MCP Server
 
@@ -247,11 +247,12 @@ bun run mcp tests/fixtures/sample-rpg.json
 
 | Tool | Description |
 |------|-------------|
-| `repo_search` | Semantic code search by features or file patterns |
-| `repo_fetch` | Retrieve entity details, source code, and feature paths |
-| `repo_explore` | Traverse the graph along functional/dependency edges |
-| `repo_encode` | Convert a repository into an RPG |
-| `repo_stats` | Get graph statistics (node/edge counts) |
+| `soop_search` | Semantic code search by features or file patterns |
+| `soop_fetch` | Retrieve entity details, source code, and feature paths |
+| `soop_explore` | Traverse the graph along functional/dependency edges |
+| `soop_encode` | Convert a repository into an RPG |
+| `soop_evolve` | Incrementally update the RPG with new commits |
+| `soop_stats` | Get graph statistics (node/edge counts) |
 
 ### Claude Code Configuration
 
@@ -260,9 +261,9 @@ Add to your Claude Code settings (`.claude/settings.json` or `~/.config/claude/s
 ```json
 {
   "mcpServers": {
-    "repo": {
+    "soop": {
       "command": "bun",
-      "args": ["run", "/path/to/repo/packages/mcp/src/server.ts", "/path/to/repo-file.json"],
+      "args": ["run", "/path/to/soop/packages/mcp/src/server.ts", "/path/to/graph-file.json"],
       "env": {}
     }
   }
@@ -274,9 +275,9 @@ Or with the installed package:
 ```json
 {
   "mcpServers": {
-    "repo": {
-      "command": "repo-mcp",
-      "args": ["/path/to/repo-file.json"]
+    "soop": {
+      "command": "soop-mcp",
+      "args": ["/path/to/graph-file.json"]
     }
   }
 }
@@ -288,22 +289,22 @@ All git commit messages, code comments, GitHub issues, pull request titles/descr
 
 ## Design Decisions
 
-- **Bun workspaces**: Monorepo with private root (`version: 0.0.0`) and `packages/repo` as the published umbrella package; all `@pleaseai/repo-*` workspace packages are `private: true`
+- **Bun workspaces**: Monorepo with private root (`version: 0.0.0`) and `packages/soop` as the published umbrella package; all `@pleaseai/soop-*` workspace packages are `private: true`
 - **Vitest over Bun Test**: Jest compatibility for planned MCP server development
-- **LanceDB over ChromaDB**: No external server required, Bun-native, disk-based persistence — available as an optional high-performance vector store via `@pleaseai/repo-store/lancedb`; `LocalVectorStore` (zero-dependency JSON store) is the current default everywhere, with LanceDB as an opt-in upgrade
-- **All workspace packages bundled inline**: `@pleaseai/repo-*` are all `private: true` and not published to npm; tsdown `noExternal` bundles them into the CLI/MCP/library outputs so `npm install -g @pleaseai/repo` works without 404 errors
+- **LanceDB over ChromaDB**: No external server required, Bun-native, disk-based persistence — available as an optional high-performance vector store via `@pleaseai/soop-store/lancedb`; `LocalVectorStore` (zero-dependency JSON store) is the current default everywhere, with LanceDB as an opt-in upgrade
+- **All workspace packages bundled inline**: `@pleaseai/soop-*` are all `private: true` and not published to npm; tsdown `noExternal` bundles them into the CLI/MCP/library outputs so `npm install -g @pleaseai/soop` works without 404 errors
 - **Paper-based implementation**: Original implementation based on research papers, not forked from Microsoft code
-- **Dual GraphStore backends**: SQLiteGraphStore (better-sqlite3) and SurrealGraphStore (native graph relations) in `@pleaseai/repo-store` for evaluation
+- **Dual GraphStore backends**: SQLiteGraphStore (better-sqlite3) and SurrealGraphStore (native graph relations) in `@pleaseai/soop-store` for evaluation
 
 ## Logging
 
-The project uses [`consola`](https://github.com/unjs/consola) for structured logging via `@pleaseai/repo-utils/logger`.
+The project uses [`consola`](https://github.com/unjs/consola) for structured logging via `@pleaseai/soop-utils/logger`.
 
 ### Usage
 
 ```typescript
 // In library packages — use createLogger with a tag
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 const log = createLogger('MyModule')
 log.info('Processing...')       // [MyModule] Processing...
 log.warn('Fallback used')       // [MyModule] Fallback used
@@ -311,11 +312,11 @@ log.error('Operation failed')   // [MyModule] Operation failed
 log.debug('Verbose details')    // Hidden unless log level >= 4
 
 // In MCP server — use createStderrLogger (stdout reserved for JSON-RPC)
-import { createStderrLogger } from '@pleaseai/repo-utils/logger'
+import { createStderrLogger } from '@pleaseai/soop-utils/logger'
 const log = createStderrLogger('MCP')
 
 // Set global log level (affects all loggers: createLogger children + createStderrLogger instances)
-import { setLogLevel, LogLevels } from '@pleaseai/repo-utils/logger'
+import { setLogLevel, LogLevels } from '@pleaseai/soop-utils/logger'
 setLogLevel(LogLevels.debug)    // Enable debug output
 ```
 
@@ -359,10 +360,10 @@ If `better-sqlite3` native bindings are compiled for a different Node.js version
 - Test files live in `packages/*/tests/` — run a single package's tests with e.g. `bun run test packages/encoder/tests/semantic.test.ts`
 
 ### CI shallow clones
-- `actions/checkout@v6` defaults to `fetch-depth: 1` — tests using `HEAD~1..HEAD` or specific commit hashes will fail
+- `actions/checkout` (v4/v6 depending on workflow) defaults to `fetch-depth: 1` — tests using `HEAD~1..HEAD` or specific commit hashes will fail
 - Unit tests use `fetch-depth: 2`; integration tests use `fetch-depth: 0` (full history for submodule fixture commits)
 - Guard git-history-dependent tests with `it.skipIf(!hasGitAncestor(repoPath, ref))` as a safety net
-- The `tests/fixtures/superjson` submodule is a real git repo used for evolution/diff-parser integration tests
+- The `tests/fixtures/superjson` submodule is a real git soop used for evolution/diff-parser integration tests
 
 ### Linter auto-formatting
 - Always run `bun run lint:fix` after editing test files — the local formatter and CI linter may disagree on arrow-parens, brace-style, and comma-dangle
@@ -399,7 +400,7 @@ All Voyage 4 models (including local `voyage-4-nano`) share the same embedding s
 
 ### CI Workflow Model Selection
 
-The `repo init --ci` template automatically selects the embedding model:
+The `soop init --ci` template automatically selects the embedding model:
 
 - `VOYAGE_API_KEY` set → `voyage-ai/voyage-4`
 - `VOYAGE_API_KEY` not set → `transformers/voyageai/voyage-4-nano` (free, no API key required)

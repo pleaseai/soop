@@ -1,5 +1,5 @@
-import type { GitHubSource, RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import type { Node } from '@pleaseai/repo-graph/node'
+import type { GitHubSource, RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import type { Node } from '@pleaseai/soop-graph/node'
 import { readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 

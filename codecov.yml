@@ -31,56 +31,56 @@ component_management:
         target: 80%
   individual_components:
     - component_id: utils
-      name: '@pleaseai/repo-utils'
+      name: '@pleaseai/soop-utils'
       paths:
         - packages/utils/src/**
       flag_regexes:
         - unit
         - integration
     - component_id: store
-      name: '@pleaseai/repo-store'
+      name: '@pleaseai/soop-store'
       paths:
         - packages/store/src/**
       flag_regexes:
         - unit
         - integration
     - component_id: graph
-      name: '@pleaseai/repo-graph'
+      name: '@pleaseai/soop-graph'
       paths:
         - packages/graph/src/**
       flag_regexes:
         - unit
         - integration
     - component_id: encoder
-      name: '@pleaseai/repo-encoder'
+      name: '@pleaseai/soop-encoder'
       paths:
         - packages/encoder/src/**
       flag_regexes:
         - unit
         - integration
     - component_id: tools
-      name: '@pleaseai/repo-tools'
+      name: '@pleaseai/soop-tools'
       paths:
         - packages/tools/src/**
       flag_regexes:
         - unit
         - integration
     - component_id: zerorepo
-      name: '@pleaseai/repo-zerorepo'
+      name: '@pleaseai/soop-zerorepo'
       paths:
         - packages/zerorepo/src/**
       flag_regexes:
         - unit
         - integration
     - component_id: mcp
-      name: '@pleaseai/repo-mcp'
+      name: '@pleaseai/soop-mcp'
       paths:
         - packages/mcp/src/**
       flag_regexes:
         - unit
         - integration
     - component_id: cli
-      name: '@pleaseai/repo-cli'
+      name: '@pleaseai/soop-cli'
       paths:
         - packages/cli/src/**
       flag_regexes:

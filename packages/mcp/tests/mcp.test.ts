@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
 import {
   encodeFailedError,
   evolveFailedError,
@@ -10,7 +10,7 @@ import {
   RPGError,
   RPGErrorCode,
   rpgNotLoadedError,
-} from '@pleaseai/repo-mcp/errors'
+} from '@pleaseai/soop-mcp/errors'
 import {
   EncodeInputSchema,
   EvolveInputSchema,
@@ -23,7 +23,7 @@ import {
   FetchInputSchema,
   SearchInputSchema,
   StatsInputSchema,
-} from '@pleaseai/repo-mcp/tools'
+} from '@pleaseai/soop-mcp/tools'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('MCP Tool Schemas', () => {

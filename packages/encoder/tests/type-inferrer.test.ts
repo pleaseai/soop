@@ -1,5 +1,5 @@
-import type { EntityNode, InheritanceRelation } from '@pleaseai/repo-encoder/dependency-graph'
-import { TypeInferrer } from '@pleaseai/repo-encoder/type-inferrer'
+import type { EntityNode, InheritanceRelation } from '@pleaseai/soop-encoder/dependency-graph'
+import { TypeInferrer } from '@pleaseai/soop-encoder/type-inferrer'
 import { describe, expect, it } from 'vitest'
 
 // Shared test data

@@ -1,6 +1,6 @@
-import type { VectorStore } from '@pleaseai/repo-store/vector-store'
+import type { VectorStore } from '@pleaseai/soop-store/vector-store'
 import type { Embedding } from './embedding'
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('SemanticSearch')
 

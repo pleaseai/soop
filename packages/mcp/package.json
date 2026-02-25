@@ -1,5 +1,5 @@
 {
-  "name": "@pleaseai/repo-mcp",
+  "name": "@pleaseai/soop-mcp",
   "version": "0.1.3",
   "private": true,
   "type": "module",
@@ -15,11 +15,11 @@
     "./interactive/state": "./src/interactive/state.ts"
   },
   "dependencies": {
-    "@pleaseai/repo-graph": "workspace:*",
-    "@pleaseai/repo-encoder": "workspace:*",
-    "@pleaseai/repo-store": "workspace:*",
-    "@pleaseai/repo-tools": "workspace:*",
-    "@pleaseai/repo-utils": "workspace:*",
+    "@pleaseai/soop-graph": "workspace:*",
+    "@pleaseai/soop-encoder": "workspace:*",
+    "@pleaseai/soop-store": "workspace:*",
+    "@pleaseai/soop-tools": "workspace:*",
+    "@pleaseai/soop-utils": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.26.0"
   },
   "peerDependencies": {

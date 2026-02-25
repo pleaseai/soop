@@ -4,32 +4,32 @@ import { join } from 'node:path'
 
 const RPG_FIXTURE = join(import.meta.dirname, '..', 'fixtures', 'nextjs-rpg.json')
 
-const CLAUDE_MD = `# RPG MCP Server
+const CLAUDE_MD = `# soop please MCP Server
 
-You have access to an RPG (Repository Planning Graph) MCP server pre-loaded with the Next.js codebase.
-Always use RPG tools to look up the latest Next.js conventions before writing code.
+You have access to a soop please (Repository Planning Graph) MCP server pre-loaded with the Next.js codebase.
+Always use soop tools to look up the latest Next.js conventions before writing code.
 
 ## Available Tools
 
 | Tool | When to Use |
 |------|-------------|
-| rpg_search | Find code entities by feature description or file pattern |
-| rpg_fetch | Get detailed metadata, source code, and feature paths for entities |
-| rpg_explore | Traverse dependency/containment edges from a starting node |
-| rpg_stats | Check graph statistics |
+| soop_search | Find code entities by feature description or file pattern |
+| soop_fetch | Get detailed metadata, source code, and feature paths for entities |
+| soop_explore | Traverse dependency/containment edges from a starting node |
+| soop_stats | Check graph statistics |
 
 ## Workflow
 
-1. **Before implementing**: Use \`rpg_search\` with mode "features" to find relevant Next.js source code
-2. **Verify conventions**: Use \`rpg_fetch\` to read actual Next.js source and confirm API names, file conventions, and patterns
-3. **Trace dependencies**: Use \`rpg_explore\` to understand how components connect
+1. **Before implementing**: Use \`soop_search\` with mode "features" to find relevant Next.js source code
+2. **Verify conventions**: Use \`soop_fetch\` to read actual Next.js source and confirm API names, file conventions, and patterns
+3. **Trace dependencies**: Use \`soop_explore\` to understand how components connect
 
 ## Example
 
 To find how Next.js handles middleware/proxy:
 \`\`\`
-rpg_search({ mode: "features", feature_terms: ["proxy", "middleware", "request handling"] })
-rpg_fetch({ code_entities: ["<entity-id-from-search>"] })
+soop_search({ mode: "features", feature_terms: ["proxy", "middleware", "request handling"] })
+soop_fetch({ code_entities: ["<entity-id-from-search>"] })
 \`\`\`
 `
 
@@ -44,8 +44,8 @@ const config: ExperimentConfig = {
     await sandbox.writeFiles({
       '.claude/settings.json': JSON.stringify({
         mcpServers: {
-          rpg: {
-            command: 'rpg-mcp',
+          soop: {
+            command: 'soop-mcp',
             args: ['nextjs-rpg.json', '--no-search'],
           },
         },

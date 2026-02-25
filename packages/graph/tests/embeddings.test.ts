@@ -1,4 +1,4 @@
-import type { SerializedEmbeddings } from '@pleaseai/repo-graph/embeddings'
+import type { SerializedEmbeddings } from '@pleaseai/soop-graph/embeddings'
 import {
   base64Float16ToFloat32,
   decodeAllEmbeddings,
@@ -7,7 +7,7 @@ import {
   parseEmbeddingsJsonl,
   serializeEmbeddings,
   serializeEmbeddingsJsonl,
-} from '@pleaseai/repo-graph/embeddings'
+} from '@pleaseai/soop-graph/embeddings'
 import { describe, expect, it } from 'vitest'
 
 describe('float16 codec', () => {

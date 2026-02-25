@@ -1,7 +1,7 @@
 import { chmodSync, existsSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('hooks')
 

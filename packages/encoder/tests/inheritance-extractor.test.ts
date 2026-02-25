@@ -1,4 +1,4 @@
-import { InheritanceExtractor } from '@pleaseai/repo-encoder/inheritance-extractor'
+import { InheritanceExtractor } from '@pleaseai/soop-encoder/inheritance-extractor'
 import { describe, expect, it } from 'vitest'
 
 describe('InheritanceExtractor', () => {

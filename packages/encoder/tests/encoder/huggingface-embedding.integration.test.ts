@@ -1,4 +1,4 @@
-import { HuggingFaceEmbedding } from '@pleaseai/repo-encoder/embedding'
+import { HuggingFaceEmbedding } from '@pleaseai/soop-encoder/embedding'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 /**

@@ -1,7 +1,7 @@
-import type { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import type { LLMClient } from '@pleaseai/repo-utils/llm'
+import type { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import type { LLMClient } from '@pleaseai/soop-utils/llm'
 import type { FileFeatureGroup } from './types'
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 import { buildHierarchicalConstructionPrompt } from './prompts'
 
 const log = createLogger('HierarchyBuilder')

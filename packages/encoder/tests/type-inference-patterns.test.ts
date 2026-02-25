@@ -1,7 +1,7 @@
 import {
   COMMON_METHOD_BLOCKLIST,
   INFERENCE_PATTERNS,
-} from '@pleaseai/repo-encoder/type-inference-patterns'
+} from '@pleaseai/soop-encoder/type-inference-patterns'
 import { describe, expect, it } from 'vitest'
 
 describe('INFERENCE_PATTERNS', () => {

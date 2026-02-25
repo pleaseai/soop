@@ -1,7 +1,7 @@
-import type { DiffResult } from '@pleaseai/repo-encoder/evolution/types'
-import type { EntityType } from '@pleaseai/repo-graph/node'
-import { RPGEvolver } from '@pleaseai/repo-encoder/evolution/evolve'
-import { DEFAULT_FORCE_REGENERATE_THRESHOLD } from '@pleaseai/repo-encoder/evolution/types'
+import type { DiffResult } from '@pleaseai/soop-encoder/evolution/types'
+import type { EntityType } from '@pleaseai/soop-graph/node'
+import { RPGEvolver } from '@pleaseai/soop-encoder/evolution/evolve'
+import { DEFAULT_FORCE_REGENERATE_THRESHOLD } from '@pleaseai/soop-encoder/evolution/types'
 import { describe, expect, it } from 'vitest'
 
 /**

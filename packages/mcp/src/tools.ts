@@ -1,21 +1,21 @@
-import type { SemanticSearch } from '@pleaseai/repo-encoder/semantic-search'
-import type { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import type { ExploreEdgeType } from '@pleaseai/repo-tools/explore'
-import type { FetchNodeConfig } from '@pleaseai/repo-tools/fetch'
-import type { SearchMode, SearchStrategy } from '@pleaseai/repo-tools/search'
+import type { SemanticSearch } from '@pleaseai/soop-encoder/semantic-search'
+import type { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import type { ExploreEdgeType } from '@pleaseai/soop-tools/explore'
+import type { FetchNodeConfig } from '@pleaseai/soop-tools/fetch'
+import type { SearchMode, SearchStrategy } from '@pleaseai/soop-tools/search'
 import { existsSync } from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { RPGEncoder } from '@pleaseai/repo-encoder/encoder'
-import { RPGEvolver } from '@pleaseai/repo-encoder/evolution/evolve'
-import { ExploreRPG } from '@pleaseai/repo-tools/explore'
-import { FetchNode } from '@pleaseai/repo-tools/fetch'
-import { SearchNode } from '@pleaseai/repo-tools/search'
+import { RPGEncoder } from '@pleaseai/soop-encoder/encoder'
+import { RPGEvolver } from '@pleaseai/soop-encoder/evolution/evolve'
+import { ExploreRPG } from '@pleaseai/soop-tools/explore'
+import { FetchNode } from '@pleaseai/soop-tools/fetch'
+import { SearchNode } from '@pleaseai/soop-tools/search'
 import { z } from 'zod/v4'
 import { encodeFailedError, evolveFailedError, invalidInputError, invalidPathError, nodeNotFoundError, RPGError, rpgNotLoadedError } from './errors'
 
 /**
- * Input schema for repo_search tool
+ * Input schema for soop_search tool
  */
 export const SearchInputSchema = z.object({
   mode: z.enum(['features', 'snippets', 'auto']).default('auto'),
@@ -33,7 +33,7 @@ export const SearchInputSchema = z.object({
 export type SearchInput = z.infer<typeof SearchInputSchema>
 
 /**
- * Base schema for repo_fetch tool (used for MCP shape)
+ * Base schema for soop_fetch tool (used for MCP shape)
  */
 export const FetchInputBaseSchema = z.object({
   codeEntities: z.array(z.string()).optional(),
@@ -41,7 +41,7 @@ export const FetchInputBaseSchema = z.object({
 })
 
 /**
- * Input schema for repo_fetch tool with validation
+ * Input schema for soop_fetch tool with validation
  */
 export const FetchInputSchema = FetchInputBaseSchema.refine(
   data => (data.codeEntities?.length ?? 0) > 0 || (data.featureEntities?.length ?? 0) > 0,
@@ -53,7 +53,7 @@ export const FetchInputSchema = FetchInputBaseSchema.refine(
 export type FetchInput = z.infer<typeof FetchInputSchema>
 
 /**
- * Input schema for repo_explore tool
+ * Input schema for soop_explore tool
  */
 export const ExploreInputSchema = z.object({
   startNode: z.string(),
@@ -65,7 +65,7 @@ export const ExploreInputSchema = z.object({
 export type ExploreInput = z.infer<typeof ExploreInputSchema>
 
 /**
- * Input schema for repo_encode tool
+ * Input schema for soop_encode tool
  */
 export const EncodeInputSchema = z.object({
   repoPath: z.string().describe('Repository path to encode'),
@@ -77,7 +77,7 @@ export const EncodeInputSchema = z.object({
 export type EncodeInput = z.infer<typeof EncodeInputSchema>
 
 /**
- * Input schema for repo_evolve tool
+ * Input schema for soop_evolve tool
  */
 export const EvolveInputSchema = z.object({
   commitRange: z.string().describe('Git commit range (e.g., "HEAD~1..HEAD")'),
@@ -90,7 +90,7 @@ export const EvolveInputSchema = z.object({
 export type EvolveInput = z.infer<typeof EvolveInputSchema>
 
 /**
- * Input schema for repo_stats tool (no input required)
+ * Input schema for soop_stats tool (no input required)
  */
 export const StatsInputSchema = z.object({})
 
@@ -100,38 +100,38 @@ export type StatsInput = z.infer<typeof StatsInputSchema>
  * MCP tool definitions for RPG operations
  */
 export const RPG_TOOLS = {
-  repo_search: {
-    name: 'repo_search',
+  soop_search: {
+    name: 'soop_search',
     description:
       'Semantic code search using Repository Planning Graph. Search by features (behavioral descriptions) or snippets (file patterns). In auto mode, uses staged fallback: feature search runs first, snippet search only triggers when feature results are empty. Use searchScopes to restrict search to specific subtrees.',
     inputSchema: SearchInputSchema,
   },
-  repo_fetch: {
-    name: 'repo_fetch',
+  soop_fetch: {
+    name: 'soop_fetch',
     description:
       'Retrieve precise metadata and source context for code entities. Returns node details, source code, and feature paths.',
     inputSchema: FetchInputSchema,
   },
-  repo_explore: {
-    name: 'repo_explore',
+  soop_explore: {
+    name: 'soop_explore',
     description:
       'Traverse the Repository Planning Graph to discover related modules. Navigate along containment (hierarchy) and dependency (import/call) edges in upstream or downstream direction.',
     inputSchema: ExploreInputSchema,
   },
-  repo_encode: {
-    name: 'repo_encode',
+  soop_encode: {
+    name: 'soop_encode',
     description:
       'Encode a repository into a Repository Planning Graph. Extracts semantic features, builds functional hierarchy, and identifies dependencies.',
     inputSchema: EncodeInputSchema,
   },
-  repo_evolve: {
-    name: 'repo_evolve',
+  soop_evolve: {
+    name: 'soop_evolve',
     description:
       'Incrementally update the loaded RPG from git commits. Parses the diff, then deletes removed entities, modifies changed entities (with semantic drift detection), and inserts new entities.',
     inputSchema: EvolveInputSchema,
   },
-  repo_stats: {
-    name: 'repo_stats',
+  soop_stats: {
+    name: 'soop_stats',
     description:
       'Get statistics about the loaded Repository Planning Graph including node counts, edge counts, and structural breakdown.',
     inputSchema: StatsInputSchema,
@@ -139,7 +139,7 @@ export const RPG_TOOLS = {
 } as const
 
 /**
- * Execute repo_search tool
+ * Execute soop_search tool
  */
 export async function executeSearch(
   rpg: RepositoryPlanningGraph | null,
@@ -172,7 +172,7 @@ export async function executeSearch(
 }
 
 /**
- * Execute repo_fetch tool
+ * Execute soop_fetch tool
  */
 export async function executeFetch(rpg: RepositoryPlanningGraph | null, input: FetchInput, config?: FetchNodeConfig) {
   if (!rpg) {
@@ -201,7 +201,7 @@ export async function executeFetch(rpg: RepositoryPlanningGraph | null, input: F
 }
 
 /**
- * Execute repo_explore tool
+ * Execute soop_explore tool
  */
 export async function executeExplore(rpg: RepositoryPlanningGraph | null, input: ExploreInput) {
   if (!rpg) {
@@ -234,7 +234,7 @@ export async function executeExplore(rpg: RepositoryPlanningGraph | null, input:
 }
 
 /**
- * Execute repo_encode tool
+ * Execute soop_encode tool
  */
 export async function executeEncode(input: EncodeInput) {
   try {
@@ -265,7 +265,7 @@ export async function executeEncode(input: EncodeInput) {
 }
 
 /**
- * Execute repo_evolve tool
+ * Execute soop_evolve tool
  */
 export async function executeEvolve(rpg: RepositoryPlanningGraph | null, input: EvolveInput) {
   if (!rpg) {
@@ -315,7 +315,7 @@ export async function executeEvolve(rpg: RepositoryPlanningGraph | null, input: 
 }
 
 /**
- * Execute repo_stats tool
+ * Execute soop_stats tool
  */
 export async function executeStats(rpg: RepositoryPlanningGraph | null) {
   if (!rpg) {

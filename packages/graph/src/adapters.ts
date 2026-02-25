@@ -1,7 +1,7 @@
 /**
  * Adapters: bidirectional converters between RPG domain types and generic store attrs.
  */
-import type { EdgeAttrs, NodeAttrs } from '@pleaseai/repo-store/types'
+import type { EdgeAttrs, NodeAttrs } from '@pleaseai/soop-store/types'
 import type {
   DependencyEdge,
   Edge,

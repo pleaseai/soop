@@ -2,8 +2,8 @@ import type { Command } from 'commander'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { getHeadCommitSha } from '@pleaseai/repo-utils/git-helpers'
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { getHeadCommitSha } from '@pleaseai/soop-utils/git-helpers'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('init')
 
@@ -47,12 +47,12 @@ export function registerInitCommand(program: Command): void {
         try {
           const absPath = path.resolve(repoPath)
 
-          // 1. Create .repo/ directory structure
+          // 1. Create .soop/ directory structure
           const repoDir = path.join(absPath, '.repo')
           const localDir = path.join(repoDir, 'local')
 
           if (existsSync(path.join(repoDir, 'config.json'))) {
-            log.warn('.repo/config.json already exists, skipping config creation')
+            log.warn('.soop/config.json already exists, skipping config creation')
           }
           else {
             await mkdir(repoDir, { recursive: true })
@@ -69,15 +69,15 @@ export function registerInitCommand(program: Command): void {
               path.join(repoDir, 'config.json'),
               JSON.stringify(configToWrite, null, 2),
             )
-            log.success('Created .repo/config.json')
+            log.success('Created .soop/config.json')
           }
 
-          // 2. Create .repo/local/ directory
+          // 2. Create .soop/local/ directory
           await mkdir(path.join(localDir, 'vectors'), { recursive: true })
-          log.success('Created .repo/local/ directory')
+          log.success('Created .soop/local/ directory')
 
-          // 3. Add .repo/local/ to .gitignore
-          await ensureGitignoreEntry(absPath, '.repo/local/')
+          // 3. Add .soop/local/ to .gitignore
+          await ensureGitignoreEntry(absPath, '.soop/local/')
 
           // 4. Install git hooks if requested
           if (options.hooks) {
@@ -92,7 +92,7 @@ export function registerInitCommand(program: Command): void {
 
           // 6. Run initial encode if requested
           if (options.encode) {
-            const { RPGEncoder } = await import('@pleaseai/repo-encoder')
+            const { RPGEncoder } = await import('@pleaseai/soop-encoder')
             log.start('Running initial encode...')
             const encoder = new RPGEncoder(absPath)
             const result = await encoder.encode()
@@ -111,7 +111,7 @@ export function registerInitCommand(program: Command): void {
 
             const outputPath = path.join(repoDir, 'graph.json')
             await writeFile(outputPath, await result.rpg.toJSON())
-            log.success(`Encoded ${result.filesProcessed} files → .repo/graph.json`)
+            log.success(`Encoded ${result.filesProcessed} files → .soop/graph.json`)
           }
 
           log.success('Repo Please initialized')
@@ -149,18 +149,18 @@ export async function ensureGitignoreEntry(repoPath: string, pattern: string): P
 
 export async function generateCIWorkflow(repoPath: string): Promise<void> {
   const workflowDir = path.join(repoPath, '.github', 'workflows')
-  const workflowPath = path.join(workflowDir, 'repo-encode.yml')
+  const workflowPath = path.join(workflowDir, 'soop-encode.yml')
 
   if (existsSync(workflowPath)) {
-    log.warn('.github/workflows/repo-encode.yml already exists, skipping')
+    log.warn('.github/workflows/soop-encode.yml already exists, skipping')
     return
   }
 
   await mkdir(workflowDir, { recursive: true })
 
   // import.meta.dirname = packages/cli/src/commands/
-  // Template is at packages/cli/src/templates/repo-encode.yml
-  const templatePath = path.join(import.meta.dirname, '..', 'templates', 'repo-encode.yml')
+  // Template is at packages/cli/src/templates/soop-encode.yml
+  const templatePath = path.join(import.meta.dirname, '..', 'templates', 'soop-encode.yml')
   let template: string
   if (existsSync(templatePath)) {
     template = await readFile(templatePath, 'utf-8')
@@ -171,5 +171,5 @@ export async function generateCIWorkflow(repoPath: string): Promise<void> {
   }
 
   await writeFile(workflowPath, template)
-  log.success('Created .github/workflows/repo-encode.yml')
+  log.success('Created .github/workflows/soop-encode.yml')
 }

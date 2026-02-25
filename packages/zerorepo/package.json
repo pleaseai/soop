@@ -1,5 +1,5 @@
 {
-  "name": "@pleaseai/repo-zerorepo",
+  "name": "@pleaseai/soop-zerorepo",
   "version": "0.1.3",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@pleaseai/repo-graph": "workspace:*",
-    "@pleaseai/repo-utils": "workspace:*"
+    "@pleaseai/soop-graph": "workspace:*",
+    "@pleaseai/soop-utils": "workspace:*"
   }
 }

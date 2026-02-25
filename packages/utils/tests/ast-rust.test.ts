@@ -1,4 +1,4 @@
-import { ASTParser } from '@pleaseai/repo-utils/ast'
+import { ASTParser } from '@pleaseai/soop-utils/ast'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('ASTParser - Rust', () => {

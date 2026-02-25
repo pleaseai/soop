@@ -1,5 +1,5 @@
 {
-  "name": "@pleaseai/repo",
+  "name": "@pleaseai/soop",
   "version": "0.1.9",
   "description": "Repository Planning Graph - A unified framework for repository understanding and generation",
   "type": "module",
@@ -10,8 +10,8 @@
   "main": "dist/src/index.mjs",
   "types": "dist/src/index.d.mts",
   "bin": {
-    "repo": "bin/repo",
-    "repo-mcp": "bin/repo-mcp"
+    "soop": "bin/soop",
+    "soop-mcp": "bin/soop-mcp"
   },
   "keywords": [
     "repository",
@@ -26,21 +26,21 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pleaseai/repo.git"
+    "url": "https://github.com/pleaseai/soop.git"
   },
   "engines": {
     "bun": ">=1.0.0",
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@pleaseai/repo-cli": "workspace:*",
-    "@pleaseai/repo-encoder": "workspace:*",
-    "@pleaseai/repo-graph": "workspace:*",
-    "@pleaseai/repo-mcp": "workspace:*",
-    "@pleaseai/repo-store": "workspace:*",
-    "@pleaseai/repo-tools": "workspace:*",
-    "@pleaseai/repo-utils": "workspace:*",
-    "@pleaseai/repo-zerorepo": "workspace:*",
+    "@pleaseai/soop-cli": "workspace:*",
+    "@pleaseai/soop-encoder": "workspace:*",
+    "@pleaseai/soop-graph": "workspace:*",
+    "@pleaseai/soop-mcp": "workspace:*",
+    "@pleaseai/soop-store": "workspace:*",
+    "@pleaseai/soop-tools": "workspace:*",
+    "@pleaseai/soop-utils": "workspace:*",
+    "@pleaseai/soop-zerorepo": "workspace:*",
     "tree-sitter": "0.25.0",
     "tree-sitter-c": "0.24.1",
     "tree-sitter-c-sharp": "0.23.1",
@@ -54,13 +54,13 @@
     "tree-sitter-typescript": "0.23.2"
   },
   "optionalDependencies": {
-    "@pleaseai/repo-darwin-arm64": "0.1.9",
-    "@pleaseai/repo-darwin-x64": "0.1.9",
-    "@pleaseai/repo-linux-x64-glibc": "0.1.9",
-    "@pleaseai/repo-linux-arm64-glibc": "0.1.9",
-    "@pleaseai/repo-linux-x64-musl": "0.1.9",
-    "@pleaseai/repo-linux-arm64-musl": "0.1.9",
-    "@pleaseai/repo-win32-x64": "0.1.9",
+    "@pleaseai/soop-darwin-arm64": "0.1.9",
+    "@pleaseai/soop-darwin-x64": "0.1.9",
+    "@pleaseai/soop-linux-x64-glibc": "0.1.9",
+    "@pleaseai/soop-linux-arm64-glibc": "0.1.9",
+    "@pleaseai/soop-linux-x64-musl": "0.1.9",
+    "@pleaseai/soop-linux-arm64-musl": "0.1.9",
+    "@pleaseai/soop-win32-x64": "0.1.9",
     "@huggingface/transformers": "^3.8.1",
     "@lancedb/lancedb": "^0.13.0",
     "@surrealdb/node": "^2.6.0",

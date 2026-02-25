@@ -136,30 +136,34 @@ jobs:
       - name: List collected packages
         run: ls -la npm/
 
+      # Sync optionalDependencies in packages/soop/package.json to current version
+      - name: Bump optional dependency versions
+        run: bun run scripts/bump-version.ts
+
       # Publish platform packages first — main package references them via optionalDependencies
       - name: Publish platform packages
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
-          for dir in npm/repo-*/; do
+          for dir in npm/soop-*/; do
             echo "Publishing $dir..."
             (cd "$dir" && npm publish --access public --provenance)
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Publish main @pleaseai/repo package (OIDC trusted publishing — no token needed)
+      # Publish main @pleaseai/soop package (OIDC trusted publishing — no token needed)
       - name: Publish main package
         if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: cd packages/repo && npm publish --access public --provenance
+        run: cd packages/soop && npm publish --access public --provenance
 
       # Dry run — show what would be published
       - name: Dry run summary
         if: ${{ github.event.inputs.dry_run == 'true' }}
         run: |
           echo "=== DRY RUN: packages that would be published ==="
-          for dir in npm/repo-*/; do
+          for dir in npm/soop-*/; do
             name=$(cat "$dir/package.json" | python3 -c "import json,sys; print(json.load(sys.stdin)['name'])")
             version=$(cat "$dir/package.json" | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
             echo "  $name@$version"
           done
-          echo "  @pleaseai/repo (main package)"
+          echo "  @pleaseai/soop (main package)"

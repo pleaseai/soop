@@ -1,5 +1,5 @@
-import type { CallSite, InheritanceRelation } from '@pleaseai/repo-encoder'
-import { SymbolResolver } from '@pleaseai/repo-encoder'
+import type { CallSite, InheritanceRelation } from '@pleaseai/soop-encoder'
+import { SymbolResolver } from '@pleaseai/soop-encoder'
 import { describe, expect, it } from 'vitest'
 
 describe('SymbolResolver', () => {

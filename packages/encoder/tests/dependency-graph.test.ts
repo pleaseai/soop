@@ -1,5 +1,5 @@
-import type { CallSite, DependencyGraphResult, InheritanceRelation } from '@pleaseai/repo-encoder'
-import { DependencyGraph } from '@pleaseai/repo-encoder'
+import type { CallSite, DependencyGraphResult, InheritanceRelation } from '@pleaseai/soop-encoder'
+import { DependencyGraph } from '@pleaseai/soop-encoder'
 import { describe, expect, it } from 'vitest'
 
 describe('DependencyGraph', () => {

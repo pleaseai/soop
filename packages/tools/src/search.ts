@@ -1,5 +1,5 @@
-import type { SemanticSearch } from '@pleaseai/repo-encoder/semantic-search'
-import type { Node, RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import type { SemanticSearch } from '@pleaseai/soop-encoder/semantic-search'
+import type { Node, RepositoryPlanningGraph } from '@pleaseai/soop-graph'
 
 /**
  * Search mode

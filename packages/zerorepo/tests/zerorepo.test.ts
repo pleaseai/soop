@@ -1,4 +1,4 @@
-import { ZeroRepo } from '@pleaseai/repo-zerorepo'
+import { ZeroRepo } from '@pleaseai/soop-zerorepo'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('zeroRepo', () => {

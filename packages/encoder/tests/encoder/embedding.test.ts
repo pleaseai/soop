@@ -1,4 +1,4 @@
-import { AISDKEmbedding, MockEmbedding, OpenAIEmbedding } from '@pleaseai/repo-encoder/embedding'
+import { AISDKEmbedding, MockEmbedding, OpenAIEmbedding } from '@pleaseai/soop-encoder/embedding'
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('ai', () => ({

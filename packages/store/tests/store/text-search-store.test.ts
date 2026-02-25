@@ -1,6 +1,6 @@
-import type { TextSearchStore } from '@pleaseai/repo-store/text-search-store'
-import { SQLiteTextSearchStore } from '@pleaseai/repo-store/sqlite'
-import { SurrealTextSearchStore } from '@pleaseai/repo-store/surreal'
+import type { TextSearchStore } from '@pleaseai/soop-store/text-search-store'
+import { SQLiteTextSearchStore } from '@pleaseai/soop-store/sqlite'
+import { SurrealTextSearchStore } from '@pleaseai/soop-store/surreal'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 function runTextSearchTests(name: string, createStore: () => TextSearchStore) {

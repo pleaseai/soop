@@ -1,4 +1,4 @@
-import type { RPGConfig } from '@pleaseai/repo-graph'
+import type { RPGConfig } from '@pleaseai/soop-graph'
 import type { FileFeatures, InteractiveState, LiftableEntity } from './state'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -6,11 +6,11 @@ import {
   discoverFiles,
   extractEntitiesFromFile,
   injectDependencies,
-} from '@pleaseai/repo-encoder/encoder'
-import { ArtifactGrounder } from '@pleaseai/repo-encoder/grounding'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import { ASTParser } from '@pleaseai/repo-utils/ast'
-import { createStderrLogger } from '@pleaseai/repo-utils/logger'
+} from '@pleaseai/soop-encoder/encoder'
+import { ArtifactGrounder } from '@pleaseai/soop-encoder/grounding'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { ASTParser } from '@pleaseai/soop-utils/ast'
+import { createStderrLogger } from '@pleaseai/soop-utils/logger'
 import {
   DOMAIN_DISCOVERY_INSTRUCTIONS,
   FILE_SYNTHESIS_INSTRUCTIONS,
@@ -900,7 +900,7 @@ export class InteractiveEncoder {
       return
     }
 
-    const outputDir = path.join(this.state.repoPath, '.rpg')
+    const outputDir = path.join(this.state.repoPath, '.repo')
     await mkdir(outputDir, { recursive: true })
 
     const json = await this.state.rpg.toJSON()

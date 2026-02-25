@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 import { resolveGitBinary } from './git-path'
 
 const log = createLogger('git-helpers')

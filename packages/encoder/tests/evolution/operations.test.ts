@@ -1,14 +1,14 @@
-import type { OperationContext } from '@pleaseai/repo-encoder/evolution/operations'
-import type { ChangedEntity } from '@pleaseai/repo-encoder/evolution/types'
+import type { OperationContext } from '@pleaseai/soop-encoder/evolution/operations'
+import type { ChangedEntity } from '@pleaseai/soop-encoder/evolution/types'
 import {
   deleteNode,
   findMatchingNode,
   insertNode,
   processModification,
-} from '@pleaseai/repo-encoder/evolution/operations'
-import { SemanticRouter } from '@pleaseai/repo-encoder/evolution/semantic-router'
-import { SemanticExtractor } from '@pleaseai/repo-encoder/semantic'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph/rpg'
+} from '@pleaseai/soop-encoder/evolution/operations'
+import { SemanticRouter } from '@pleaseai/soop-encoder/evolution/semantic-router'
+import { SemanticExtractor } from '@pleaseai/soop-encoder/semantic'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph/rpg'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('deleteNode (AC-2)', () => {

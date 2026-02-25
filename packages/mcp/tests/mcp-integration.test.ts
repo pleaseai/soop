@@ -1,7 +1,7 @@
 import { join } from 'node:path'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import { createMcpServer, loadRPG } from '@pleaseai/repo-mcp/server'
-import { executeExplore, executeFetch, executeSearch, executeStats } from '@pleaseai/repo-mcp/tools'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { createMcpServer, loadRPG } from '@pleaseai/soop-mcp/server'
+import { executeExplore, executeFetch, executeSearch, executeStats } from '@pleaseai/soop-mcp/tools'
 import { beforeAll, describe, expect, it } from 'vitest'
 
 describe('MCP Integration Tests', () => {

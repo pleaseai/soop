@@ -22,8 +22,8 @@ export type {
 export type { VectorStore } from './vector-store'
 
 // Store implementations — import directly to avoid transitive deps:
-//   import { SQLiteGraphStore } from '@pleaseai/repo-store/sqlite'
-//   import { SQLiteTextSearchStore } from '@pleaseai/repo-store/sqlite'
-//   import { SurrealGraphStore } from '@pleaseai/repo-store/surreal'
-//   import { SurrealTextSearchStore } from '@pleaseai/repo-store/surreal'
-//   import { LanceDBVectorStore } from '@pleaseai/repo-store/lancedb'
+//   import { SQLiteGraphStore } from '@pleaseai/soop-store/sqlite'
+//   import { SQLiteTextSearchStore } from '@pleaseai/soop-store/sqlite'
+//   import { SurrealGraphStore } from '@pleaseai/soop-store/surreal'
+//   import { SurrealTextSearchStore } from '@pleaseai/soop-store/surreal'
+//   import { LanceDBVectorStore } from '@pleaseai/soop-store/lancedb'

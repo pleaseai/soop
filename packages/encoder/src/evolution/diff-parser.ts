@@ -1,9 +1,9 @@
-import type { EntityType } from '@pleaseai/repo-graph/node'
-import type { CodeEntity } from '@pleaseai/repo-utils/ast'
+import type { EntityType } from '@pleaseai/soop-graph/node'
+import type { CodeEntity } from '@pleaseai/soop-utils/ast'
 import type { ChangedEntity, DiffResult, FileChange, FileChangeStatus } from './types'
 import { execFileSync } from 'node:child_process'
-import { ASTParser } from '@pleaseai/repo-utils/ast'
-import { resolveGitBinary } from '@pleaseai/repo-utils/git-path'
+import { ASTParser } from '@pleaseai/soop-utils/ast'
+import { resolveGitBinary } from '@pleaseai/soop-utils/git-path'
 
 /**
  * Parse git diff between two commits and produce entity-level change sets.

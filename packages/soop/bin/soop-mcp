@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Launcher shim for @pleaseai/repo MCP server binary.
+// Launcher shim for @pleaseai/soop MCP server binary.
 // Delegates to the platform-specific compiled binary via the launcher.
 import('../dist/launcher-mcp.mjs').catch((err) => {
-  console.error('Failed to load repo-mcp launcher:', err.message)
+  console.error('Failed to load soop-mcp launcher:', err.message)
   process.exit(1)
 })

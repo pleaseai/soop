@@ -1,7 +1,7 @@
-import { MockEmbedding } from '@pleaseai/repo-encoder/embedding'
-import { EmbeddingManager } from '@pleaseai/repo-encoder/embedding-manager'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import { base64Float16ToFloat32 } from '@pleaseai/repo-graph/embeddings'
+import { MockEmbedding } from '@pleaseai/soop-encoder/embedding'
+import { EmbeddingManager } from '@pleaseai/soop-encoder/embedding-manager'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { base64Float16ToFloat32 } from '@pleaseai/soop-graph/embeddings'
 import { describe, expect, it } from 'vitest'
 
 async function createTestRPG(): Promise<RepositoryPlanningGraph> {

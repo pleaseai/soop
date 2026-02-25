@@ -1,4 +1,4 @@
-import { LocalVectorStore } from '@pleaseai/repo-store/local'
+import { LocalVectorStore } from '@pleaseai/soop-store/local'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 describe('LocalVectorStore', () => {

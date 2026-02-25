@@ -10,7 +10,7 @@ import {
   isLowLevelNode,
   NodeType,
   RepositoryPlanningGraph,
-} from '@pleaseai/repo-graph'
+} from '@pleaseai/soop-graph'
 import { describe, expect, it } from 'vitest'
 
 describe('node', () => {

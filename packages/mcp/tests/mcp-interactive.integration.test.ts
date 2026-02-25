@@ -2,8 +2,8 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { InteractiveEncoder } from '@pleaseai/repo-mcp/interactive/encoder'
-import { InteractiveState } from '@pleaseai/repo-mcp/interactive/state'
+import { InteractiveEncoder } from '@pleaseai/soop-mcp/interactive/encoder'
+import { InteractiveState } from '@pleaseai/soop-mcp/interactive/state'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 describe('MCP Interactive Encoding Integration', () => {
@@ -146,8 +146,8 @@ export class Logger {
       expect(result.entitiesProcessed).toBe(state.fileFeatures.length)
     })
 
-    it('should persist graph to .rpg/graph.json', () => {
-      const graphPath = join(repoDir, '.rpg', 'graph.json')
+    it('should persist graph to .soop/graph.json', () => {
+      const graphPath = join(repoDir, '.repo', 'graph.json')
       expect(existsSync(graphPath)).toBe(true)
     })
 

@@ -1,15 +1,15 @@
-import type { Embedding } from '@pleaseai/repo-encoder/embedding'
+import type { Embedding } from '@pleaseai/soop-encoder/embedding'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { HuggingFaceEmbedding, AISDKEmbedding } from '@pleaseai/repo-encoder/embedding'
-import { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } from '@pleaseai/repo-graph/embeddings'
-import { SemanticSearch } from '@pleaseai/repo-encoder/semantic-search'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import { LocalVectorStore } from '@pleaseai/repo-store/local'
-import { createStderrLogger } from '@pleaseai/repo-utils/logger'
+import { AISDKEmbedding, HuggingFaceEmbedding } from '@pleaseai/soop-encoder/embedding'
+import { SemanticSearch } from '@pleaseai/soop-encoder/semantic-search'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { decodeAllEmbeddings, parseEmbeddings, parseEmbeddingsJsonl } from '@pleaseai/soop-graph/embeddings'
+import { LocalVectorStore } from '@pleaseai/soop-store/local'
+import { createStderrLogger } from '@pleaseai/soop-utils/logger'
 import { invalidPathError, RPGError } from './errors'
 import { InteractiveState, registerInteractiveProtocol } from './interactive'
 import {
@@ -55,50 +55,50 @@ export function createMcpServer(
   const search = options.semanticSearch ?? semanticSearch ?? null
   const rootPath = options.rootPath
   const server = new McpServer({
-    name: 'repo-mcp-server',
+    name: 'soop-mcp-server',
     version: '0.1.0',
   })
 
   // Register all RPG tools
   server.tool(
-    RPG_TOOLS.repo_search.name,
-    RPG_TOOLS.repo_search.description,
+    RPG_TOOLS.soop_search.name,
+    RPG_TOOLS.soop_search.description,
     SearchInputSchema.shape,
     async args =>
       wrapHandler(() => executeSearch(rpg, SearchInputSchema.parse(args), search)),
   )
 
   server.tool(
-    RPG_TOOLS.repo_fetch.name,
-    RPG_TOOLS.repo_fetch.description,
+    RPG_TOOLS.soop_fetch.name,
+    RPG_TOOLS.soop_fetch.description,
     FetchInputBaseSchema.shape,
     async (args: unknown) => wrapHandler(() => executeFetch(rpg, FetchInputSchema.parse(args), { rootPath })),
   )
 
   server.tool(
-    RPG_TOOLS.repo_explore.name,
-    RPG_TOOLS.repo_explore.description,
+    RPG_TOOLS.soop_explore.name,
+    RPG_TOOLS.soop_explore.description,
     ExploreInputSchema.shape,
     async args => wrapHandler(() => executeExplore(rpg, ExploreInputSchema.parse(args))),
   )
 
   server.tool(
-    RPG_TOOLS.repo_encode.name,
-    RPG_TOOLS.repo_encode.description,
+    RPG_TOOLS.soop_encode.name,
+    RPG_TOOLS.soop_encode.description,
     EncodeInputSchema.shape,
     async args => wrapHandler(() => executeEncode(EncodeInputSchema.parse(args))),
   )
 
   server.tool(
-    RPG_TOOLS.repo_evolve.name,
-    RPG_TOOLS.repo_evolve.description,
+    RPG_TOOLS.soop_evolve.name,
+    RPG_TOOLS.soop_evolve.description,
     EvolveInputSchema.shape,
     async args => wrapHandler(() => executeEvolve(rpg, EvolveInputSchema.parse(args))),
   )
 
   server.tool(
-    RPG_TOOLS.repo_stats.name,
-    RPG_TOOLS.repo_stats.description,
+    RPG_TOOLS.soop_stats.name,
+    RPG_TOOLS.soop_stats.description,
     StatsInputSchema.shape,
     async () => wrapHandler(() => executeStats(rpg)),
   )
@@ -247,7 +247,7 @@ export async function main(): Promise<void> {
 /**
  * Initialize semantic search with HuggingFace embedding and index RPG nodes.
  *
- * If `.rpg/embeddings.json` exists alongside the RPG file, pre-computed
+ * If `.soop/embeddings.json` exists alongside the RPG file, pre-computed
  * embeddings are loaded directly into LanceDB, skipping HuggingFace model loading.
  */
 async function initSemanticSearch(

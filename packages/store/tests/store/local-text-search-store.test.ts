@@ -1,4 +1,4 @@
-import { LocalTextSearchStore } from '@pleaseai/repo-store/local'
+import { LocalTextSearchStore } from '@pleaseai/soop-store/local'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 describe('LocalTextSearchStore', () => {

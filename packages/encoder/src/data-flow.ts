@@ -1,8 +1,8 @@
-import type { DataFlowEdge } from '@pleaseai/repo-graph/edge'
-import type { ParseResult } from '@pleaseai/repo-utils/ast'
+import type { DataFlowEdge } from '@pleaseai/soop-graph/edge'
+import type { ParseResult } from '@pleaseai/soop-utils/ast'
 import path from 'node:path'
-import { DataFlowEdgeSchema } from '@pleaseai/repo-graph/edge'
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { DataFlowEdgeSchema } from '@pleaseai/soop-graph/edge'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('DataFlowDetector')
 

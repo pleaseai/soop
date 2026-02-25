@@ -1,4 +1,4 @@
-import type { DependencyType } from '@pleaseai/repo-graph/edge'
+import type { DependencyType } from '@pleaseai/soop-graph/edge'
 
 /**
  * Receiver classification for a call site.

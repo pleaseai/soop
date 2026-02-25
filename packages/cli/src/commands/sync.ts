@@ -1,12 +1,12 @@
+import type { VectorStore } from '@pleaseai/soop-store/vector-store'
 import type { Command } from 'commander'
-import type { VectorStore } from '@pleaseai/repo-store/vector-store'
 import { existsSync } from 'node:fs'
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { LocalVectorStore } from '@pleaseai/repo-store/local'
-import { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } from '@pleaseai/repo-graph/embeddings'
-import { getCurrentBranch, getDefaultBranch, getHeadCommitSha, getMergeBase } from '@pleaseai/repo-utils/git-helpers'
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { decodeAllEmbeddings, parseEmbeddings, parseEmbeddingsJsonl } from '@pleaseai/soop-graph/embeddings'
+import { LocalVectorStore } from '@pleaseai/soop-store/local'
+import { getCurrentBranch, getDefaultBranch, getHeadCommitSha, getMergeBase } from '@pleaseai/soop-utils/git-helpers'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('sync')
 
@@ -34,7 +34,7 @@ export function registerSyncCommand(program: Command): void {
 
         // 1. Validate canonical graph exists
         if (!existsSync(canonicalPath)) {
-          log.error('.repo/graph.json not found. Run "repo init --encode" first.')
+          log.error('.soop/graph.json not found. Run "repo init --encode" first.')
           process.exit(1)
         }
 
@@ -56,7 +56,7 @@ export function registerSyncCommand(program: Command): void {
         }
 
         // 4. Read canonical graph to get base commit
-        const { RepositoryPlanningGraph } = await import('@pleaseai/repo-graph')
+        const { RepositoryPlanningGraph } = await import('@pleaseai/soop-graph')
         const canonicalJson = await readFile(canonicalPath, 'utf-8')
         const canonicalRpg = await RepositoryPlanningGraph.fromJSON(canonicalJson)
         const canonicalCommit = canonicalRpg.getConfig().github?.commit
@@ -103,7 +103,7 @@ export function registerSyncCommand(program: Command): void {
             try {
               const localJson = await readFile(localGraphPath, 'utf-8')
               const localRpg = await RepositoryPlanningGraph.fromJSON(localJson)
-              const { RPGEncoder } = await import('@pleaseai/repo-encoder')
+              const { RPGEncoder } = await import('@pleaseai/soop-encoder')
               const encoder = new RPGEncoder(repoPath)
               const result = await encoder.evolve(localRpg, { commitRange })
 

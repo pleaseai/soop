@@ -1,18 +1,18 @@
 import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { RPGEncoder } from '@pleaseai/repo-encoder'
-import { MockEmbedding } from '@pleaseai/repo-encoder/embedding'
-import { SemanticSearch } from '@pleaseai/repo-encoder/semantic-search'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import { LocalVectorStore } from '@pleaseai/repo-store/local'
+import { RPGEncoder } from '@pleaseai/soop-encoder'
+import { MockEmbedding } from '@pleaseai/soop-encoder/embedding'
+import { SemanticSearch } from '@pleaseai/soop-encoder/semantic-search'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { LocalVectorStore } from '@pleaseai/soop-store/local'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-// This test suite encodes the actual rpg repository
-const PROJECT_ROOT = resolve(__dirname, '../..')
+// This test suite encodes the actual repo repository
+const PROJECT_ROOT = resolve(__dirname, '../../../../')
 
 describe('e2E: Encode Real Repository', () => {
-  describe('encode rpg Project', () => {
+  describe('encode repo Project', () => {
     it('should encode the entire src directory', async () => {
       const encoder = new RPGEncoder(PROJECT_ROOT, {
         include: ['packages/*/src/**/*.ts'],

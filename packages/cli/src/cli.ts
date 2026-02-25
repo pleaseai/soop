@@ -1,19 +1,19 @@
 #!/usr/bin/env node
-import type { SemanticOptions } from '@pleaseai/repo-encoder/semantic'
-import type { SerializedEmbeddings } from '@pleaseai/repo-graph/embeddings'
+import type { SemanticOptions } from '@pleaseai/soop-encoder/semantic'
+import type { SerializedEmbeddings } from '@pleaseai/soop-graph/embeddings'
 
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { RPGEncoder } from '@pleaseai/repo-encoder'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import { serializeEmbeddingsJsonl } from '@pleaseai/repo-graph/embeddings'
-import { ExploreRPG, FetchNode, SearchNode } from '@pleaseai/repo-tools'
-import { getHeadCommitSha } from '@pleaseai/repo-utils/git-helpers'
-import { parseModelString } from '@pleaseai/repo-utils/llm'
-import { createLogger, LogLevels, setLogLevel } from '@pleaseai/repo-utils/logger'
-import { ZeroRepo } from '@pleaseai/repo-zerorepo'
-import { EmbeddingManager } from '@pleaseai/repo-encoder/embedding-manager'
-import { HuggingFaceEmbedding, AISDKEmbedding } from '@pleaseai/repo-encoder/embedding'
+import { RPGEncoder } from '@pleaseai/soop-encoder'
+import { AISDKEmbedding, HuggingFaceEmbedding } from '@pleaseai/soop-encoder/embedding'
+import { EmbeddingManager } from '@pleaseai/soop-encoder/embedding-manager'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { serializeEmbeddingsJsonl } from '@pleaseai/soop-graph/embeddings'
+import { ExploreRPG, FetchNode, SearchNode } from '@pleaseai/soop-tools'
+import { getHeadCommitSha } from '@pleaseai/soop-utils/git-helpers'
+import { parseModelString } from '@pleaseai/soop-utils/llm'
+import { createLogger, LogLevels, setLogLevel } from '@pleaseai/soop-utils/logger'
+import { ZeroRepo } from '@pleaseai/soop-zerorepo'
 import { program } from 'commander'
 import { config } from 'dotenv'
 
@@ -26,7 +26,7 @@ const log = createLogger('CLI')
 config({ path: ['.env.local', '.env'], quiet: true })
 
 program
-  .name('repo')
+  .name('soop')
   .description('Repository Planning Graph - Code understanding and generation')
   .version(pkg.version)
 
@@ -53,7 +53,7 @@ program
   .option('--stamp', 'Stamp config.github.commit with HEAD SHA after encoding')
   .option('--embed', 'Generate embeddings file after encoding')
   .option('--embed-model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local HuggingFace models (e.g., transformers/voyageai/voyage-4-nano)')
-  .option('--embed-output <path>', 'Embeddings output file path', '.repo/embeddings.jsonl')
+  .option('--embed-output <path>', 'Embeddings output file path', '.soop/embeddings.jsonl')
   .option('--verbose', 'Show detailed progress')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
   .option('--max-batch-tokens <tokens>', 'Maximum tokens per batch (default: 50000)')
@@ -186,12 +186,12 @@ program
 program
   .command('search')
   .description('Search for features or code in an RPG')
-  .requiredOption('--rpg <file>', 'RPG file path')
+  .requiredOption('--graph <file>', 'RPG file path')
   .option('-t, --term <term>', 'Search term')
   .option('-m, --mode <mode>', 'Search mode (features, snippets, auto)', 'auto')
   .option('-p, --pattern <pattern>', 'File pattern for snippet search')
-  .action(async (options: { rpg: string, term?: string, mode: string, pattern?: string }) => {
-    const json = await readFile(options.rpg, 'utf-8')
+  .action(async (options: { graph: string, term?: string, mode: string, pattern?: string }) => {
+    const json = await readFile(options.graph, 'utf-8')
     const rpg = await RepositoryPlanningGraph.fromJSON(json)
 
     const search = new SearchNode(rpg)
@@ -216,10 +216,10 @@ program
 program
   .command('fetch')
   .description('Fetch detailed information for entities')
-  .requiredOption('--rpg <file>', 'RPG file path')
+  .requiredOption('--graph <file>', 'RPG file path')
   .argument('<entities...>', 'Entity IDs to fetch')
-  .action(async (entities: string[], options: { rpg: string }) => {
-    const json = await readFile(options.rpg, 'utf-8')
+  .action(async (entities: string[], options: { graph: string }) => {
+    const json = await readFile(options.graph, 'utf-8')
     const rpg = await RepositoryPlanningGraph.fromJSON(json)
 
     const fetcher = new FetchNode(rpg)
@@ -244,7 +244,7 @@ program
 program
   .command('explore')
   .description('Explore graph from a starting node')
-  .requiredOption('--rpg <file>', 'RPG file path')
+  .requiredOption('--graph <file>', 'RPG file path')
   .argument('<node>', 'Starting node ID')
   .option('-e, --edge-type <type>', 'Edge type (containment, dependency, all)', 'all')
   .option('-d, --depth <depth>', 'Maximum depth', '3')
@@ -252,9 +252,9 @@ program
   .action(
     async (
       node: string,
-      options: { rpg: string, edgeType: string, depth: string, direction: string },
+      options: { graph: string, edgeType: string, depth: string, direction: string },
     ) => {
-      const json = await readFile(options.rpg, 'utf-8')
+      const json = await readFile(options.graph, 'utf-8')
       const rpg = await RepositoryPlanningGraph.fromJSON(json)
 
       const explorer = new ExploreRPG(rpg)
@@ -281,17 +281,17 @@ program
 program
   .command('evolve')
   .description('Update RPG with new commits')
-  .requiredOption('--rpg <file>', 'RPG file path')
+  .requiredOption('--graph <file>', 'RPG file path')
   .option('-c, --commits <range>', 'Commit range', 'HEAD~1..HEAD')
   .option('-m, --model <provider/model>', 'LLM provider/model (e.g., codex/gpt-5.3-codex, claude-code/haiku, openai/gpt-5.2, google)')
   .option('--no-llm', 'Disable LLM (use heuristic extraction)')
   .option('--stamp', 'Stamp config.github.commit with HEAD SHA')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
   .option('--max-batch-tokens <tokens>', 'Maximum tokens per batch (default: 50000)')
-  .action(async (options: { rpg: string, commits: string, model?: string, llm?: boolean, stamp?: boolean, minBatchTokens?: string, maxBatchTokens?: string }) => {
+  .action(async (options: { graph: string, commits: string, model?: string, llm?: boolean, stamp?: boolean, minBatchTokens?: string, maxBatchTokens?: string }) => {
     log.info(`Evolving RPG with commits: ${options.commits}`)
 
-    const json = await readFile(options.rpg, 'utf-8')
+    const json = await readFile(options.graph, 'utf-8')
     const rpg = await RepositoryPlanningGraph.fromJSON(json)
     const repoPath = rpg.getConfig().rootPath ?? '.'
 
@@ -305,7 +305,7 @@ program
       log.info(`Stamped commit: ${headSha}`)
     }
 
-    await writeFile(options.rpg, await rpg.toJSON())
+    await writeFile(options.graph, await rpg.toJSON())
 
     console.log('\nEvolution complete:')
     console.log(`  Inserted: ${result.inserted}`)
@@ -375,18 +375,18 @@ program
 program
   .command('embed')
   .description('Generate embeddings file from an RPG')
-  .requiredOption('--rpg <file>', 'RPG file path')
+  .requiredOption('--graph <file>', 'RPG file path')
   .option('--model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local models (e.g., transformers/voyageai/voyage-4-nano)')
-  .option('-o, --output <file>', 'Output file path', '.repo/embeddings.jsonl')
+  .option('-o, --output <file>', 'Output file path', '.soop/embeddings.jsonl')
   .option('--stamp', 'Stamp embeddings commit with HEAD SHA')
   .action(
     async (options: {
-      rpg: string
+      graph: string
       model?: string
       output: string
       stamp?: boolean
     }) => {
-      const json = await readFile(options.rpg, 'utf-8')
+      const json = await readFile(options.graph, 'utf-8')
       const rpg = await RepositoryPlanningGraph.fromJSON(json)
       const repoPath = rpg.getConfig().rootPath ?? '.'
 

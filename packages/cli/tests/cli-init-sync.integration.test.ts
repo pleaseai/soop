@@ -3,9 +3,9 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
-import { getHeadCommitSha } from '@pleaseai/repo-utils/git-helpers'
-import { resolveGitBinary } from '@pleaseai/repo-utils/git-path'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { getHeadCommitSha } from '@pleaseai/soop-utils/git-helpers'
+import { resolveGitBinary } from '@pleaseai/soop-utils/git-path'
 import { Command } from 'commander'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { installHooks } from '../src/commands/hooks'
@@ -32,24 +32,24 @@ describe('ensureGitignoreEntry', () => {
   })
 
   it('should create .gitignore when it does not exist', async () => {
-    await ensureGitignoreEntry(tempDir, '.repo/local/')
+    await ensureGitignoreEntry(tempDir, '.soop/local/')
 
     const content = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
-    expect(content).toContain('.repo/local/')
+    expect(content).toContain('.soop/local/')
     expect(content).toContain('# Repo local data')
   })
 
   it('should skip if pattern already exists in .gitignore', async () => {
     await writeFile(
       path.join(tempDir, '.gitignore'),
-      '# existing\n.repo/local/\n',
+      '# existing\n.soop/local/\n',
     )
 
-    await ensureGitignoreEntry(tempDir, '.repo/local/')
+    await ensureGitignoreEntry(tempDir, '.soop/local/')
 
     const content = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
     // Should appear exactly once
-    const matches = content.match(/\.rpg\/local\//g)
+    const matches = content.match(/\.repo\/local\//g)
     expect(matches).toHaveLength(1)
   })
 
@@ -59,11 +59,11 @@ describe('ensureGitignoreEntry', () => {
       'node_modules/\ndist/\n',
     )
 
-    await ensureGitignoreEntry(tempDir, '.repo/local/')
+    await ensureGitignoreEntry(tempDir, '.soop/local/')
 
     const content = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
     expect(content).toContain('node_modules/')
-    expect(content).toContain('.repo/local/')
+    expect(content).toContain('.soop/local/')
     expect(content).toContain('# Repo local data')
   })
 
@@ -73,11 +73,11 @@ describe('ensureGitignoreEntry', () => {
       'node_modules/',
     )
 
-    await ensureGitignoreEntry(tempDir, '.repo/local/')
+    await ensureGitignoreEntry(tempDir, '.soop/local/')
 
     const content = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
     expect(content).toContain('node_modules/')
-    expect(content).toContain('.repo/local/')
+    expect(content).toContain('.soop/local/')
     // Should have a newline separator before the RPG section
     expect(content).not.toMatch(/node_modules\/# RPG/)
   })
@@ -97,7 +97,7 @@ describe('generateCIWorkflow', () => {
   it('should generate workflow file from template', async () => {
     await generateCIWorkflow(tempDir)
 
-    const workflowPath = path.join(tempDir, '.github', 'workflows', 'repo-encode.yml')
+    const workflowPath = path.join(tempDir, '.github', 'workflows', 'soop-encode.yml')
     expect(existsSync(workflowPath)).toBe(true)
 
     const content = await readFile(workflowPath, 'utf-8')
@@ -111,14 +111,14 @@ describe('generateCIWorkflow', () => {
     const workflowDir = path.join(tempDir, '.github', 'workflows')
     mkdirSync(workflowDir, { recursive: true })
     await writeFile(
-      path.join(workflowDir, 'repo-encode.yml'),
+      path.join(workflowDir, 'soop-encode.yml'),
       'existing content',
     )
 
     await generateCIWorkflow(tempDir)
 
     const content = await readFile(
-      path.join(workflowDir, 'repo-encode.yml'),
+      path.join(workflowDir, 'soop-encode.yml'),
       'utf-8',
     )
     expect(content).toBe('existing content')
@@ -139,7 +139,7 @@ describe('rpg init command', () => {
     rmSync(tempDir, { recursive: true, force: true })
   })
 
-  it('should create .repo/config.json and local directories', async () => {
+  it('should create .soop/config.json and local directories', async () => {
     const program = new Command()
     program.exitOverride()
     registerInitCommand(program)
@@ -157,10 +157,10 @@ describe('rpg init command', () => {
 
     // .gitignore updated
     const gitignore = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
-    expect(gitignore).toContain('.repo/local/')
+    expect(gitignore).toContain('.soop/local/')
   })
 
-  it('should skip config creation if .repo/config.json already exists', async () => {
+  it('should skip config creation if .soop/config.json already exists', async () => {
     // Pre-create config
     const rpgDir = path.join(tempDir, '.repo')
     mkdirSync(rpgDir, { recursive: true })
@@ -206,7 +206,7 @@ describe('rpg init command', () => {
     registerInitCommand(program)
     await program.parseAsync(['node', 'rpg', 'init', tempDir, '--ci'])
 
-    const workflowPath = path.join(tempDir, '.github', 'workflows', 'repo-encode.yml')
+    const workflowPath = path.join(tempDir, '.github', 'workflows', 'soop-encode.yml')
     expect(existsSync(workflowPath)).toBe(true)
 
     const content = await readFile(workflowPath, 'utf-8')

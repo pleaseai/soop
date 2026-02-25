@@ -1,8 +1,8 @@
-# repo please: Repository Planning Graph
+# soop please: Repository Planning Graph
 
 A unified framework for repository understanding and generation based on the Repository Planning Graph (RPG) representation.
 
-[![codecov](https://codecov.io/gh/pleaseai/repo/graph/badge.svg?token=PfprF4qUBw)](https://codecov.io/gh/pleaseai/repo)
+[![codecov](https://codecov.io/gh/pleaseai/soop/graph/badge.svg?token=PfprF4qUBw)](https://codecov.io/gh/pleaseai/soop)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_repo&metric=security_rating&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_repo)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_repo&metric=vulnerabilities&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_repo)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_repo&metric=bugs&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_repo)
@@ -93,8 +93,8 @@ Extract RPG from existing codebases through three mechanisms:
 curl -fsSL https://bun.sh/install | bash
 
 # Clone and install
-git clone https://github.com/pleaseai/repo.git
-cd repo
+git clone https://github.com/pleaseai/soop.git
+cd soop
 bun install
 ```
 
@@ -103,7 +103,7 @@ bun install
 ### Repository Generation (ZeroRepo)
 
 ```typescript
-import { ZeroRepo } from '@pleaseai/repo'
+import { ZeroRepo } from '@pleaseai/soop'
 
 // Initialize with repository specification
 const zerorepo = new ZeroRepo({
@@ -125,7 +125,7 @@ await zerorepo.generateRepository(rpg, './generated_repo')
 ### Repository Understanding (Encoder)
 
 ```typescript
-import { RPGEncoder, SearchNode, FetchNode, ExploreRPG } from '@pleaseai/repo'
+import { RPGEncoder, SearchNode, FetchNode, ExploreRPG } from '@pleaseai/soop'
 
 // Encode existing repository
 const encoder = new RPGEncoder('./my_project')
@@ -163,24 +163,24 @@ await encoder.evolve({ commitRange: 'HEAD~5..HEAD' })
 
 ```bash
 # Encode a repository
-repo encode ./my_project -o repo.json
+soop encode ./my_project -o repo.json
 
 # Encode with a specific LLM provider/model
-repo encode ./my_project -m google                    # Google Gemini (default model)
-repo encode ./my_project -m openai/gpt-5.2            # OpenAI with specific model
-repo encode ./my_project -m anthropic/claude-haiku-4.5 # Anthropic Haiku
-repo encode ./my_project -m claude-code/haiku          # Claude Code (no API key needed)
-repo encode ./my_project --no-llm                      # Heuristic only (no LLM)
+soop encode ./my_project -m google                    # Google Gemini (default model)
+soop encode ./my_project -m openai/gpt-5.2            # OpenAI with specific model
+soop encode ./my_project -m anthropic/claude-haiku-4.5 # Anthropic Haiku
+soop encode ./my_project -m claude-code/haiku          # Claude Code (no API key needed)
+soop encode ./my_project --no-llm                      # Heuristic only (no LLM)
 
 # Generate from specification
-repo generate --spec "A REST API for user management" -o ./output
+soop generate --spec "A REST API for user management" -o ./output
 
 # Search in RPG
-repo search --rpg repo.json --term "authentication"
+soop search --graph graph.json --term "authentication"
 
 # Evolve with commits (also supports -m/--model)
-repo evolve --rpg repo.json --commits HEAD~5..HEAD
-repo evolve --rpg repo.json -m google --commits HEAD~5..HEAD
+soop evolve --graph graph.json --commits HEAD~5..HEAD
+soop evolve --graph graph.json -m google --commits HEAD~5..HEAD
 ```
 
 #### Model Configuration
@@ -197,22 +197,22 @@ The `-m, --model` option uses `provider/model` format. If the model is omitted, 
 ## Project Structure
 
 ```
-repo-please-monorepo/              # Private monorepo root (not published)
+soop/                              # Private monorepo root (not published)
 ├── packages/
-│   ├── repo/                      # Published package: @pleaseai/repo
+│   ├── soop/                      # Published package: @pleaseai/soop
 │   │   ├── src/index.ts           # Main exports (re-exports all workspace packages)
-│   │   ├── bin/repo               # CLI binary
-│   │   ├── bin/repo-mcp           # MCP server binary
+│   │   ├── bin/soop               # CLI binary
+│   │   ├── bin/soop-mcp           # MCP server binary
 │   │   └── package.json
 │   │
-│   ├── utils/    # @pleaseai/repo-utils   — AST parser, LLM, git helpers, logger
-│   ├── store/    # @pleaseai/repo-store   — Storage interfaces & implementations
-│   ├── graph/    # @pleaseai/repo-graph   — RPG data structures
-│   ├── encoder/  # @pleaseai/repo-encoder — Code → RPG extraction
-│   ├── tools/    # @pleaseai/repo-tools   — Agentic navigation tools
-│   ├── zerorepo/ # @pleaseai/repo-zerorepo — Intent → Code generation
-│   ├── mcp/      # @pleaseai/repo-mcp    — MCP server
-│   └── cli/      # @pleaseai/repo-cli    — CLI entry point
+│   ├── utils/    # @pleaseai/soop-utils   — AST parser, LLM, git helpers, logger
+│   ├── store/    # @pleaseai/soop-store   — Storage interfaces & implementations
+│   ├── graph/    # @pleaseai/soop-graph   — RPG data structures
+│   ├── encoder/  # @pleaseai/soop-encoder — Code → RPG extraction
+│   ├── tools/    # @pleaseai/soop-tools   — Agentic navigation tools
+│   ├── zerorepo/ # @pleaseai/soop-zerorepo — Intent → Code generation
+│   ├── mcp/      # @pleaseai/soop-mcp    — MCP server
+│   └── cli/      # @pleaseai/soop-cli    — CLI entry point
 │
 ├── tests/
 │   └── fixtures/                  # Shared test fixtures (sample-rpg.json, superjson)

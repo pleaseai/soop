@@ -1,7 +1,7 @@
-import type { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import type { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
 import path from 'node:path'
-import { isHighLevelNode, isLowLevelNode } from '@pleaseai/repo-graph/node'
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { isHighLevelNode, isLowLevelNode } from '@pleaseai/soop-graph/node'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('ArtifactGrounder')
 

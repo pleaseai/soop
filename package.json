@@ -1,5 +1,5 @@
 {
-  "name": "repo-please-monorepo",
+  "name": "soop-please-monorepo",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,9 +10,10 @@
     "dev": "bun run --watch packages/cli/src/cli.ts",
     "mcp": "bun run packages/mcp/src/server.ts",
     "build": "tsdown && bun run build:copy-assets",
-    "build:copy-assets": "mkdir -p packages/repo/dist/packages/cli/templates && cp packages/cli/src/templates/*.yml packages/repo/dist/packages/cli/templates/",
+    "build:copy-assets": "mkdir -p packages/soop/dist/packages/cli/templates && cp packages/cli/src/templates/*.yml packages/soop/dist/packages/cli/templates/",
     "build:npm": "bun run scripts/generate-packages.ts",
-    "publish:npm": "bun run build:npm && for dir in npm/repo-*/; do (cd \"$dir\" && npm publish --access public); done",
+    "bump-version": "bun run scripts/bump-version.ts",
+    "publish:npm": "bun run build:npm && for dir in npm/soop-*/; do (cd \"$dir\" && npm publish --access public); done",
     "test": "vitest run",
     "test:unit": "vitest run --project=unit",
     "test:integration": "vitest run --project=integration",
@@ -24,7 +25,7 @@
     "lint:fix": "eslint --cache --fix .",
     "format": "eslint --cache --fix .",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf packages/repo/dist"
+    "clean": "rm -rf packages/soop/dist"
   },
   "packageManager": "bun@1.3.9",
   "dependencies": {
@@ -41,14 +42,14 @@
     "tree-sitter-typescript": "0.23.2"
   },
   "devDependencies": {
-    "@pleaseai/repo-cli": "workspace:*",
-    "@pleaseai/repo-encoder": "workspace:*",
-    "@pleaseai/repo-graph": "workspace:*",
-    "@pleaseai/repo-mcp": "workspace:*",
-    "@pleaseai/repo-store": "workspace:*",
-    "@pleaseai/repo-tools": "workspace:*",
-    "@pleaseai/repo-utils": "workspace:*",
-    "@pleaseai/repo-zerorepo": "workspace:*",
+    "@pleaseai/soop-cli": "workspace:*",
+    "@pleaseai/soop-encoder": "workspace:*",
+    "@pleaseai/soop-graph": "workspace:*",
+    "@pleaseai/soop-mcp": "workspace:*",
+    "@pleaseai/soop-store": "workspace:*",
+    "@pleaseai/soop-tools": "workspace:*",
+    "@pleaseai/soop-utils": "workspace:*",
+    "@pleaseai/soop-zerorepo": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.36",
     "@ai-sdk/google": "^3.0.21",
     "@ai-sdk/openai": "^3.0.25",
@@ -74,6 +75,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/pleaseai/repo.git"
+    "url": "https://github.com/pleaseai/soop.git"
   }
 }

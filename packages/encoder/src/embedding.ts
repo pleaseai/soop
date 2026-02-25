@@ -1,6 +1,6 @@
 import type { EmbeddingModel } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
-import { createLogger } from '@pleaseai/repo-utils/logger'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 import { embed, embedMany } from 'ai'
 
 const log = createLogger('HuggingFace')

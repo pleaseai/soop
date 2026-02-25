@@ -1,5 +1,5 @@
-import { ArtifactGrounder, computeLCA } from '@pleaseai/repo-encoder/grounding'
-import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import { ArtifactGrounder, computeLCA } from '@pleaseai/soop-encoder/grounding'
+import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
 import { describe, expect, it } from 'vitest'
 
 describe('computeLCA (PathTrie)', () => {
