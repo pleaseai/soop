@@ -330,7 +330,11 @@ export class TypeInferrer {
         const TreeSitter = require('tree-sitter')
         this.parser = new TreeSitter() as Parser
       }
-      catch {
+      catch (err) {
+        const code = (err as NodeJS.ErrnoException).code
+        if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
+          throw err
+        }
         // tree-sitter not available in compiled binary
         return null
       }

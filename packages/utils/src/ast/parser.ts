@@ -9,7 +9,11 @@ try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   ParserClass = require('tree-sitter') as new () => Parser
 }
-catch {
+catch (err) {
+  const code = (err as NodeJS.ErrnoException).code
+  if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
+    throw err
+  }
   // tree-sitter native module not available (e.g., standalone compiled binary)
 }
 

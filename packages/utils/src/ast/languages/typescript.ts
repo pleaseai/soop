@@ -6,7 +6,12 @@ try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   TypeScript = require('tree-sitter-typescript').typescript
 }
-catch {}
+catch (err) {
+  const code = (err as NodeJS.ErrnoException).code
+  if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
+    throw err
+  }
+}
 
 /**
  * Entity node types for TypeScript and JavaScript

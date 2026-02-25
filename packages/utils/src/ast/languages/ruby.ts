@@ -5,7 +5,12 @@ try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   Ruby = require('tree-sitter-ruby')
 }
-catch {}
+catch (err) {
+  const code = (err as NodeJS.ErrnoException).code
+  if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
+    throw err
+  }
+}
 
 const RUBY_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
   method: 'method',

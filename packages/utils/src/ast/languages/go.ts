@@ -5,7 +5,12 @@ try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   Go = require('tree-sitter-go')
 }
-catch {}
+catch (err) {
+  const code = (err as NodeJS.ErrnoException).code
+  if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
+    throw err
+  }
+}
 
 const GO_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
   function_declaration: 'function',

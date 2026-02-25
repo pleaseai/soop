@@ -16,11 +16,20 @@ export class InheritanceExtractor {
   /**
    * Get or create a Parser instance, lazy-loaded to avoid issues when tree-sitter isn't needed
    */
-  private getParser(): Parser {
+  private getParser(): Parser | undefined {
     if (!this.parser) {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const TreeSitter = require('tree-sitter')
-      this.parser = new TreeSitter() as Parser
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const TreeSitter = require('tree-sitter')
+        this.parser = new TreeSitter() as Parser
+      }
+      catch (err) {
+        const code = (err as NodeJS.ErrnoException).code
+        if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
+          throw err
+        }
+        return undefined
+      }
     }
     return this.parser
   }
@@ -48,7 +57,10 @@ export class InheritanceExtractor {
       if (!parser) {
         return []
       }
-      const config = LANGUAGE_CONFIGS[normalizedLanguage as SupportedLanguage]!
+      const config = LANGUAGE_CONFIGS[normalizedLanguage as SupportedLanguage]
+      if (!config) {
+        return []
+      }
       parser.setLanguage(
         config.parser as Parameters<typeof parser.setLanguage>[0],
       )
