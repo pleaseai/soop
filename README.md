@@ -273,6 +273,10 @@ MIT License
 
 - [Implementation Status](docs/implementation-status.md) — Paper vs implementation gap analysis (implemented / not implemented / needs modification)
 
+## Related Projects
+
+- [Beads](https://github.com/steveyegge/beads) — Distributed, git-backed task tracking system for AI coding agents; provides persistent structured memory and dependency-aware task graphs for long-horizon agent workflows
+
 ## Acknowledgments
 
 This implementation is based on research from Microsoft Research Asia.
