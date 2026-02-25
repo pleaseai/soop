@@ -1,14 +1,19 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "plugins": [
+    {
+      "type": "node-workspace"
+    }
+  ],
+  "release-type": "node",
+  "changelog-path": "CHANGELOG.md",
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": true,
+  "include-v-in-tag": true,
   "packages": {
     "packages/soop": {
-      "release-type": "node",
       "package-name": "@pleaseai/soop",
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
       "include-component-in-tag": false,
-      "include-v-in-tag": true,
       "extra-files": [
         {
           "type": "json",
@@ -46,6 +51,38 @@
           "jsonpath": "$.optionalDependencies['@pleaseai/soop-win32-x64']"
         }
       ]
+    },
+    "packages/cli": {
+      "package-name": "@pleaseai/soop-cli",
+      "include-component-in-tag": true
+    },
+    "packages/encoder": {
+      "package-name": "@pleaseai/soop-encoder",
+      "include-component-in-tag": true
+    },
+    "packages/graph": {
+      "package-name": "@pleaseai/soop-graph",
+      "include-component-in-tag": true
+    },
+    "packages/mcp": {
+      "package-name": "@pleaseai/soop-mcp",
+      "include-component-in-tag": true
+    },
+    "packages/store": {
+      "package-name": "@pleaseai/soop-store",
+      "include-component-in-tag": true
+    },
+    "packages/tools": {
+      "package-name": "@pleaseai/soop-tools",
+      "include-component-in-tag": true
+    },
+    "packages/utils": {
+      "package-name": "@pleaseai/soop-utils",
+      "include-component-in-tag": true
+    },
+    "packages/zerorepo": {
+      "package-name": "@pleaseai/soop-zerorepo",
+      "include-component-in-tag": true
     }
   }
 }
