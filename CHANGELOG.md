@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/pleaseai/RPG/compare/v0.1.7...v0.1.8) (2026-02-25)
+
+
+### Features
+
+* **distribution:** add cross-platform binary distribution via Bun compile ([#110](https://github.com/pleaseai/RPG/issues/110)) ([7603609](https://github.com/pleaseai/RPG/commit/7603609febad52473f01dc73a4fbe2b3e546b6bc))
+
 ## [0.1.7](https://github.com/pleaseai/RPG/compare/v0.1.6...v0.1.7) (2026-02-25)
 
 
