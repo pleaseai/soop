@@ -1,7 +1,7 @@
-import type { SupportedLanguage } from '@pleaseai/rpg-utils/ast'
+import type { SupportedLanguage } from '@pleaseai/soop-utils/ast'
 import type Parser from 'tree-sitter'
 import type { CallSite, ReceiverKind } from './dependency-graph'
-import { LANGUAGE_CONFIGS } from '@pleaseai/rpg-utils/ast'
+import { LANGUAGE_CONFIGS } from '@pleaseai/soop-utils/ast'
 
 interface CallInfo {
   symbol: string | null

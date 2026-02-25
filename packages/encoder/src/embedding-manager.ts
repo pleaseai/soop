@@ -1,8 +1,8 @@
-import type { EmbeddingConfig, SerializedEmbeddings } from '@pleaseai/rpg-graph/embeddings'
-import type { RepositoryPlanningGraph } from '@pleaseai/rpg-graph/rpg'
+import type { EmbeddingConfig, SerializedEmbeddings } from '@pleaseai/soop-graph/embeddings'
+import type { RepositoryPlanningGraph } from '@pleaseai/soop-graph/rpg'
 import type { Embedding } from './embedding'
-import { float32ToBase64Float16 } from '@pleaseai/rpg-graph/embeddings'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { float32ToBase64Float16 } from '@pleaseai/soop-graph/embeddings'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('EmbeddingManager')
 
@@ -13,7 +13,7 @@ const DEFAULT_TEXT_TEMPLATE = '{description} {keywords} {path}'
  * EmbeddingManager — generates and manages serialized embeddings for git storage.
  *
  * Produces SerializedEmbeddings with base64 float16 vectors that can be
- * committed to git as `.rpg/embeddings.json`.
+ * committed to git as `.soop/embeddings.json`.
  */
 export class EmbeddingManager {
   private readonly provider: Embedding

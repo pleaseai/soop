@@ -1,7 +1,7 @@
-import type { SupportedLanguage } from '@pleaseai/rpg-utils/ast'
+import type { SupportedLanguage } from '@pleaseai/soop-utils/ast'
 import type Parser from 'tree-sitter'
 import type { CallSite, EntityNode, InheritanceRelation } from './dependency-graph'
-import { LANGUAGE_CONFIGS } from '@pleaseai/rpg-utils/ast'
+import { LANGUAGE_CONFIGS } from '@pleaseai/soop-utils/ast'
 import { COMMON_METHOD_BLOCKLIST } from './type-inference-patterns'
 
 /**

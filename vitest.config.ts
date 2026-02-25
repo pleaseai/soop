@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['tests/**/*.test.ts'],
+    include: ['packages/*/tests/**/*.test.ts'],
     exclude: ['tests/fixtures/**'],
     coverage: {
       provider: 'v8',
@@ -24,8 +24,8 @@ export default defineConfig({
           name: 'unit',
           globals: true,
           environment: 'node',
-          include: ['tests/**/*.test.ts'],
-          exclude: ['tests/fixtures/**', 'tests/**/*.integration.test.ts'],
+          include: ['packages/*/tests/**/*.test.ts'],
+          exclude: ['tests/fixtures/**', 'packages/*/tests/**/*.integration.test.ts'],
           testTimeout: 15000,
         },
       },
@@ -34,7 +34,7 @@ export default defineConfig({
           name: 'integration',
           globals: true,
           environment: 'node',
-          include: ['tests/**/*.integration.test.ts'],
+          include: ['packages/*/tests/**/*.integration.test.ts'],
           exclude: ['tests/fixtures/**'],
           testTimeout: 30000,
         },

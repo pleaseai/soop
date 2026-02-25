@@ -199,7 +199,7 @@ export function base64Float16ToFloat32(encoded: string, dimension: number): numb
 
 /**
  * Parse a JSON string into a validated SerializedEmbeddings object.
- * @deprecated Use parseEmbeddingsJsonl() instead for new files (.rpg/embeddings.jsonl).
+ * @deprecated Use parseEmbeddingsJsonl() instead for new files (.soop/embeddings.jsonl).
  */
 export function parseEmbeddings(json: string): SerializedEmbeddings {
   return SerializedEmbeddingsSchema.parse(JSON.parse(json))
@@ -207,7 +207,7 @@ export function parseEmbeddings(json: string): SerializedEmbeddings {
 
 /**
  * Serialize a SerializedEmbeddings object to a JSON string.
- * @deprecated Use serializeEmbeddingsJsonl() instead for new files (.rpg/embeddings.jsonl).
+ * @deprecated Use serializeEmbeddingsJsonl() instead for new files (.soop/embeddings.jsonl).
  */
 export function serializeEmbeddings(data: SerializedEmbeddings): string {
   return JSON.stringify(data, null, 2)

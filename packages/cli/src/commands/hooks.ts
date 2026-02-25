@@ -1,25 +1,25 @@
 import { chmodSync, existsSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('hooks')
 
 const HOOK_CONTENT = `#!/bin/sh
-# RPG auto-sync hook — installed by "rpg init --hooks"
-# Runs rpg sync after git operations. Failures do not block git.
+# Repo Please auto-sync hook — installed by "soop init --hooks"
+# Runs soop sync after git operations. Failures do not block git.
 
-if command -v rpg >/dev/null 2>&1; then
-  rpg sync || echo "rpg sync failed (exit $?), run 'rpg sync' manually to debug" >&2
+if command -v soop >/dev/null 2>&1; then
+  soop sync || echo "soop sync failed (exit $?), run 'soop sync' manually to debug" >&2
 elif command -v bunx >/dev/null 2>&1; then
-  bunx rpg sync || echo "rpg sync failed (exit $?), run 'rpg sync' manually to debug" >&2
+  bunx soop sync || echo "soop sync failed (exit $?), run 'soop sync' manually to debug" >&2
 fi
 `
 
 const HOOK_NAMES = ['post-merge', 'post-checkout'] as const
 
 /**
- * Install git hooks that run "rpg sync" after merge/checkout.
+ * Install git hooks that run "repo sync" after merge/checkout.
  * Does not overwrite existing hooks.
  */
 export async function installHooks(repoPath: string): Promise<void> {

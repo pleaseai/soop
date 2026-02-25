@@ -2,8 +2,8 @@
 /**
  * Build script for cross-platform binary distribution.
  *
- * Compiles `rpg` and `rpg-mcp` standalone Bun executables for 7 platform targets,
- * then generates the npm/rpg-<target>/ package directories with package.json manifests.
+ * Compiles `soop` and `soop-mcp` standalone Bun executables for 7 platform targets,
+ * then generates the npm/soop-<target>/ package directories with package.json manifests.
  *
  * Usage: bun run scripts/generate-packages.ts
  */
@@ -16,7 +16,7 @@ import { join } from 'node:path'
 // ---------------------------------------------------------------------------
 
 interface Target {
-  /** npm package suffix, e.g. "darwin-arm64" → @pleaseai/rpg-darwin-arm64 */
+  /** npm package suffix, e.g. "darwin-arm64" → @pleaseai/soop-darwin-arm64 */
   packageSuffix: string
   /** Bun compile target string */
   bunTarget: string
@@ -34,8 +34,8 @@ interface Target {
 
 const ROOT = import.meta.dirname ? join(import.meta.dirname, '..') : process.cwd()
 
-// Read version from root package.json
-const pkgJson = await Bun.file(join(ROOT, 'package.json')).json() as { version: string }
+// Read version from packages/soop/package.json
+const pkgJson = await Bun.file(join(ROOT, 'packages', 'soop', 'package.json')).json() as { version: string }
 const VERSION = pkgJson.version
 
 const TARGETS: Target[] = [
@@ -92,7 +92,7 @@ const TARGETS: Target[] = [
 // ---------------------------------------------------------------------------
 
 function packageName(suffix: string): string {
-  return `@pleaseai/rpg-${suffix}`
+  return `@pleaseai/soop-${suffix}`
 }
 
 function binaryName(name: string, os: string): string {
@@ -146,27 +146,27 @@ async function buildBinary(
 }
 
 async function generatePackageJson(target: Target): Promise<void> {
-  const pkgDir = join(ROOT, 'npm', `rpg-${target.packageSuffix}`)
+  const pkgDir = join(ROOT, 'npm', `soop-${target.packageSuffix}`)
   await mkdir(pkgDir, { recursive: true })
 
   const pkg: Record<string, unknown> = {
     name: packageName(target.packageSuffix),
     version: VERSION,
-    description: `RPG binary for ${target.os}-${target.cpu}${target.libc ? `-${target.libc}` : ''}`,
+    description: `Soop Please binary for ${target.os}-${target.cpu}${target.libc ? `-${target.libc}` : ''}`,
     os: [target.os],
     cpu: [target.cpu],
     bin: {
-      'rpg': binaryName('rpg', target.os),
-      'rpg-mcp': binaryName('rpg-mcp', target.os),
+      'soop': binaryName('soop', target.os),
+      'soop-mcp': binaryName('soop-mcp', target.os),
     },
     files: [
-      binaryName('rpg', target.os),
-      binaryName('rpg-mcp', target.os),
+      binaryName('soop', target.os),
+      binaryName('soop-mcp', target.os),
     ],
     license: 'MIT',
     repository: {
       type: 'git',
-      url: 'https://github.com/pleaseai/rpg.git',
+      url: 'https://github.com/pleaseai/soop.git',
     },
   }
 
@@ -204,20 +204,20 @@ if (filterPrefix && BUILD_TARGETS.length === 0) {
   process.exit(1)
 }
 
-console.log(`Building RPG binaries v${VERSION} for ${BUILD_TARGETS.length} targets${filterPrefix ? ` (filter: ${filterPrefix})` : ''}...\n`)
+console.log(`Building Soop Please binaries v${VERSION} for ${BUILD_TARGETS.length} targets${filterPrefix ? ` (filter: ${filterPrefix})` : ''}...\n`)
 
 // Compile binaries for each target
 for (const target of BUILD_TARGETS) {
-  const pkgDir = join(ROOT, 'npm', `rpg-${target.packageSuffix}`)
+  const pkgDir = join(ROOT, 'npm', `soop-${target.packageSuffix}`)
 
-  const rpgBin = binaryName('rpg', target.os)
-  const mcpBin = binaryName('rpg-mcp', target.os)
+  const repoBin = binaryName('soop', target.os)
+  const mcpBin = binaryName('soop-mcp', target.os)
 
   console.log(`\n[${target.packageSuffix}] target=${target.bunTarget}`)
 
   await buildBinary(
     join(ROOT, 'packages', 'cli', 'src', 'cli.ts'),
-    join(pkgDir, rpgBin),
+    join(pkgDir, repoBin),
     target.bunTarget,
   )
 
@@ -228,23 +228,23 @@ for (const target of BUILD_TARGETS) {
   )
 
   await generatePackageJson(target)
-  console.log(`  Generated npm/rpg-${target.packageSuffix}/package.json`)
+  console.log(`  Generated npm/soop-${target.packageSuffix}/package.json`)
 }
 
-// Sync optionalDependencies in root package.json so versions stay in sync with VERSION
-const rootPkgPath = join(ROOT, 'package.json')
-const rootPkg = await Bun.file(rootPkgPath).json() as Record<string, unknown>
-const optDeps = rootPkg.optionalDependencies as Record<string, string>
+// Sync optionalDependencies in packages/soop/package.json so versions stay in sync with VERSION
+const repoPkgPath = join(ROOT, 'packages', 'soop', 'package.json')
+const repoPkg = await Bun.file(repoPkgPath).json() as Record<string, unknown>
+const optDeps = repoPkg.optionalDependencies as Record<string, string>
 for (const target of TARGETS) {
   const name = packageName(target.packageSuffix)
   if (name in optDeps) {
     optDeps[name] = VERSION
   }
 }
-await writeFile(rootPkgPath, `${JSON.stringify(rootPkg, null, 2)}\n`)
-console.log(`\nSynced optionalDependencies in package.json → v${VERSION}`)
+await writeFile(repoPkgPath, `${JSON.stringify(repoPkg, null, 2)}\n`)
+console.log(`\nSynced optionalDependencies in packages/soop/package.json → v${VERSION}`)
 
 console.log('\nBuild complete!')
 console.log('Platform packages written to npm/')
 console.log('\nTo publish platform packages:')
-console.log('  for dir in npm/rpg-*/; do (cd "$dir" && npm publish --access public); done')
+console.log('  for dir in npm/soop-*/; do (cd "$dir" && npm publish --access public); done')

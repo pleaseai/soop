@@ -9,7 +9,7 @@ import { z } from 'zod/v4'
  */
 export function registerInteractiveTools(server: McpServer, encoder: InteractiveEncoder): void {
   server.registerTool(
-    'rpg_build_index',
+    'repo_build_index',
     {
       title: 'Build Structural Index',
       description: `Build a structural graph from a repository (AST parsing + dependency edges, no semantic features).
@@ -49,7 +49,7 @@ Returns:
   )
 
   server.registerTool(
-    'rpg_submit_features',
+    'repo_submit_features',
     {
       title: 'Submit Semantic Features',
       description: `Apply semantic features to entities in the RPG graph.
@@ -90,7 +90,7 @@ Error Handling:
   )
 
   server.registerTool(
-    'rpg_finalize_features',
+    'repo_finalize_features',
     {
       title: 'Finalize Features',
       description: `Aggregate entity features into file-level descriptions and auto-route drifted entities.
@@ -125,7 +125,7 @@ Returns:
   )
 
   server.registerTool(
-    'rpg_submit_synthesis',
+    'repo_submit_synthesis',
     {
       title: 'Submit File Synthesis',
       description: `Apply holistic file-level feature synthesis.
@@ -162,7 +162,7 @@ Returns:
   )
 
   server.registerTool(
-    'rpg_submit_hierarchy',
+    'repo_submit_hierarchy',
     {
       title: 'Submit Hierarchy',
       description: `Apply 3-level hierarchy assignments to files.
@@ -199,7 +199,7 @@ Returns:
   )
 
   server.registerTool(
-    'rpg_submit_routing',
+    'repo_submit_routing',
     {
       title: 'Submit Routing Decisions',
       description: `Apply routing decisions for entities that drifted from their hierarchy location.

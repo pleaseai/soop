@@ -1,6 +1,6 @@
-import type { LLMClient } from '@pleaseai/rpg-utils/llm'
+import type { LLMClient } from '@pleaseai/soop-utils/llm'
 import type { DomainDiscoveryResult, FileFeatureGroup } from './types'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 import { buildDomainDiscoveryPrompt } from './prompts'
 
 const log = createLogger('DomainDiscovery')

@@ -1,8 +1,8 @@
-import type { SupportedLanguage } from '@pleaseai/rpg-utils/ast'
+import type { SupportedLanguage } from '@pleaseai/soop-utils/ast'
 import type Parser from 'tree-sitter'
 import type { InheritanceRelation } from './dependency-graph'
-import { LANGUAGE_CONFIGS } from '@pleaseai/rpg-utils/ast'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { LANGUAGE_CONFIGS } from '@pleaseai/soop-utils/ast'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('InheritanceExtractor')
 

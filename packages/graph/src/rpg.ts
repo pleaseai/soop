@@ -1,8 +1,8 @@
-import type { ContextStore } from '@pleaseai/rpg-store/context-store'
+import type { ContextStore } from '@pleaseai/soop-store/context-store'
 import type { DataFlowEdge, DependencyEdge, Edge, EdgeType, FunctionalEdge } from './edge'
 import type { HighLevelNode, LowLevelNode, Node, SemanticFeature, StructuralMetadata } from './node'
-import { DefaultContextStore } from '@pleaseai/rpg-store/default-context-store'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { DefaultContextStore } from '@pleaseai/soop-store/default-context-store'
+import { createLogger } from '@pleaseai/soop-utils/logger'
 import { z } from 'zod/v4'
 import { attrsToEdge, attrsToNode, edgeToAttrs, nodeToAttrs, nodeToSearchFields } from './adapters'
 import {

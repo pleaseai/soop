@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Platform-detecting launcher for the `rpg-mcp` MCP server binary.
+ * Platform-detecting launcher for the `soop-mcp` MCP server binary.
  *
  * Detects the current platform/arch/libc, resolves the appropriate
- * @pleaseai/rpg-<platform>-<arch>[-<libc>] optional package, and
- * executes its pre-compiled `rpg-mcp` binary.
+ * @pleaseai/soop-<platform>-<arch>[-<libc>] optional package, and
+ * executes its pre-compiled `soop-mcp` binary.
  *
- * This file is compiled to dist/launcher-mcp.mjs by tsdown and is the
- * target of the `bin/rpg-mcp` Node.js shim.
+ * This file is compiled to packages/soop/dist/launcher-mcp.mjs by tsdown and is the
+ * target of the `bin/soop-mcp` Node.js shim.
  */
 
 import { execFileSync, spawnSync } from 'node:child_process'
@@ -66,11 +66,11 @@ function getPackageSuffix(): string {
 // ---------------------------------------------------------------------------
 
 function binaryFilename(): string {
-  return process.platform === 'win32' ? 'rpg-mcp.exe' : 'rpg-mcp'
+  return process.platform === 'win32' ? 'soop-mcp.exe' : 'soop-mcp'
 }
 
 function findBinary(): string {
-  const packageName = `@pleaseai/rpg-${getPackageSuffix()}`
+  const packageName = `@pleaseai/soop-${getPackageSuffix()}`
   const filename = binaryFilename()
   const require = createRequire(import.meta.url)
   const searchPaths: string[] = []
@@ -102,7 +102,7 @@ function findBinary(): string {
   throw new Error(
     `Could not find the ${packageName} binary.\n`
     + `Searched:\n${searchPaths.map(p => `  - ${p}`).join('\n')}\n\n`
-    + `Make sure @pleaseai/rpg is installed — the optional platform package `
+    + `Make sure @pleaseai/soop is installed — the optional platform package `
     + `should be installed automatically on supported platforms.\n`
     + `If you used --no-optional, re-run without that flag.`,
   )

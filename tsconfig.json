@@ -5,6 +5,6 @@
     "rootDir": ".",
     "baseUrl": "."
   },
-  "include": ["src/**/*", "packages/*/src/**/*"],
+  "include": ["packages/*/src/**/*"],
   "exclude": ["node_modules", "dist", "packages/*/dist", "**/*.test.ts"]
 }

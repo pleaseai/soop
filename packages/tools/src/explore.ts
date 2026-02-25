@@ -1,5 +1,5 @@
-import type { Edge, Node, RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
-import { EdgeType } from '@pleaseai/rpg-graph'
+import type { Edge, Node, RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { EdgeType } from '@pleaseai/soop-graph'
 
 /**
  * Edge type for exploration
