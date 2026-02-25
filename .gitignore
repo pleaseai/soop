@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 
+# Generated platform npm packages (built by scripts/generate-packages.ts)
+npm/
+
 # Environment
 .env
 .env.local

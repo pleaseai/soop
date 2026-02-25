@@ -1,0 +1,206 @@
+#!/usr/bin/env bun
+/**
+ * Build script for cross-platform binary distribution.
+ *
+ * Compiles `rpg` and `rpg-mcp` standalone Bun executables for 7 platform targets,
+ * then generates the npm/rpg-<target>/ package directories with package.json manifests.
+ *
+ * Usage: bun run scripts/generate-packages.ts
+ */
+
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface Target {
+  /** npm package suffix, e.g. "darwin-arm64" → @pleaseai/rpg-darwin-arm64 */
+  packageSuffix: string
+  /** Bun compile target string */
+  bunTarget: string
+  /** package.json `os` value */
+  os: string
+  /** package.json `cpu` value */
+  cpu: string
+  /** package.json `libc` value (Linux only) */
+  libc?: string
+}
+
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
+const ROOT = import.meta.dirname ? join(import.meta.dirname, '..') : process.cwd()
+
+// Read version from root package.json
+const pkgJson = await Bun.file(join(ROOT, 'package.json')).json() as { version: string }
+const VERSION = pkgJson.version
+
+const TARGETS: Target[] = [
+  {
+    packageSuffix: 'darwin-arm64',
+    bunTarget: 'bun-darwin-arm64',
+    os: 'darwin',
+    cpu: 'arm64',
+  },
+  {
+    packageSuffix: 'darwin-x64',
+    bunTarget: 'bun-darwin-x64-modern',
+    os: 'darwin',
+    cpu: 'x64',
+  },
+  {
+    packageSuffix: 'linux-x64-glibc',
+    bunTarget: 'bun-linux-x64-modern',
+    os: 'linux',
+    cpu: 'x64',
+    libc: 'glibc',
+  },
+  {
+    packageSuffix: 'linux-arm64-glibc',
+    bunTarget: 'bun-linux-arm64',
+    os: 'linux',
+    cpu: 'arm64',
+    libc: 'glibc',
+  },
+  {
+    packageSuffix: 'linux-x64-musl',
+    bunTarget: 'bun-linux-x64-modern-musl',
+    os: 'linux',
+    cpu: 'x64',
+    libc: 'musl',
+  },
+  {
+    packageSuffix: 'linux-arm64-musl',
+    bunTarget: 'bun-linux-arm64-musl',
+    os: 'linux',
+    cpu: 'arm64',
+    libc: 'musl',
+  },
+  {
+    packageSuffix: 'win32-x64',
+    bunTarget: 'bun-windows-x64-modern',
+    os: 'win32',
+    cpu: 'x64',
+  },
+]
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function packageName(suffix: string): string {
+  return `@pleaseai/rpg-${suffix}`
+}
+
+function binaryName(name: string, os: string): string {
+  return os === 'win32' ? `${name}.exe` : name
+}
+
+async function buildBinary(
+  entrypoint: string,
+  outfile: string,
+  target: string,
+): Promise<void> {
+  console.log(`  Building ${outfile} for ${target}...`)
+  const result = await Bun.build({
+    entrypoints: [entrypoint],
+    outfile,
+    target: target as Parameters<typeof Bun.build>[0]['target'],
+    compile: true,
+    bytecode: true,
+    minify: true,
+    // Embed all @pleaseai/* workspace packages; exclude heavy native/optional deps
+    external: [
+      '@lancedb/lancedb',
+      '@surrealdb/node',
+      '@huggingface/transformers',
+      'onnxruntime-node',
+      'onnxruntime-common',
+      'sharp',
+    ],
+  })
+
+  if (!result.success) {
+    console.error(`  Build failed for ${outfile}:`)
+    for (const log of result.logs) {
+      console.error(`    ${log.message}`)
+    }
+    throw new Error(`Bun.build failed for ${outfile} on ${target}`)
+  }
+}
+
+async function generatePackageJson(target: Target): Promise<void> {
+  const pkgDir = join(ROOT, 'npm', `rpg-${target.packageSuffix}`)
+  await mkdir(pkgDir, { recursive: true })
+
+  const pkg: Record<string, unknown> = {
+    name: packageName(target.packageSuffix),
+    version: VERSION,
+    description: `RPG binary for ${target.os}-${target.cpu}${target.libc ? `-${target.libc}` : ''}`,
+    os: [target.os],
+    cpu: [target.cpu],
+    bin: {
+      'rpg': binaryName('rpg', target.os),
+      'rpg-mcp': binaryName('rpg-mcp', target.os),
+    },
+    files: [
+      binaryName('rpg', target.os),
+      binaryName('rpg-mcp', target.os),
+    ],
+    license: 'MIT',
+    repository: {
+      type: 'git',
+      url: 'https://github.com/pleaseai/rpg.git',
+    },
+  }
+
+  // Add libc field for Linux targets
+  if (target.libc) {
+    pkg.libc = [target.libc]
+  }
+
+  await writeFile(
+    join(pkgDir, 'package.json'),
+    `${JSON.stringify(pkg, null, 2)}\n`,
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+console.log(`Building RPG binaries v${VERSION} for ${TARGETS.length} targets...\n`)
+
+// Compile binaries for each target
+for (const target of TARGETS) {
+  const pkgDir = join(ROOT, 'npm', `rpg-${target.packageSuffix}`)
+  await mkdir(pkgDir, { recursive: true })
+
+  const rpgBin = binaryName('rpg', target.os)
+  const mcpBin = binaryName('rpg-mcp', target.os)
+
+  console.log(`\n[${target.packageSuffix}] target=${target.bunTarget}`)
+
+  await buildBinary(
+    join(ROOT, 'packages', 'cli', 'src', 'cli.ts'),
+    join(pkgDir, rpgBin),
+    target.bunTarget,
+  )
+
+  await buildBinary(
+    join(ROOT, 'packages', 'mcp', 'src', 'server.ts'),
+    join(pkgDir, mcpBin),
+    target.bunTarget,
+  )
+
+  await generatePackageJson(target)
+  console.log(`  Generated npm/rpg-${target.packageSuffix}/package.json`)
+}
+
+console.log('\nBuild complete!')
+console.log('Platform packages written to npm/')
+console.log('\nTo publish platform packages:')
+console.log('  for dir in npm/rpg-*/; do (cd "$dir" && npm publish --access public); done')

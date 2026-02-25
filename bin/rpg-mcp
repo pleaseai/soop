@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+// Launcher shim for @pleaseai/rpg MCP server binary.
+// Delegates to the platform-specific compiled binary via the launcher.
+import('../dist/launcher-mcp.mjs').catch((err) => {
+  console.error('Failed to load rpg-mcp launcher:', err.message)
+  process.exit(1)
+})

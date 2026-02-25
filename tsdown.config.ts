@@ -13,6 +13,11 @@ const external = [
   'tree-sitter-rust',
   'tree-sitter-go',
   'tree-sitter-java',
+  'tree-sitter-c',
+  'tree-sitter-c-sharp',
+  'tree-sitter-cpp',
+  'tree-sitter-ruby',
+  'tree-sitter-kotlin',
   // HuggingFace transformers + ONNX (loads model files at runtime, cannot bundle)
   '@huggingface/transformers',
   'onnxruntime-node',
@@ -62,6 +67,20 @@ export default defineConfig([
     external,
     noExternal: [/^@pleaseai\//],
     banner: { js: '#!/usr/bin/env node' },
+    inlineOnly: false,
+  },
+  // Launcher scripts: compiled from scripts/launcher/*.ts → dist/launcher-{cli,mcp}.mjs
+  // These are pure Node.js scripts (no native deps) used by bin/rpg and bin/rpg-mcp shims
+  {
+    entry: {
+      'launcher-cli': './scripts/launcher/cli.ts',
+      'launcher-mcp': './scripts/launcher/mcp.ts',
+    },
+    format: 'esm',
+    platform: 'node',
+    dts: false,
+    outDir: 'dist',
+    // Launchers have no @pleaseai/* deps — they only use Node.js built-ins
     inlineOnly: false,
   },
 ])
