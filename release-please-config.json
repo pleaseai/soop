@@ -8,7 +8,44 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "include-component-in-tag": false,
-      "include-v-in-tag": true
+      "include-v-in-tag": true,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "packages/soop/package.json",
+          "jsonpath": "$.optionalDependencies['@pleaseai/soop-darwin-arm64']"
+        },
+        {
+          "type": "json",
+          "path": "packages/soop/package.json",
+          "jsonpath": "$.optionalDependencies['@pleaseai/soop-darwin-x64']"
+        },
+        {
+          "type": "json",
+          "path": "packages/soop/package.json",
+          "jsonpath": "$.optionalDependencies['@pleaseai/soop-linux-x64-glibc']"
+        },
+        {
+          "type": "json",
+          "path": "packages/soop/package.json",
+          "jsonpath": "$.optionalDependencies['@pleaseai/soop-linux-arm64-glibc']"
+        },
+        {
+          "type": "json",
+          "path": "packages/soop/package.json",
+          "jsonpath": "$.optionalDependencies['@pleaseai/soop-linux-x64-musl']"
+        },
+        {
+          "type": "json",
+          "path": "packages/soop/package.json",
+          "jsonpath": "$.optionalDependencies['@pleaseai/soop-linux-arm64-musl']"
+        },
+        {
+          "type": "json",
+          "path": "packages/soop/package.json",
+          "jsonpath": "$.optionalDependencies['@pleaseai/soop-win32-x64']"
+        }
+      ]
     }
   }
 }
