@@ -4,13 +4,14 @@
   "description": "Repository Planning Graph - A unified framework for repository understanding and generation",
   "type": "module",
   "files": [
-    "dist/"
+    "dist/",
+    "bin/"
   ],
   "main": "dist/src/index.mjs",
   "types": "dist/src/index.d.mts",
   "bin": {
-    "rpg": "dist/packages/cli/src/cli.mjs",
-    "rpg-mcp": "dist/packages/mcp/src/server.mjs"
+    "rpg": "bin/rpg",
+    "rpg-mcp": "bin/rpg-mcp"
   },
   "workspaces": [
     "packages/*"
@@ -20,6 +21,8 @@
     "mcp": "bun run packages/mcp/src/server.ts",
     "build": "tsdown && bun run build:copy-assets",
     "build:copy-assets": "mkdir -p dist/packages/cli/templates && cp packages/cli/src/templates/*.yml dist/packages/cli/templates/",
+    "build:npm": "bun run scripts/generate-packages.ts",
+    "publish:npm": "bun run build:npm && for dir in npm/rpg-*/; do (cd \"$dir\" && npm publish --access public); done",
     "test": "vitest run",
     "test:unit": "vitest run --project=unit",
     "test:integration": "vitest run --project=integration",
@@ -49,6 +52,13 @@
     "tree-sitter-typescript": "0.23.2"
   },
   "optionalDependencies": {
+    "@pleaseai/rpg-darwin-arm64": "0.1.7",
+    "@pleaseai/rpg-darwin-x64": "0.1.7",
+    "@pleaseai/rpg-linux-x64-glibc": "0.1.7",
+    "@pleaseai/rpg-linux-arm64-glibc": "0.1.7",
+    "@pleaseai/rpg-linux-x64-musl": "0.1.7",
+    "@pleaseai/rpg-linux-arm64-musl": "0.1.7",
+    "@pleaseai/rpg-win32-x64": "0.1.7",
     "@huggingface/transformers": "^3.8.1",
     "@lancedb/lancedb": "^0.13.0",
     "@surrealdb/node": "^2.6.0",
