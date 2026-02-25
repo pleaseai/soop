@@ -172,10 +172,29 @@ async function generatePackageJson(target: Target): Promise<void> {
 // Main
 // ---------------------------------------------------------------------------
 
-console.log(`Building RPG binaries v${VERSION} for ${TARGETS.length} targets...\n`)
+// ---------------------------------------------------------------------------
+// Target filter (--filter <packageSuffix-prefix>)
+// e.g. --filter darwin   → darwin-arm64, darwin-x64
+//      --filter linux-x64 → linux-x64-glibc, linux-x64-musl
+//      --filter linux-arm64 → linux-arm64-glibc, linux-arm64-musl
+//      --filter win32     → win32-x64
+// ---------------------------------------------------------------------------
+
+const filterIdx = process.argv.indexOf('--filter')
+const filterPrefix = filterIdx !== -1 ? process.argv[filterIdx + 1] : null
+const BUILD_TARGETS = filterPrefix
+  ? TARGETS.filter(t => t.packageSuffix.startsWith(filterPrefix))
+  : TARGETS
+
+if (filterPrefix && BUILD_TARGETS.length === 0) {
+  console.error(`No targets match --filter "${filterPrefix}". Available: ${TARGETS.map(t => t.packageSuffix).join(', ')}`)
+  process.exit(1)
+}
+
+console.log(`Building RPG binaries v${VERSION} for ${BUILD_TARGETS.length} targets${filterPrefix ? ` (filter: ${filterPrefix})` : ''}...\n`)
 
 // Compile binaries for each target
-for (const target of TARGETS) {
+for (const target of BUILD_TARGETS) {
   const pkgDir = join(ROOT, 'npm', `rpg-${target.packageSuffix}`)
 
   const rpgBin = binaryName('rpg', target.os)
@@ -203,7 +222,7 @@ for (const target of TARGETS) {
 const rootPkgPath = join(ROOT, 'package.json')
 const rootPkg = await Bun.file(rootPkgPath).json() as Record<string, unknown>
 const optDeps = rootPkg.optionalDependencies as Record<string, string>
-for (const target of TARGETS) {
+for (const target of BUILD_TARGETS) {
   const name = packageName(target.packageSuffix)
   if (name in optDeps) {
     optDeps[name] = VERSION

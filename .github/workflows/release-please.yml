@@ -4,9 +4,19 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — build binaries but skip npm publish'
+        type: boolean
+        default: false
 
 jobs:
+  # -------------------------------------------------------------------------
+  # Job 1: Create / update release PR (push to main only)
+  # -------------------------------------------------------------------------
   release-please:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
@@ -24,9 +34,77 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  publish:
+  # -------------------------------------------------------------------------
+  # Job 2: Build platform binaries (matrix — each OS builds its own targets)
+  #
+  # Runs when:
+  #   - push: release was created by release-please
+  #   - workflow_dispatch: always (manual trigger)
+  # -------------------------------------------------------------------------
+  build-binaries:
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created }}
+    if: |
+      always() && (
+        (github.event_name == 'push' &&
+          needs.release-please.result == 'success' &&
+          needs.release-please.outputs.release_created == 'true') ||
+        github.event_name == 'workflow_dispatch'
+      )
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS — builds darwin-arm64 and darwin-x64 natively on Apple Silicon
+          - os: macos-latest
+            filter: darwin
+            artifact: darwin
+
+          # Linux x64 — builds linux-x64-glibc and linux-x64-musl
+          - os: ubuntu-latest
+            filter: linux-x64
+            artifact: linux-x64
+
+          # Linux arm64 — builds linux-arm64-glibc and linux-arm64-musl
+          - os: ubuntu-24.04-arm
+            filter: linux-arm64
+            artifact: linux-arm64
+
+          # Windows x64
+          - os: windows-latest
+            filter: win32
+            artifact: win32
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build binaries (${{ matrix.filter }})
+        run: bun run scripts/generate-packages.ts --filter ${{ matrix.filter }}
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.artifact }}
+          path: npm/
+          retention-days: 1
+
+  # -------------------------------------------------------------------------
+  # Job 3: Collect all platform packages and publish to npm
+  # -------------------------------------------------------------------------
+  publish:
+    needs: [release-please, build-binaries]
+    if: |
+      always() &&
+      needs.build-binaries.result == 'success' && (
+        (github.event_name == 'push' &&
+          needs.release-please.result == 'success' &&
+          needs.release-please.outputs.release_created == 'true') ||
+        github.event_name == 'workflow_dispatch'
+      )
     runs-on: ubuntu-latest
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -41,23 +119,47 @@ jobs:
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-      - run: bun install --frozen-lockfile
-      - run: bunx turbo run build
 
-      # Compile platform-specific binaries (cross-compilation from Linux for all 7 targets)
-      - name: Build platform binaries
-        run: bun run build:npm
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
 
-      # Publish platform packages first — the main package references them via optionalDependencies
+      - name: Build main package
+        run: bunx turbo run build
+
+      - name: Download all platform binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: binaries-*
+          path: npm/
+          merge-multiple: true
+
+      - name: List collected packages
+        run: ls -la npm/
+
+      # Publish platform packages first — main package references them via optionalDependencies
       - name: Publish platform packages
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
           for dir in npm/rpg-*/; do
+            echo "Publishing $dir..."
             (cd "$dir" && npm publish --access public --provenance)
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Publish main @pleaseai/rpg package
-      # Trusted publishing - no token needed, provenance auto-generated
-      # Requires trusted publisher configured on npmjs.com
-      - run: npm publish --access public --provenance
+      # Publish main @pleaseai/rpg package (OIDC trusted publishing — no token needed)
+      - name: Publish main package
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: npm publish --access public --provenance
+
+      # Dry run — show what would be published
+      - name: Dry run summary
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          echo "=== DRY RUN: packages that would be published ==="
+          for dir in npm/rpg-*/; do
+            name=$(cat "$dir/package.json" | python3 -c "import json,sys; print(json.load(sys.stdin)['name'])")
+            version=$(cat "$dir/package.json" | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
+            echo "  $name@$version"
+          done
+          echo "  @pleaseai/rpg (main package)"
