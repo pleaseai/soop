@@ -222,7 +222,7 @@ for (const target of BUILD_TARGETS) {
 const rootPkgPath = join(ROOT, 'package.json')
 const rootPkg = await Bun.file(rootPkgPath).json() as Record<string, unknown>
 const optDeps = rootPkg.optionalDependencies as Record<string, string>
-for (const target of BUILD_TARGETS) {
+for (const target of TARGETS) {
   const name = packageName(target.packageSuffix)
   if (name in optDeps) {
     optDeps[name] = VERSION
