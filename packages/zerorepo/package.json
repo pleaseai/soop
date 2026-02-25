@@ -1,5 +1,5 @@
 {
-  "name": "@pleaseai/rpg-zerorepo",
+  "name": "@pleaseai/repo-zerorepo",
   "version": "0.1.3",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@pleaseai/rpg-graph": "workspace:*",
-    "@pleaseai/rpg-utils": "workspace:*"
+    "@pleaseai/repo-graph": "workspace:*",
+    "@pleaseai/repo-utils": "workspace:*"
   }
 }

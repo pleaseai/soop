@@ -1,18 +1,8 @@
 {
-  "name": "@pleaseai/rpg",
-  "version": "0.1.8",
-  "description": "Repository Planning Graph - A unified framework for repository understanding and generation",
+  "name": "repo-please-monorepo",
+  "version": "0.0.0",
+  "private": true,
   "type": "module",
-  "files": [
-    "dist/",
-    "bin/"
-  ],
-  "main": "dist/src/index.mjs",
-  "types": "dist/src/index.d.mts",
-  "bin": {
-    "rpg": "bin/rpg",
-    "rpg-mcp": "bin/rpg-mcp"
-  },
   "workspaces": [
     "packages/*"
   ],
@@ -20,9 +10,9 @@
     "dev": "bun run --watch packages/cli/src/cli.ts",
     "mcp": "bun run packages/mcp/src/server.ts",
     "build": "tsdown && bun run build:copy-assets",
-    "build:copy-assets": "mkdir -p dist/packages/cli/templates && cp packages/cli/src/templates/*.yml dist/packages/cli/templates/",
+    "build:copy-assets": "mkdir -p packages/repo/dist/packages/cli/templates && cp packages/cli/src/templates/*.yml packages/repo/dist/packages/cli/templates/",
     "build:npm": "bun run scripts/generate-packages.ts",
-    "publish:npm": "bun run build:npm && for dir in npm/rpg-*/; do (cd \"$dir\" && npm publish --access public); done",
+    "publish:npm": "bun run build:npm && for dir in npm/repo-*/; do (cd \"$dir\" && npm publish --access public); done",
     "test": "vitest run",
     "test:unit": "vitest run --project=unit",
     "test:integration": "vitest run --project=integration",
@@ -34,8 +24,7 @@
     "lint:fix": "eslint --cache --fix .",
     "format": "eslint --cache --fix .",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
-    "prepublishOnly": "bun run build"
+    "clean": "rm -rf packages/repo/dist"
   },
   "packageManager": "bun@1.3.9",
   "dependencies": {
@@ -51,23 +40,15 @@
     "tree-sitter-rust": "0.24.0",
     "tree-sitter-typescript": "0.23.2"
   },
-  "optionalDependencies": {
-    "@pleaseai/rpg-darwin-arm64": "0.1.7",
-    "@pleaseai/rpg-darwin-x64": "0.1.7",
-    "@pleaseai/rpg-linux-x64-glibc": "0.1.7",
-    "@pleaseai/rpg-linux-arm64-glibc": "0.1.7",
-    "@pleaseai/rpg-linux-x64-musl": "0.1.7",
-    "@pleaseai/rpg-linux-arm64-musl": "0.1.7",
-    "@pleaseai/rpg-win32-x64": "0.1.7",
-    "@huggingface/transformers": "^3.8.1",
-    "@lancedb/lancedb": "^0.13.0",
-    "@surrealdb/node": "^2.6.0",
-    "better-sqlite3": "^12.6.2"
-  },
-  "peerDependencies": {
-    "zod": "^3.25.0 || ^4.0.0"
-  },
   "devDependencies": {
+    "@pleaseai/repo-cli": "workspace:*",
+    "@pleaseai/repo-encoder": "workspace:*",
+    "@pleaseai/repo-graph": "workspace:*",
+    "@pleaseai/repo-mcp": "workspace:*",
+    "@pleaseai/repo-store": "workspace:*",
+    "@pleaseai/repo-tools": "workspace:*",
+    "@pleaseai/repo-utils": "workspace:*",
+    "@pleaseai/repo-zerorepo": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.36",
     "@ai-sdk/google": "^3.0.21",
     "@ai-sdk/openai": "^3.0.25",
@@ -88,26 +69,11 @@
     "vitest": "^4.0.18",
     "zod": "^4.0.0"
   },
-  "keywords": [
-    "repository",
-    "code-generation",
-    "code-understanding",
-    "llm",
-    "graph",
-    "software-engineering",
-    "ast"
-  ],
-  "author": "Minsu Lee <amond@amond.net>",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/pleaseai/rpg.git"
-  },
-  "engines": {
-    "bun": ">=1.0.0",
-    "node": ">=20.0.0"
-  },
   "trustedDependencies": [
     "better-sqlite3"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pleaseai/repo.git"
+  }
 }
