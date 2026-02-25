@@ -45,7 +45,10 @@ export class InheritanceExtractor {
 
     try {
       const parser = this.getParser()
-      const config = LANGUAGE_CONFIGS[normalizedLanguage as SupportedLanguage]
+      if (!parser) {
+        return []
+      }
+      const config = LANGUAGE_CONFIGS[normalizedLanguage as SupportedLanguage]!
       parser.setLanguage(
         config.parser as Parameters<typeof parser.setLanguage>[0],
       )

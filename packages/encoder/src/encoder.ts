@@ -511,6 +511,9 @@ export class RPGEncoder {
   constructor(repoPath: string, options?: Partial<Omit<EncoderOptions, 'repoPath'>>) {
     this.repoPath = repoPath
     this.astParser = new ASTParser()
+    if (!this.astParser.isAvailable()) {
+      log.warn('tree-sitter not available — AST parsing and dependency edges will be skipped')
+    }
     this.options = {
       repoPath,
       includeSource: false,
@@ -1059,15 +1062,20 @@ export class RPGEncoder {
     }
 
     // Phase 3b: Artifact Grounding - dependency injection
-    log.info('Phase 3.2: Dependency injection...')
-    try {
-      await injectDependencies(rpg, this.repoPath, this.astParser)
+    if (this.astParser.isAvailable()) {
+      log.info('Phase 3.2: Dependency injection...')
+      try {
+        await injectDependencies(rpg, this.repoPath, this.astParser)
+      }
+      catch (error) {
+        const msg = 'Dependency injection failed, continuing without dependency edges: '
+          + `${error instanceof Error ? error.message : String(error)}`
+        log.warn(msg)
+        warnings.push(msg)
+      }
     }
-    catch (error) {
-      const msg = 'Dependency injection failed, continuing without dependency edges: '
-        + `${error instanceof Error ? error.message : String(error)}`
-      log.warn(msg)
-      warnings.push(msg)
+    else {
+      log.info('Phase 3.2: Dependency injection skipped (tree-sitter not available)')
     }
 
     // Phase 3c: Data flow edge creation (section 3.2 inter-module + intra-module flows)

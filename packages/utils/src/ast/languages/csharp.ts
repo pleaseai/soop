@@ -1,6 +1,11 @@
 import type { CodeEntity, LanguageConfig } from '../types'
 
-const CSharp = require('tree-sitter-c-sharp')
+let CSharp: unknown
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  CSharp = require('tree-sitter-c-sharp')
+}
+catch {}
 
 const CSHARP_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
   method_declaration: 'method',
@@ -14,8 +19,10 @@ const CSHARP_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
 
 const CSHARP_IMPORT_TYPES = ['using_directive']
 
-export const csharpConfig: LanguageConfig = {
-  parser: CSharp,
-  entityTypes: CSHARP_ENTITY_TYPES,
-  importTypes: CSHARP_IMPORT_TYPES,
-}
+export const csharpConfig: LanguageConfig | undefined = CSharp
+  ? {
+      parser: CSharp as LanguageConfig['parser'],
+      entityTypes: CSHARP_ENTITY_TYPES,
+      importTypes: CSHARP_IMPORT_TYPES,
+    }
+  : undefined

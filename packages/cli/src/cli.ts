@@ -12,6 +12,8 @@ import { getHeadCommitSha } from '@pleaseai/rpg-utils/git-helpers'
 import { parseModelString } from '@pleaseai/rpg-utils/llm'
 import { createLogger, LogLevels, setLogLevel } from '@pleaseai/rpg-utils/logger'
 import { ZeroRepo } from '@pleaseai/rpg-zerorepo'
+import { EmbeddingManager } from '@pleaseai/rpg-encoder/embedding-manager'
+import { HuggingFaceEmbedding, AISDKEmbedding } from '@pleaseai/rpg-encoder/embedding'
 import { program } from 'commander'
 import { config } from 'dotenv'
 
@@ -466,14 +468,11 @@ async function generateEmbeddings(
   commit: string,
   embedModelStr?: string,
 ): Promise<SerializedEmbeddings> {
-  const { EmbeddingManager } = await import('@pleaseai/rpg-encoder/embedding-manager')
-
   const modelStr = embedModelStr ?? 'voyage-ai/voyage-code-3'
   const [providerPart] = modelStr.split('/')
 
   if (providerPart === 'transformers') {
     // Local HuggingFace model via @huggingface/transformers (ONNX)
-    const { HuggingFaceEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
     const modelId = modelStr.slice('transformers/'.length)
     const embedding = new HuggingFaceEmbedding({ model: modelId })
 
@@ -487,8 +486,6 @@ async function generateEmbeddings(
   }
 
   const { createOpenAI } = await import('@ai-sdk/openai')
-  const { AISDKEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
-
   const parsed = parseEmbedModelString(modelStr)
 
   const provider = createOpenAI({

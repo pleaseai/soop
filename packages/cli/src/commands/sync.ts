@@ -1,7 +1,11 @@
 import type { Command } from 'commander'
+import type { VectorStore } from '@pleaseai/rpg-store/vector-store'
 import { existsSync } from 'node:fs'
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { LocalVectorStore } from '@pleaseai/rpg-store/local'
+import { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } from '@pleaseai/rpg-graph/embeddings'
+import { getCurrentBranch, getDefaultBranch, getHeadCommitSha, getMergeBase } from '@pleaseai/rpg-utils/git-helpers'
 import { createLogger } from '@pleaseai/rpg-utils/logger'
 
 const log = createLogger('sync')
@@ -36,11 +40,6 @@ export function registerSyncCommand(program: Command): void {
 
         // 2. Ensure local directory exists
         await mkdir(path.join(localDir, 'vectors'), { recursive: true })
-
-        // 3. Import git helpers dynamically
-        const { getCurrentBranch, getDefaultBranch, getHeadCommitSha, getMergeBase } = await import(
-          '@pleaseai/rpg-utils/git-helpers',
-        )
 
         let currentBranch: string
         let defaultBranch: string
@@ -141,96 +140,73 @@ export function registerSyncCommand(program: Command): void {
         const embeddingsPathJson = path.join(rpgDir, 'embeddings.json')
         const embeddingsPath = existsSync(embeddingsPathJsonl) ? embeddingsPathJsonl : embeddingsPathJson
         if (existsSync(embeddingsPath)) {
-          // Separate dynamic import failure (build/packaging problem) from data processing failure
-          let embeddingParsers: {
-            parseEmbeddings: (json: string) => ReturnType<typeof import('@pleaseai/rpg-graph/embeddings').parseEmbeddings>
-            parseEmbeddingsJsonl: (jsonl: string) => ReturnType<typeof import('@pleaseai/rpg-graph/embeddings').parseEmbeddingsJsonl>
-            decodeAllEmbeddings: (embeddings: ReturnType<typeof import('@pleaseai/rpg-graph/embeddings').parseEmbeddings>) => Map<string, number[]>
-          } | undefined
+          const vectorDbPath = path.join(localDir, 'vectors')
+          const vectorStore: VectorStore = new LocalVectorStore()
           try {
-            embeddingParsers = await import('@pleaseai/rpg-graph/embeddings')
-          }
-          catch (importError) {
-            const code = (importError as NodeJS.ErrnoException).code
-            if (code === 'MODULE_NOT_FOUND' || code === 'ERR_MODULE_NOT_FOUND') {
-              log.warn('Could not import @pleaseai/rpg-graph/embeddings — this indicates a packaging or build problem', importError)
-            }
-            else {
-              throw importError
-            }
-          }
+            await vectorStore.open({ path: vectorDbPath })
 
-          if (embeddingParsers) {
-            const vectorDbPath = path.join(localDir, 'vectors')
-            const { LocalVectorStore } = await import('@pleaseai/rpg-store/local')
-            const vectorStore: import('@pleaseai/rpg-store/vector-store').VectorStore = new LocalVectorStore()
             try {
-              await vectorStore.open({ path: vectorDbPath })
+              const embeddingsContent = await readFile(embeddingsPath, 'utf-8')
+              const embeddings = embeddingsPath.endsWith('.jsonl')
+                ? parseEmbeddingsJsonl(embeddingsContent)
+                : parseEmbeddings(embeddingsContent)
+              const vectors = decodeAllEmbeddings(embeddings)
 
+              // Read the local RPG to get node metadata
+              let localRpg: InstanceType<typeof RepositoryPlanningGraph> | undefined
               try {
-                const { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } = embeddingParsers
-                const embeddingsContent = await readFile(embeddingsPath, 'utf-8')
-                const embeddings = embeddingsPath.endsWith('.jsonl')
-                  ? parseEmbeddingsJsonl(embeddingsContent)
-                  : parseEmbeddings(embeddingsContent)
-                const vectors = decodeAllEmbeddings(embeddings)
+                const localJson = await readFile(localGraphPath, 'utf-8')
+                localRpg = await RepositoryPlanningGraph.fromJSON(localJson)
+                const nodes = await localRpg.getNodes()
+                const nodeMap = new Map(nodes.map(n => [n.id, n]))
 
-                // Read the local RPG to get node metadata
-                let localRpg: InstanceType<typeof RepositoryPlanningGraph> | undefined
-                try {
-                  const localJson = await readFile(localGraphPath, 'utf-8')
-                  localRpg = await RepositoryPlanningGraph.fromJSON(localJson)
-                  const nodes = await localRpg.getNodes()
-                  const nodeMap = new Map(nodes.map(n => [n.id, n]))
-
-                  const docs = Array.from(vectors.entries())
-                    .filter(([id]) => nodeMap.has(id))
-                    .map(([id, embedding]) => {
-                      const node = nodeMap.get(id)!
-                      return {
-                        id,
-                        embedding,
-                        metadata: {
-                          entityType: node.metadata?.entityType,
-                          path: node.metadata?.path,
-                          text: `${node.feature.description} ${(node.feature.keywords ?? []).join(' ')} ${node.metadata?.path ?? ''}`,
-                        },
-                      }
-                    })
-
-                  if (docs.length > 0) {
-                    try {
-                      if (vectorStore.upsertBatch) {
-                        await vectorStore.upsertBatch(docs)
-                      }
-                      else {
-                        for (const doc of docs)
-                          await vectorStore.upsert(doc.id, doc.embedding, doc.metadata)
-                      }
-                      log.success(`Pre-computed embeddings loaded: ${docs.length} vectors (${embeddings.config.model})`)
-                      embeddingsLoaded = true
+                const docs = Array.from(vectors.entries())
+                  .filter(([id]) => nodeMap.has(id))
+                  .map(([id, embedding]) => {
+                    const node = nodeMap.get(id)!
+                    return {
+                      id,
+                      embedding,
+                      metadata: {
+                        entityType: node.metadata?.entityType,
+                        path: node.metadata?.path,
+                        text: `${node.feature.description} ${(node.feature.keywords ?? []).join(' ')} ${node.metadata?.path ?? ''}`,
+                      },
                     }
-                    catch (upsertError) {
-                      // Clear partial index to avoid inconsistent state
-                      await vectorStore.clear?.()
-                      throw upsertError
+                  })
+
+                if (docs.length > 0) {
+                  try {
+                    if (vectorStore.upsertBatch) {
+                      await vectorStore.upsertBatch(docs)
                     }
+                    else {
+                      for (const doc of docs)
+                        await vectorStore.upsert(doc.id, doc.embedding, doc.metadata)
+                    }
+                    log.success(`Pre-computed embeddings loaded: ${docs.length} vectors (${embeddings.config.model})`)
+                    embeddingsLoaded = true
+                  }
+                  catch (upsertError) {
+                    // Clear partial index to avoid inconsistent state
+                    await vectorStore.clear?.()
+                    throw upsertError
                   }
                 }
-                finally {
-                  await localRpg?.close()
-                }
               }
-              catch (error) {
-                log.warn(
-                  `Failed to load pre-computed embeddings: ${error instanceof Error ? error.message : String(error)}`,
-                )
-                log.warn('Falling back to on-demand embedding generation')
+              finally {
+                await localRpg?.close()
               }
             }
-            finally {
-              await vectorStore.close()
+            catch (error) {
+              log.warn(
+                `Failed to load pre-computed embeddings: ${error instanceof Error ? error.message : String(error)}`,
+              )
+              log.warn('Falling back to on-demand embedding generation')
             }
+          }
+          finally {
+            await vectorStore.close()
           }
         }
 

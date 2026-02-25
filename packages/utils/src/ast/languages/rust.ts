@@ -1,6 +1,11 @@
 import type { CodeEntity, LanguageConfig } from '../types'
 
-const Rust = require('tree-sitter-rust')
+let Rust: unknown
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Rust = require('tree-sitter-rust')
+}
+catch {}
 
 const RUST_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
   function_item: 'function',
@@ -13,8 +18,10 @@ const RUST_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
 
 const RUST_IMPORT_TYPES = ['use_declaration']
 
-export const rustConfig: LanguageConfig = {
-  parser: Rust,
-  entityTypes: RUST_ENTITY_TYPES,
-  importTypes: RUST_IMPORT_TYPES,
-}
+export const rustConfig: LanguageConfig | undefined = Rust
+  ? {
+      parser: Rust as LanguageConfig['parser'],
+      entityTypes: RUST_ENTITY_TYPES,
+      importTypes: RUST_IMPORT_TYPES,
+    }
+  : undefined

@@ -15,12 +15,17 @@ interface CallInfo {
  * Supports TypeScript, JavaScript, Python, Java, Rust, and Go.
  */
 export class CallExtractor {
-  private readonly parser: Parser
+  private readonly parser: Parser | undefined
 
   constructor() {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const TreeSitter = require('tree-sitter')
-    this.parser = new TreeSitter()
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const TreeSitter = require('tree-sitter')
+      this.parser = new TreeSitter()
+    }
+    catch {
+      // tree-sitter not available in compiled binary
+    }
   }
 
   private isSupportedLanguage(language: string): language is SupportedLanguage {
@@ -34,11 +39,15 @@ export class CallExtractor {
       return calls
     }
 
+    if (!this.parser) {
+      return calls
+    }
+
     if (!this.isSupportedLanguage(language)) {
       return calls
     }
 
-    const config = LANGUAGE_CONFIGS[language]
+    const config = LANGUAGE_CONFIGS[language]!
 
     try {
       this.parser.setLanguage(

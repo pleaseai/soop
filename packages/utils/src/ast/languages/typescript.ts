@@ -1,7 +1,12 @@
 import type { CodeEntity, LanguageConfig } from '../types'
 
-// Tree-sitter language parser
-const TypeScript = require('tree-sitter-typescript').typescript
+// Tree-sitter language parser (optional — not available in compiled Bun binary)
+let TypeScript: unknown
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  TypeScript = require('tree-sitter-typescript').typescript
+}
+catch {}
 
 /**
  * Entity node types for TypeScript and JavaScript
@@ -21,18 +26,22 @@ const TYPESCRIPT_IMPORT_TYPES = ['import_statement']
 /**
  * Language configuration for TypeScript
  */
-export const typescriptConfig: LanguageConfig = {
-  parser: TypeScript,
-  entityTypes: TS_JS_ENTITY_TYPES,
-  importTypes: TYPESCRIPT_IMPORT_TYPES,
-}
+export const typescriptConfig: LanguageConfig | undefined = TypeScript
+  ? {
+      parser: TypeScript as LanguageConfig['parser'],
+      entityTypes: TS_JS_ENTITY_TYPES,
+      importTypes: TYPESCRIPT_IMPORT_TYPES,
+    }
+  : undefined
 
 /**
  * Language configuration for JavaScript
  * Uses the same TypeScript parser as JavaScript is a subset of TypeScript
  */
-export const javascriptConfig: LanguageConfig = {
-  parser: TypeScript,
-  entityTypes: TS_JS_ENTITY_TYPES,
-  importTypes: TYPESCRIPT_IMPORT_TYPES,
-}
+export const javascriptConfig: LanguageConfig | undefined = TypeScript
+  ? {
+      parser: TypeScript as LanguageConfig['parser'],
+      entityTypes: TS_JS_ENTITY_TYPES,
+      importTypes: TYPESCRIPT_IMPORT_TYPES,
+    }
+  : undefined

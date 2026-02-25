@@ -1,6 +1,11 @@
 import type { CodeEntity, LanguageConfig } from '../types'
 
-const Kotlin = require('tree-sitter-kotlin')
+let Kotlin: unknown
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Kotlin = require('tree-sitter-kotlin')
+}
+catch {}
 
 const KOTLIN_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
   function_declaration: 'function',
@@ -11,8 +16,10 @@ const KOTLIN_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
 
 const KOTLIN_IMPORT_TYPES = ['import_header']
 
-export const kotlinConfig: LanguageConfig = {
-  parser: Kotlin,
-  entityTypes: KOTLIN_ENTITY_TYPES,
-  importTypes: KOTLIN_IMPORT_TYPES,
-}
+export const kotlinConfig: LanguageConfig | undefined = Kotlin
+  ? {
+      parser: Kotlin as LanguageConfig['parser'],
+      entityTypes: KOTLIN_ENTITY_TYPES,
+      importTypes: KOTLIN_IMPORT_TYPES,
+    }
+  : undefined

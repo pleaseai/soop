@@ -1,6 +1,11 @@
 import type { CodeEntity, LanguageConfig } from '../types'
 
-const Ruby = require('tree-sitter-ruby')
+let Ruby: unknown
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Ruby = require('tree-sitter-ruby')
+}
+catch {}
 
 const RUBY_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
   method: 'method',
@@ -12,8 +17,10 @@ const RUBY_ENTITY_TYPES: Record<string, CodeEntity['type']> = {
 // Ruby imports are 'call' nodes filtered to require/require_relative in extractor
 const RUBY_IMPORT_TYPES = ['call']
 
-export const rubyConfig: LanguageConfig = {
-  parser: Ruby,
-  entityTypes: RUBY_ENTITY_TYPES,
-  importTypes: RUBY_IMPORT_TYPES,
-}
+export const rubyConfig: LanguageConfig | undefined = Ruby
+  ? {
+      parser: Ruby as LanguageConfig['parser'],
+      entityTypes: RUBY_ENTITY_TYPES,
+      importTypes: RUBY_IMPORT_TYPES,
+    }
+  : undefined

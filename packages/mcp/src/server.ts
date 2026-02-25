@@ -4,7 +4,8 @@ import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { HuggingFaceEmbedding } from '@pleaseai/rpg-encoder/embedding'
+import { HuggingFaceEmbedding, AISDKEmbedding } from '@pleaseai/rpg-encoder/embedding'
+import { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } from '@pleaseai/rpg-graph/embeddings'
 import { SemanticSearch } from '@pleaseai/rpg-encoder/semantic-search'
 import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
 import { LocalVectorStore } from '@pleaseai/rpg-store/local'
@@ -321,7 +322,7 @@ async function createEmbeddingForSearch(config: {
   dimension: number
   space?: string
 }): Promise<Embedding> {
-  const { HuggingFaceEmbedding: HFEmbedding, AISDKEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
+  const HFEmbedding = HuggingFaceEmbedding
 
   if (config.provider === 'transformers') {
     return new HFEmbedding({ model: config.model })
@@ -372,8 +373,6 @@ async function initFromPrecomputedEmbeddings(
   embeddingsPath: string,
   dbPath: string,
 ): Promise<SemanticSearch> {
-  const { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } = await import('@pleaseai/rpg-graph/embeddings')
-
   log.start('Loading pre-computed embeddings...')
   const embeddingsContent = await readFile(embeddingsPath, 'utf-8')
   const embeddingsData = embeddingsPath.endsWith('.jsonl')

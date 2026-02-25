@@ -325,11 +325,19 @@ export class TypeInferrer {
     if (!this.isSupportedLanguage(language))
       return null
     if (!this.parser) {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const TreeSitter = require('tree-sitter')
-      this.parser = new TreeSitter() as Parser
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const TreeSitter = require('tree-sitter')
+        this.parser = new TreeSitter() as Parser
+      }
+      catch {
+        // tree-sitter not available in compiled binary
+        return null
+      }
     }
     const config = LANGUAGE_CONFIGS[language]
+    if (!config)
+      return null
     try {
       this.parser.setLanguage(config.parser as Parameters<typeof this.parser.setLanguage>[0])
       return this.parser
