@@ -1,4 +1,4 @@
-import type { RPGConfig } from '@pleaseai/rpg-graph'
+import type { RPGConfig } from '@pleaseai/repo-graph'
 import type { FileFeatures, InteractiveState, LiftableEntity } from './state'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -6,11 +6,11 @@ import {
   discoverFiles,
   extractEntitiesFromFile,
   injectDependencies,
-} from '@pleaseai/rpg-encoder/encoder'
-import { ArtifactGrounder } from '@pleaseai/rpg-encoder/grounding'
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
-import { ASTParser } from '@pleaseai/rpg-utils/ast'
-import { createStderrLogger } from '@pleaseai/rpg-utils/logger'
+} from '@pleaseai/repo-encoder/encoder'
+import { ArtifactGrounder } from '@pleaseai/repo-encoder/grounding'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import { ASTParser } from '@pleaseai/repo-utils/ast'
+import { createStderrLogger } from '@pleaseai/repo-utils/logger'
 import {
   DOMAIN_DISCOVERY_INSTRUCTIONS,
   FILE_SYNTHESIS_INSTRUCTIONS,

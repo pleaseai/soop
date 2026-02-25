@@ -1,15 +1,15 @@
-import type { Embedding } from '@pleaseai/rpg-encoder/embedding'
+import type { Embedding } from '@pleaseai/repo-encoder/embedding'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { AISDKEmbedding, HuggingFaceEmbedding } from '@pleaseai/rpg-encoder/embedding'
-import { SemanticSearch } from '@pleaseai/rpg-encoder/semantic-search'
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
-import { decodeAllEmbeddings, parseEmbeddings, parseEmbeddingsJsonl } from '@pleaseai/rpg-graph/embeddings'
-import { LocalVectorStore } from '@pleaseai/rpg-store/local'
-import { createStderrLogger } from '@pleaseai/rpg-utils/logger'
+import { HuggingFaceEmbedding, AISDKEmbedding } from '@pleaseai/repo-encoder/embedding'
+import { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } from '@pleaseai/repo-graph/embeddings'
+import { SemanticSearch } from '@pleaseai/repo-encoder/semantic-search'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import { LocalVectorStore } from '@pleaseai/repo-store/local'
+import { createStderrLogger } from '@pleaseai/repo-utils/logger'
 import { invalidPathError, RPGError } from './errors'
 import { InteractiveState, registerInteractiveProtocol } from './interactive'
 import {
@@ -55,50 +55,50 @@ export function createMcpServer(
   const search = options.semanticSearch ?? semanticSearch ?? null
   const rootPath = options.rootPath
   const server = new McpServer({
-    name: 'rpg-mcp-server',
+    name: 'repo-mcp-server',
     version: '0.1.0',
   })
 
   // Register all RPG tools
   server.tool(
-    RPG_TOOLS.rpg_search.name,
-    RPG_TOOLS.rpg_search.description,
+    RPG_TOOLS.repo_search.name,
+    RPG_TOOLS.repo_search.description,
     SearchInputSchema.shape,
     async args =>
       wrapHandler(() => executeSearch(rpg, SearchInputSchema.parse(args), search)),
   )
 
   server.tool(
-    RPG_TOOLS.rpg_fetch.name,
-    RPG_TOOLS.rpg_fetch.description,
+    RPG_TOOLS.repo_fetch.name,
+    RPG_TOOLS.repo_fetch.description,
     FetchInputBaseSchema.shape,
     async (args: unknown) => wrapHandler(() => executeFetch(rpg, FetchInputSchema.parse(args), { rootPath })),
   )
 
   server.tool(
-    RPG_TOOLS.rpg_explore.name,
-    RPG_TOOLS.rpg_explore.description,
+    RPG_TOOLS.repo_explore.name,
+    RPG_TOOLS.repo_explore.description,
     ExploreInputSchema.shape,
     async args => wrapHandler(() => executeExplore(rpg, ExploreInputSchema.parse(args))),
   )
 
   server.tool(
-    RPG_TOOLS.rpg_encode.name,
-    RPG_TOOLS.rpg_encode.description,
+    RPG_TOOLS.repo_encode.name,
+    RPG_TOOLS.repo_encode.description,
     EncodeInputSchema.shape,
     async args => wrapHandler(() => executeEncode(EncodeInputSchema.parse(args))),
   )
 
   server.tool(
-    RPG_TOOLS.rpg_evolve.name,
-    RPG_TOOLS.rpg_evolve.description,
+    RPG_TOOLS.repo_evolve.name,
+    RPG_TOOLS.repo_evolve.description,
     EvolveInputSchema.shape,
     async args => wrapHandler(() => executeEvolve(rpg, EvolveInputSchema.parse(args))),
   )
 
   server.tool(
-    RPG_TOOLS.rpg_stats.name,
-    RPG_TOOLS.rpg_stats.description,
+    RPG_TOOLS.repo_stats.name,
+    RPG_TOOLS.repo_stats.description,
     StatsInputSchema.shape,
     async () => wrapHandler(() => executeStats(rpg)),
   )

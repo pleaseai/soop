@@ -1,4 +1,4 @@
-import type { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
+import type { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
 import { createHash } from 'node:crypto'
 
 /**
