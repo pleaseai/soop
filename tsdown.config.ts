@@ -29,48 +29,48 @@ const external = [
 ]
 
 export default defineConfig([
-  // Library bundle: dist/src/index.mjs + dist/src/index.d.mts
+  // Library bundle: packages/repo/dist/src/index.mjs + packages/repo/dist/src/index.d.mts
   // Bundles all @pleaseai/* workspace packages inline (private, not separately published on npm)
   // Their pure-JS transitive deps (ai-sdk, consola, etc.) are also bundled
   // Native/binary deps remain external (consumer must install optionalDependencies)
   {
-    entry: { 'src/index': './src/index.ts' },
+    entry: { 'src/index': './packages/repo/src/index.ts' },
     format: 'esm',
     platform: 'node',
     dts: { eager: true },
     clean: true,
-    outDir: 'dist',
+    outDir: 'packages/repo/dist',
     external,
     noExternal: [/^@pleaseai\//],
     inlineOnly: false,
   },
-  // CLI binary: dist/packages/cli/src/cli.mjs (standalone, bundles all pure-JS deps)
+  // CLI binary: packages/repo/dist/packages/cli/src/cli.mjs (standalone, bundles all pure-JS deps)
   // noExternal ensures @pleaseai/* workspace packages are bundled inline (private, not on npm)
   {
     entry: { 'packages/cli/src/cli': './packages/cli/src/cli.ts' },
     format: 'esm',
     platform: 'node',
     dts: false,
-    outDir: 'dist',
+    outDir: 'packages/repo/dist',
     external,
     noExternal: [/^@pleaseai\//],
     inlineOnly: false,
   },
-  // MCP server binary: dist/packages/mcp/src/server.mjs (standalone)
+  // MCP server binary: packages/repo/dist/packages/mcp/src/server.mjs (standalone)
   // noExternal ensures @pleaseai/* workspace packages are bundled inline (private, not on npm)
   {
     entry: { 'packages/mcp/src/server': './packages/mcp/src/server.ts' },
     format: 'esm',
     platform: 'node',
     dts: false,
-    outDir: 'dist',
+    outDir: 'packages/repo/dist',
     external,
     noExternal: [/^@pleaseai\//],
     banner: { js: '#!/usr/bin/env node' },
     inlineOnly: false,
   },
-  // Launcher scripts: compiled from scripts/launcher/*.ts → dist/launcher-{cli,mcp}.mjs
-  // These are pure Node.js scripts (no native deps) used by bin/rpg and bin/rpg-mcp shims
+  // Launcher scripts: compiled from scripts/launcher/*.ts → packages/repo/dist/launcher-{cli,mcp}.mjs
+  // These are pure Node.js scripts (no native deps) used by bin/repo and bin/repo-mcp shims
   {
     entry: {
       'launcher-cli': './scripts/launcher/cli.ts',
@@ -79,7 +79,7 @@ export default defineConfig([
     format: 'esm',
     platform: 'node',
     dts: false,
-    outDir: 'dist',
+    outDir: 'packages/repo/dist',
     // Launchers have no @pleaseai/* deps — they only use Node.js built-ins
     inlineOnly: false,
   },

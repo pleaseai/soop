@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Platform-detecting launcher for the `rpg` CLI binary.
+ * Platform-detecting launcher for the `repo` CLI binary.
  *
  * Detects the current platform/arch/libc, resolves the appropriate
- * @pleaseai/rpg-<platform>-<arch>[-<libc>] optional package, and
- * executes its pre-compiled `rpg` binary.
+ * @pleaseai/repo-<platform>-<arch>[-<libc>] optional package, and
+ * executes its pre-compiled `repo` binary.
  *
- * This file is compiled to dist/launcher-cli.mjs by tsdown and is the
- * target of the `bin/rpg` Node.js shim.
+ * This file is compiled to packages/repo/dist/launcher-cli.mjs by tsdown and is the
+ * target of the `bin/repo` Node.js shim.
  */
 
 import { execFileSync, spawnSync } from 'node:child_process'
@@ -66,11 +66,11 @@ function getPackageSuffix(): string {
 // ---------------------------------------------------------------------------
 
 function binaryFilename(): string {
-  return process.platform === 'win32' ? 'rpg.exe' : 'rpg'
+  return process.platform === 'win32' ? 'repo.exe' : 'repo'
 }
 
 function findBinary(): string {
-  const packageName = `@pleaseai/rpg-${getPackageSuffix()}`
+  const packageName = `@pleaseai/repo-${getPackageSuffix()}`
   const filename = binaryFilename()
   const require = createRequire(import.meta.url)
   const searchPaths: string[] = []
@@ -102,7 +102,7 @@ function findBinary(): string {
   throw new Error(
     `Could not find the ${packageName} binary.\n`
     + `Searched:\n${searchPaths.map(p => `  - ${p}`).join('\n')}\n\n`
-    + `Make sure @pleaseai/rpg is installed — the optional platform package `
+    + `Make sure @pleaseai/repo is installed — the optional platform package `
     + `should be installed automatically on supported platforms.\n`
     + `If you used --no-optional, re-run without that flag.`,
   )
