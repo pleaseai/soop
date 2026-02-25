@@ -47,13 +47,13 @@ const TARGETS: Target[] = [
   },
   {
     packageSuffix: 'darwin-x64',
-    bunTarget: 'bun-darwin-x64-modern',
+    bunTarget: 'bun-darwin-x64',
     os: 'darwin',
     cpu: 'x64',
   },
   {
     packageSuffix: 'linux-x64-glibc',
-    bunTarget: 'bun-linux-x64-modern',
+    bunTarget: 'bun-linux-x64',
     os: 'linux',
     cpu: 'x64',
     libc: 'glibc',
@@ -67,7 +67,7 @@ const TARGETS: Target[] = [
   },
   {
     packageSuffix: 'linux-x64-musl',
-    bunTarget: 'bun-linux-x64-modern-musl',
+    bunTarget: 'bun-linux-x64-musl',
     os: 'linux',
     cpu: 'x64',
     libc: 'musl',
@@ -81,7 +81,7 @@ const TARGETS: Target[] = [
   },
   {
     packageSuffix: 'win32-x64',
-    bunTarget: 'bun-windows-x64-modern',
+    bunTarget: 'bun-windows-x64',
     os: 'win32',
     cpu: 'x64',
   },
