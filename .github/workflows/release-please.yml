@@ -140,26 +140,26 @@ jobs:
       - name: Publish platform packages
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
-          for dir in npm/rpg-*/; do
+          for dir in npm/repo-*/; do
             echo "Publishing $dir..."
             (cd "$dir" && npm publish --access public --provenance)
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # Publish main @pleaseai/rpg package (OIDC trusted publishing — no token needed)
+      # Publish main @pleaseai/repo package (OIDC trusted publishing — no token needed)
       - name: Publish main package
         if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: npm publish --access public --provenance
+        run: cd packages/repo && npm publish --access public --provenance
 
       # Dry run — show what would be published
       - name: Dry run summary
         if: ${{ github.event.inputs.dry_run == 'true' }}
         run: |
           echo "=== DRY RUN: packages that would be published ==="
-          for dir in npm/rpg-*/; do
+          for dir in npm/repo-*/; do
             name=$(cat "$dir/package.json" | python3 -c "import json,sys; print(json.load(sys.stdin)['name'])")
             version=$(cat "$dir/package.json" | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
             echo "  $name@$version"
           done
-          echo "  @pleaseai/rpg (main package)"
+          echo "  @pleaseai/repo (main package)"

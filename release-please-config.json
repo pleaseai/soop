@@ -1,9 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
-    ".": {
+    "packages/repo": {
       "release-type": "node",
-      "package-name": "@pleaseai/rpg",
+      "package-name": "@pleaseai/repo",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,

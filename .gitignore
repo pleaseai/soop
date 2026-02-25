@@ -36,9 +36,9 @@ coverage/
 # Generated RPG files
 *.rpg.json
 
-# RPG local data
-.rpg/local/
-.rpg/cache/
+# Repo local data
+.repo/local/
+.repo/cache/
 
 # Bun
 bun.lockb

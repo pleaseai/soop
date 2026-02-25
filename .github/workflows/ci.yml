@@ -39,7 +39,7 @@ jobs:
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: pleaseai/rpg
+          slug: pleaseai/repo
           files: coverage/unit/coverage-final.json
           flags: unit
           fail_ci_if_error: false
@@ -57,7 +57,7 @@ jobs:
       - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: pleaseai/rpg
+          slug: pleaseai/repo
           files: coverage/integration/coverage-final.json
           flags: integration
           fail_ci_if_error: false
