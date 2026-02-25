@@ -1,0 +1,15 @@
+# Turbo cache (speeds up incremental builds)
+.turbo/
+
+# TypeScript build info cache
+*.tsbuildinfo
+
+# Local environment overrides (DB, API connections)
+.env.local
+.env.*.local
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# ESLint cache
+.eslintcache
