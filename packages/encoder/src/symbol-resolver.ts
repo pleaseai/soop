@@ -1,5 +1,5 @@
 import type { CallSite, InheritanceRelation } from './dependency-graph'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { createLogger } from '@pleaseai/repo-utils/logger'
 import { resolveImportPath } from './dependency-injection'
 
 const log = createLogger('SymbolResolver')

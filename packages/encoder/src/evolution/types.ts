@@ -1,4 +1,4 @@
-import type { EntityType } from '@pleaseai/rpg-graph/node'
+import type { EntityType } from '@pleaseai/repo-graph/node'
 import type { SemanticOptions } from '../semantic'
 
 /**

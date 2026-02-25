@@ -1,8 +1,8 @@
-import type { EmbeddingConfig, SerializedEmbeddings } from '@pleaseai/rpg-graph/embeddings'
-import type { RepositoryPlanningGraph } from '@pleaseai/rpg-graph/rpg'
+import type { EmbeddingConfig, SerializedEmbeddings } from '@pleaseai/repo-graph/embeddings'
+import type { RepositoryPlanningGraph } from '@pleaseai/repo-graph/rpg'
 import type { Embedding } from './embedding'
-import { float32ToBase64Float16 } from '@pleaseai/rpg-graph/embeddings'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { float32ToBase64Float16 } from '@pleaseai/repo-graph/embeddings'
+import { createLogger } from '@pleaseai/repo-utils/logger'
 
 const log = createLogger('EmbeddingManager')
 

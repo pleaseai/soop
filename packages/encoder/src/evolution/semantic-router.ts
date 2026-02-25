@@ -1,10 +1,10 @@
-import type { Node } from '@pleaseai/rpg-graph/node'
-import type { RepositoryPlanningGraph } from '@pleaseai/rpg-graph/rpg'
-import type { LLMClient } from '@pleaseai/rpg-utils/llm'
+import type { Node } from '@pleaseai/repo-graph/node'
+import type { RepositoryPlanningGraph } from '@pleaseai/repo-graph/rpg'
+import type { LLMClient } from '@pleaseai/repo-utils/llm'
 import type { Embedding } from '../embedding'
 import type { SemanticRoutingResponse } from './prompts'
-import { isHighLevelNode } from '@pleaseai/rpg-graph/node'
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { isHighLevelNode } from '@pleaseai/repo-graph/node'
+import { createLogger } from '@pleaseai/repo-utils/logger'
 import { buildSemanticRoutingPrompt, SemanticRoutingResponseSchema } from './prompts'
 
 const log = createLogger('SemanticRouter')
