@@ -177,7 +177,6 @@ console.log(`Building RPG binaries v${VERSION} for ${TARGETS.length} targets...\
 // Compile binaries for each target
 for (const target of TARGETS) {
   const pkgDir = join(ROOT, 'npm', `rpg-${target.packageSuffix}`)
-  await mkdir(pkgDir, { recursive: true })
 
   const rpgBin = binaryName('rpg', target.os)
   const mcpBin = binaryName('rpg-mcp', target.os)
@@ -199,6 +198,19 @@ for (const target of TARGETS) {
   await generatePackageJson(target)
   console.log(`  Generated npm/rpg-${target.packageSuffix}/package.json`)
 }
+
+// Sync optionalDependencies in root package.json so versions stay in sync with VERSION
+const rootPkgPath = join(ROOT, 'package.json')
+const rootPkg = await Bun.file(rootPkgPath).json() as Record<string, unknown>
+const optDeps = rootPkg.optionalDependencies as Record<string, string>
+for (const target of TARGETS) {
+  const name = packageName(target.packageSuffix)
+  if (name in optDeps) {
+    optDeps[name] = VERSION
+  }
+}
+await writeFile(rootPkgPath, `${JSON.stringify(rootPkg, null, 2)}\n`)
+console.log(`\nSynced optionalDependencies in package.json → v${VERSION}`)
 
 console.log('\nBuild complete!')
 console.log('Platform packages written to npm/')
