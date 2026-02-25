@@ -16,6 +16,6 @@
     "@pleaseai/soop-utils": "workspace:*",
     "@pleaseai/soop-zerorepo": "workspace:*",
     "commander": "^14.0.3",
-    "dotenv": "^17.2.4"
+    "dotenv": "^17.3.1"
   }
 }
