@@ -2,6 +2,7 @@ import type { Command } from 'commander'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { getHeadCommitSha } from '@pleaseai/rpg-utils/git-helpers'
 import { createLogger } from '@pleaseai/rpg-utils/logger'
 
 const log = createLogger('init')
@@ -92,8 +93,6 @@ export function registerInitCommand(program: Command): void {
           // 6. Run initial encode if requested
           if (options.encode) {
             const { RPGEncoder } = await import('@pleaseai/rpg-encoder')
-            const { getHeadCommitSha } = await import('@pleaseai/rpg-utils/git-helpers')
-
             log.start('Running initial encode...')
             const encoder = new RPGEncoder(absPath)
             const result = await encoder.encode()

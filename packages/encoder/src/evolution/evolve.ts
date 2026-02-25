@@ -26,6 +26,9 @@ export class RPGEvolver {
     this.rpg = rpg
     this.options = options
     this.astParser = new ASTParser()
+    if (!this.astParser.isAvailable()) {
+      log.warn('tree-sitter not available — dependency edges will be skipped during evolution')
+    }
     this.diffParser = new DiffParser(options.repoPath, this.astParser)
     this.semanticExtractor = new SemanticExtractor(options.semantic)
     const llmClient = this.createLLMClient()
@@ -144,14 +147,19 @@ export class RPGEvolver {
     }
 
     // Area 10: Post-Evolution Dependency Graph Rebuild
-    log.info('Post-evolution: rebuilding dependency graph...')
-    try {
-      await injectDependencies(this.rpg, this.options.repoPath, this.astParser)
+    if (this.astParser.isAvailable()) {
+      log.info('Post-evolution: rebuilding dependency graph...')
+      try {
+        await injectDependencies(this.rpg, this.options.repoPath, this.astParser)
+      }
+      catch (error) {
+        const msg = `Dependency rebuild failed: ${error instanceof Error ? error.message : String(error)}`
+        log.warn(msg)
+        errors.push({ entity: 'dependency-rebuild', phase: 'post-evolution', error: msg })
+      }
     }
-    catch (error) {
-      const msg = `Dependency rebuild failed: ${error instanceof Error ? error.message : String(error)}`
-      log.warn(msg)
-      errors.push({ entity: 'dependency-rebuild', phase: 'post-evolution', error: msg })
+    else {
+      log.info('Post-evolution: dependency graph rebuild skipped (tree-sitter not available)')
     }
 
     result.llmCalls = this.semanticRouter.getLLMCalls()

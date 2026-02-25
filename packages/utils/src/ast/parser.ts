@@ -1,18 +1,43 @@
+import type { default as Parser } from 'tree-sitter'
 import type { CodeEntity, LanguageConfig, ParseResult, SupportedLanguage } from './types'
 
-import Parser from 'tree-sitter'
 import { LANGUAGE_CONFIGS } from './languages'
+
+// Try to load tree-sitter at runtime — gracefully unavailable in compiled Bun binary
+let ParserClass: (new () => Parser) | undefined
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  ParserClass = require('tree-sitter') as new () => Parser
+}
+catch (err) {
+  const code = (err as NodeJS.ErrnoException).code
+  if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
+    throw err
+  }
+  // tree-sitter native module not available (e.g., standalone compiled binary)
+}
 
 /**
  * AST Parser using tree-sitter
  *
  * Extracts code structure for dependency analysis and semantic lifting.
+ * Gracefully degrades when tree-sitter is not available (e.g., in standalone binary).
  */
 export class ASTParser {
-  private readonly parser: Parser
+  private readonly parser: Parser | undefined
 
   constructor() {
-    this.parser = new Parser()
+    if (ParserClass) {
+      this.parser = new ParserClass()
+    }
+  }
+
+  /**
+   * Check if tree-sitter is available and AST parsing is supported.
+   * Returns false in standalone compiled binaries where tree-sitter is external.
+   */
+  isAvailable(): boolean {
+    return this.parser !== undefined
   }
 
   /**
@@ -69,6 +94,11 @@ export class ASTParser {
       errors: [],
     }
 
+    // Return empty result if tree-sitter is not available
+    if (!this.parser) {
+      return result
+    }
+
     // Handle empty source
     if (!source.trim()) {
       return result
@@ -79,7 +109,7 @@ export class ASTParser {
       result.errors.push(`Unsupported language: ${language}`)
       return result
     }
-    const config = LANGUAGE_CONFIGS[language]
+    const config = LANGUAGE_CONFIGS[language]!
 
     try {
       this.parser.setLanguage(

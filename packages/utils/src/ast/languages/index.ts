@@ -11,9 +11,10 @@ import { javascriptConfig, typescriptConfig } from './typescript'
 
 /**
  * Language configurations for all supported languages
- * Maps language names to their AST parsing configurations
+ * Maps language names to their AST parsing configurations.
+ * Only includes languages whose tree-sitter grammar loaded successfully.
  */
-export const LANGUAGE_CONFIGS: Record<SupportedLanguage, LanguageConfig> = {
+const RAW_LANGUAGE_CONFIGS: Record<SupportedLanguage, LanguageConfig | undefined> = {
   typescript: typescriptConfig,
   javascript: javascriptConfig,
   python: pythonConfig,
@@ -25,7 +26,11 @@ export const LANGUAGE_CONFIGS: Record<SupportedLanguage, LanguageConfig> = {
   cpp: cppConfig,
   ruby: rubyConfig,
   kotlin: kotlinConfig,
-} as const
+}
+
+export const LANGUAGE_CONFIGS: Partial<Record<SupportedLanguage, LanguageConfig>> = Object.fromEntries(
+  Object.entries(RAW_LANGUAGE_CONFIGS).filter(([_, v]) => v !== undefined),
+) as Partial<Record<SupportedLanguage, LanguageConfig>>
 
 export { cConfig, cppConfig } from './c-cpp'
 export { csharpConfig } from './csharp'

@@ -1,4 +1,5 @@
 import type { ContextStore } from '@pleaseai/rpg-store/context-store'
+import { DefaultContextStore } from '@pleaseai/rpg-store/default-context-store'
 import type { DataFlowEdge, DependencyEdge, Edge, EdgeType, FunctionalEdge } from './edge'
 import type { HighLevelNode, LowLevelNode, Node, SemanticFeature, StructuralMetadata } from './node'
 import { createLogger } from '@pleaseai/rpg-utils/logger'
@@ -115,7 +116,6 @@ export class RepositoryPlanningGraph {
     if (context) {
       return new RepositoryPlanningGraph(config, context)
     }
-    const { DefaultContextStore } = await import('@pleaseai/rpg-store/default-context-store')
     const store = new DefaultContextStore()
     await store.open({ path: 'memory' })
     return new RepositoryPlanningGraph(config, store)
