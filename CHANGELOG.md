@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/pleaseai/RPG/compare/v0.1.8...v0.1.9) (2026-02-25)
+
+
+### Bug Fixes
+
+* **build:** resolve Bun compile errors for cross-platform binary distribution ([#114](https://github.com/pleaseai/RPG/issues/114)) ([1f9ce01](https://github.com/pleaseai/RPG/commit/1f9ce01e67825b2019733f6c28cdfe984a4379d6))
+
 ## [0.1.8](https://github.com/pleaseai/RPG/compare/v0.1.7...v0.1.8) (2026-02-25)
 
 
