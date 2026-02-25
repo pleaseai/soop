@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.7](https://github.com/pleaseai/RPG/compare/v0.1.6...v0.1.7) (2026-02-25)
+
+
+### Features
+
+* **ast:** add C#, C/C++, Ruby, Kotlin language support and upgrade tree-sitter ([#107](https://github.com/pleaseai/RPG/issues/107)) ([4be235a](https://github.com/pleaseai/RPG/commit/4be235a9727ba4400573a82bfa6dd124466dbaae))
+* **encoder:** achieve full parity with Python reference encoder ([#105](https://github.com/pleaseai/RPG/issues/105)) ([812e16e](https://github.com/pleaseai/RPG/commit/812e16ee4661eb3d597635d93f49ac093df25801))
+
 ## [0.1.6](https://github.com/pleaseai/RPG/compare/v0.1.5...v0.1.6) (2026-02-24)
 
 
