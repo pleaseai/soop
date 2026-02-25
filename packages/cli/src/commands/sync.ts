@@ -1,10 +1,10 @@
-import type { Command } from 'commander'
 import type { VectorStore } from '@pleaseai/rpg-store/vector-store'
+import type { Command } from 'commander'
 import { existsSync } from 'node:fs'
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { decodeAllEmbeddings, parseEmbeddings, parseEmbeddingsJsonl } from '@pleaseai/rpg-graph/embeddings'
 import { LocalVectorStore } from '@pleaseai/rpg-store/local'
-import { parseEmbeddings, parseEmbeddingsJsonl, decodeAllEmbeddings } from '@pleaseai/rpg-graph/embeddings'
 import { getCurrentBranch, getDefaultBranch, getHeadCommitSha, getMergeBase } from '@pleaseai/rpg-utils/git-helpers'
 import { createLogger } from '@pleaseai/rpg-utils/logger'
 
