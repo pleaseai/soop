@@ -1,4 +1,4 @@
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
 import { describe, expect, it } from 'vitest'
 
 describe('RepositoryPlanningGraph.updateConfig', () => {

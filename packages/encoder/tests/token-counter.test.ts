@@ -1,5 +1,5 @@
-import type { EntityInput } from '@pleaseai/rpg-encoder/semantic'
-import { estimateBatchTokens, estimateEntityTokens, estimateTokenCount } from '@pleaseai/rpg-encoder/token-counter'
+import type { EntityInput } from '@pleaseai/repo-encoder/semantic'
+import { estimateBatchTokens, estimateEntityTokens, estimateTokenCount } from '@pleaseai/repo-encoder/token-counter'
 import { describe, expect, it } from 'vitest'
 
 describe('token counter', () => {

@@ -1,6 +1,6 @@
-import type { LiftableEntity } from '@pleaseai/rpg-mcp/interactive/state'
-import { InteractiveEncoder, jaccardDistance } from '@pleaseai/rpg-mcp/interactive/encoder'
-import { InteractiveState } from '@pleaseai/rpg-mcp/interactive/state'
+import type { LiftableEntity } from '@pleaseai/repo-mcp/interactive/state'
+import { InteractiveEncoder, jaccardDistance } from '@pleaseai/repo-mcp/interactive/encoder'
+import { InteractiveState } from '@pleaseai/repo-mcp/interactive/state'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 function makeEntity(id: string, sourceCode?: string): LiftableEntity {

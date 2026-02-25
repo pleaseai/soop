@@ -1,6 +1,6 @@
-import type { EntityNode, InheritanceRelation } from '@pleaseai/rpg-encoder/dependency-graph'
-import { CallExtractor } from '@pleaseai/rpg-encoder/call-extractor'
-import { TypeInferrer } from '@pleaseai/rpg-encoder/type-inferrer'
+import type { EntityNode, InheritanceRelation } from '@pleaseai/repo-encoder/dependency-graph'
+import { CallExtractor } from '@pleaseai/repo-encoder/call-extractor'
+import { TypeInferrer } from '@pleaseai/repo-encoder/type-inferrer'
 import { describe, expect, it } from 'vitest'
 
 /**

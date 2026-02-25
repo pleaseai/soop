@@ -1,9 +1,9 @@
 import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { MockEmbedding } from '@pleaseai/rpg-encoder/embedding'
-import { SemanticSearch } from '@pleaseai/rpg-encoder/semantic-search'
-import { LocalVectorStore } from '@pleaseai/rpg-store/local'
+import { MockEmbedding } from '@pleaseai/repo-encoder/embedding'
+import { SemanticSearch } from '@pleaseai/repo-encoder/semantic-search'
+import { LocalVectorStore } from '@pleaseai/repo-store/local'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 describe('semanticSearch', () => {
@@ -169,7 +169,7 @@ describe('semanticSearch', () => {
 
     it('should be a no-op when VectorStore does not implement clear', async () => {
       // Build a minimal VectorStore without clear()
-      const minimal: import('@pleaseai/rpg-store/vector-store').VectorStore = {
+      const minimal: import('@pleaseai/repo-store/vector-store').VectorStore = {
         open: async () => {},
         close: async () => {},
         upsert: async () => {},
@@ -177,8 +177,8 @@ describe('semanticSearch', () => {
         search: async () => [],
         count: async () => 0,
       }
-      const { MockEmbedding } = await import('@pleaseai/rpg-encoder/embedding')
-      const s = new (await import('@pleaseai/rpg-encoder/semantic-search')).SemanticSearch({
+      const { MockEmbedding } = await import('@pleaseai/repo-encoder/embedding')
+      const s = new (await import('@pleaseai/repo-encoder/semantic-search')).SemanticSearch({
         vectorStore: minimal,
         embedding: new MockEmbedding(4),
       })

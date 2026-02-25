@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import path from 'node:path'
-import { DiffParser } from '@pleaseai/rpg-encoder/evolution/diff-parser'
-import { resolveGitBinary } from '@pleaseai/rpg-utils/git-path'
+import { DiffParser } from '@pleaseai/repo-encoder/evolution/diff-parser'
+import { resolveGitBinary } from '@pleaseai/repo-utils/git-path'
 import { describe, expect, it } from 'vitest'
 
 function hasGitAncestor(repoPath: string, ref: string): boolean {
@@ -23,7 +23,7 @@ function hasGitAncestor(repoPath: string, ref: string): boolean {
 
 describe('diffParser.extractEntitiesFromRevision', () => {
   it('extracts entities from a TypeScript file at a revision', async () => {
-    const fixtureRepo = path.resolve(__dirname, '../fixtures/superjson')
+    const fixtureRepo = path.resolve(__dirname, '../../../../tests/fixtures/superjson')
     const parser = new DiffParser(fixtureRepo)
 
     // Use a known commit
@@ -44,7 +44,7 @@ describe('diffParser.extractEntitiesFromRevision', () => {
   })
 
   it('returns empty array for non-existent file', async () => {
-    const fixtureRepo = path.resolve(__dirname, '../fixtures/superjson')
+    const fixtureRepo = path.resolve(__dirname, '../../../../tests/fixtures/superjson')
     const parser = new DiffParser(fixtureRepo)
 
     const entities = await parser.extractEntitiesFromRevision('HEAD', 'does-not-exist.ts')
@@ -52,7 +52,7 @@ describe('diffParser.extractEntitiesFromRevision', () => {
   })
 
   it('returns empty array for unsupported file type', async () => {
-    const fixtureRepo = path.resolve(__dirname, '../fixtures/superjson')
+    const fixtureRepo = path.resolve(__dirname, '../../../../tests/fixtures/superjson')
     const parser = new DiffParser(fixtureRepo)
 
     const entities = await parser.extractEntitiesFromRevision('HEAD', 'package.json')
@@ -63,7 +63,7 @@ describe('diffParser.extractEntitiesFromRevision', () => {
 describe('diffParser AC-1: only process changed files', () => {
   // 5f920b4 modifies src/index.test.ts — a known commit with .ts changes
   const COMMIT_WITH_TS_CHANGE = '5f920b4'
-  const fixtureRepo = path.resolve(__dirname, '../fixtures/superjson')
+  const fixtureRepo = path.resolve(__dirname, '../../../../tests/fixtures/superjson')
 
   it.skipIf(!hasGitAncestor(fixtureRepo, `${COMMIT_WITH_TS_CHANGE}~1`))(
     'only parses changed files from diff, not the entire repository',

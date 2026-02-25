@@ -2,8 +2,8 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
-import { getHeadCommitSha } from '@pleaseai/rpg-utils/git-helpers'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import { getHeadCommitSha } from '@pleaseai/repo-utils/git-helpers'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 describe('stamp / last-commit logic', () => {

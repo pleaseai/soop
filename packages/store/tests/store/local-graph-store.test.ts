@@ -1,4 +1,4 @@
-import { LocalGraphStore } from '@pleaseai/rpg-store/local'
+import { LocalGraphStore } from '@pleaseai/repo-store/local'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 describe('LocalGraphStore', () => {

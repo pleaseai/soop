@@ -1,16 +1,16 @@
-import type { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
+import type { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
 import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { RPGEncoder } from '@pleaseai/rpg-encoder'
-import { MockEmbedding } from '@pleaseai/rpg-encoder/embedding'
-import { SemanticSearch } from '@pleaseai/rpg-encoder/semantic-search'
-import { executeSearch } from '@pleaseai/rpg-mcp/tools'
-import { LocalVectorStore } from '@pleaseai/rpg-store/local'
-import { SearchNode } from '@pleaseai/rpg-tools'
+import { RPGEncoder } from '@pleaseai/repo-encoder'
+import { MockEmbedding } from '@pleaseai/repo-encoder/embedding'
+import { SemanticSearch } from '@pleaseai/repo-encoder/semantic-search'
+import { executeSearch } from '@pleaseai/repo-mcp/tools'
+import { LocalVectorStore } from '@pleaseai/repo-store/local'
+import { SearchNode } from '@pleaseai/repo-tools'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
-const SUPERJSON_ROOT = resolve(__dirname, '../fixtures/superjson')
+const SUPERJSON_ROOT = resolve(__dirname, '../../../../tests/fixtures/superjson')
 
 describe('e2E: Hybrid Search Pipeline (superjson)', () => {
   let rpg: RepositoryPlanningGraph

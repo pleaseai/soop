@@ -1,10 +1,10 @@
-import type { CodeEntity, LanguageConfig, ParseResult, SupportedLanguage } from '@pleaseai/rpg-utils/ast/types'
+import type { CodeEntity, LanguageConfig, ParseResult, SupportedLanguage } from '@pleaseai/repo-utils/ast/types'
 import { describe, expect, it } from 'vitest'
 
 describe('AST Types', () => {
   describe('imports', () => {
     it('should import types from ast/types', async () => {
-      const module = await import('@pleaseai/rpg-utils/ast/types')
+      const module = await import('@pleaseai/repo-utils/ast/types')
       expect(module).toBeDefined()
     })
   })

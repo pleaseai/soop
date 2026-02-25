@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
 import {
   encodeFailedError,
   evolveFailedError,
@@ -10,7 +10,7 @@ import {
   RPGError,
   RPGErrorCode,
   rpgNotLoadedError,
-} from '@pleaseai/rpg-mcp/errors'
+} from '@pleaseai/repo-mcp/errors'
 import {
   EncodeInputSchema,
   EvolveInputSchema,
@@ -23,7 +23,7 @@ import {
   FetchInputSchema,
   SearchInputSchema,
   StatsInputSchema,
-} from '@pleaseai/rpg-mcp/tools'
+} from '@pleaseai/repo-mcp/tools'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('MCP Tool Schemas', () => {
@@ -278,7 +278,7 @@ describe('MCP Tool Execution', () => {
 
   beforeEach(async () => {
     // Load sample RPG fixture
-    const fixturePath = join(__dirname, 'fixtures', 'sample-rpg.json')
+    const fixturePath = join(__dirname, '../../../tests/fixtures', 'sample-rpg.json')
     const content = await readFile(fixturePath, 'utf-8')
     rpg = await RepositoryPlanningGraph.fromJSON(content)
   })

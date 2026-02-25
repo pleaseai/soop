@@ -1,4 +1,4 @@
-import { CallExtractor } from '@pleaseai/rpg-encoder/call-extractor'
+import { CallExtractor } from '@pleaseai/repo-encoder/call-extractor'
 import { describe, expect, it } from 'vitest'
 
 describe('CallExtractor', () => {

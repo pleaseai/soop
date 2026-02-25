@@ -1,4 +1,4 @@
-import { ASTParser } from '@pleaseai/rpg-utils/ast'
+import { ASTParser } from '@pleaseai/repo-utils/ast'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('ASTParser - Kotlin', () => {

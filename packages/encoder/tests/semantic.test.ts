@@ -1,5 +1,5 @@
-import type { EntityInput } from '@pleaseai/rpg-encoder/semantic'
-import { SemanticExtractor } from '@pleaseai/rpg-encoder/semantic'
+import type { EntityInput } from '@pleaseai/repo-encoder/semantic'
+import { SemanticExtractor } from '@pleaseai/repo-encoder/semantic'
 import { describe, expect, it } from 'vitest'
 
 describe('semanticExtractor', () => {

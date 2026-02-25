@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process'
 import { resolve } from 'node:path'
-import { RPGEncoder } from '@pleaseai/rpg-encoder/encoder'
-import { executeEvolve } from '@pleaseai/rpg-mcp/tools'
-import { resolveGitBinary } from '@pleaseai/rpg-utils/git-path'
+import { RPGEncoder } from '@pleaseai/repo-encoder/encoder'
+import { executeEvolve } from '@pleaseai/repo-mcp/tools'
+import { resolveGitBinary } from '@pleaseai/repo-utils/git-path'
 import { describe, expect, it } from 'vitest'
 
-const FIXTURE_REPO = resolve(__dirname, 'fixtures/superjson')
+const FIXTURE_REPO = resolve(__dirname, '../../../tests/fixtures/superjson')
 
 function hasGitAncestor(repoPath: string, ref: string): boolean {
   try {
@@ -17,7 +17,7 @@ function hasGitAncestor(repoPath: string, ref: string): boolean {
   }
 }
 
-describe('MCP rpg_evolve Integration', () => {
+describe('MCP repo_evolve Integration', () => {
   it.skipIf(!hasGitAncestor(FIXTURE_REPO, 'HEAD~1'))(
     'should evolve an encoded RPG via executeEvolve',
     async () => {

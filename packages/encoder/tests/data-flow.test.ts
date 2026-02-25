@@ -1,5 +1,5 @@
-import type { DataFlowEdge } from '@pleaseai/rpg-graph/edge'
-import { DataFlowDetector } from '@pleaseai/rpg-encoder/data-flow'
+import type { DataFlowEdge } from '@pleaseai/repo-graph/edge'
+import { DataFlowDetector } from '@pleaseai/repo-encoder/data-flow'
 import { describe, expect, it } from 'vitest'
 
 describe('DataFlowDetector', () => {

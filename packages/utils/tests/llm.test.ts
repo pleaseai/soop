@@ -1,5 +1,5 @@
-import { LLMClient, parseModelString } from '@pleaseai/rpg-utils/llm'
-import { Memory } from '@pleaseai/rpg-utils/memory'
+import { LLMClient, parseModelString } from '@pleaseai/repo-utils/llm'
+import { Memory } from '@pleaseai/repo-utils/memory'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod/v4'
 

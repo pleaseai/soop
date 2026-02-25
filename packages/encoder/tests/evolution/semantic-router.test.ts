@@ -1,7 +1,7 @@
-import type { Embedding, EmbeddingResult } from '@pleaseai/rpg-encoder/embedding'
-import type { LLMClient } from '@pleaseai/rpg-utils/llm'
-import { cosineSimilarity, SemanticRouter } from '@pleaseai/rpg-encoder/evolution/semantic-router'
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph/rpg'
+import type { Embedding, EmbeddingResult } from '@pleaseai/repo-encoder/embedding'
+import type { LLMClient } from '@pleaseai/repo-utils/llm'
+import { cosineSimilarity, SemanticRouter } from '@pleaseai/repo-encoder/evolution/semantic-router'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph/rpg'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 describe('cosineSimilarity', () => {

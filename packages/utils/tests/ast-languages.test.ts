@@ -1,5 +1,5 @@
-import type { LanguageConfig } from '@pleaseai/rpg-utils/ast/types'
-import { LANGUAGE_CONFIGS } from '@pleaseai/rpg-utils/ast/languages'
+import type { LanguageConfig } from '@pleaseai/repo-utils/ast/types'
+import { LANGUAGE_CONFIGS } from '@pleaseai/repo-utils/ast/languages'
 import { describe, expect, it } from 'vitest'
 
 describe('Language Configurations', () => {

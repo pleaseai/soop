@@ -1,5 +1,5 @@
-import type { EntityInput, SemanticOptions } from '@pleaseai/rpg-encoder/semantic'
-import { SemanticExtractor } from '@pleaseai/rpg-encoder/semantic'
+import type { EntityInput, SemanticOptions } from '@pleaseai/repo-encoder/semantic'
+import { SemanticExtractor } from '@pleaseai/repo-encoder/semantic'
 import { describe, expect, it } from 'vitest'
 
 describe('SemanticOptions batch parameters', () => {

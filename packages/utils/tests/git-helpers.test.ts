@@ -2,8 +2,8 @@ import { execFileSync } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { getCurrentBranch, getDefaultBranch, getHeadCommitSha, getMergeBase } from '@pleaseai/rpg-utils/git-helpers'
-import { resolveGitBinary } from '@pleaseai/rpg-utils/git-path'
+import { getCurrentBranch, getDefaultBranch, getHeadCommitSha, getMergeBase } from '@pleaseai/repo-utils/git-helpers'
+import { resolveGitBinary } from '@pleaseai/repo-utils/git-path'
 import { describe, expect, it } from 'vitest'
 
 function git(cwd: string, args: string[]): string {

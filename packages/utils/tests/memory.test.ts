@@ -1,4 +1,4 @@
-import { Memory } from '@pleaseai/rpg-utils/memory'
+import { Memory } from '@pleaseai/repo-utils/memory'
 import { describe, expect, it } from 'vitest'
 
 describe('Memory', () => {

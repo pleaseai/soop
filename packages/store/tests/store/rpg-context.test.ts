@@ -1,5 +1,5 @@
-import type { HighLevelNode, Node } from '@pleaseai/rpg-graph'
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph/rpg'
+import type { HighLevelNode, Node } from '@pleaseai/repo-graph'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph/rpg'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 describe('RPG with ContextStore (default)', () => {

@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process'
 import path from 'node:path'
-import { RPGEncoder } from '@pleaseai/rpg-encoder/encoder'
-import { RPGEvolver } from '@pleaseai/rpg-encoder/evolution/evolve'
-import { resolveGitBinary } from '@pleaseai/rpg-utils/git-path'
+import { RPGEncoder } from '@pleaseai/repo-encoder/encoder'
+import { RPGEvolver } from '@pleaseai/repo-encoder/evolution/evolve'
+import { resolveGitBinary } from '@pleaseai/repo-utils/git-path'
 import { describe, expect, it } from 'vitest'
 
-const FIXTURE_REPO = path.resolve(__dirname, '../fixtures/superjson')
+const FIXTURE_REPO = path.resolve(__dirname, '../../../../tests/fixtures/superjson')
 
 function hasGitAncestor(repoPath: string, ref: string): boolean {
   let git: string

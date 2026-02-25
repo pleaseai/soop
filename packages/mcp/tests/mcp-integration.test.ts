@@ -1,14 +1,14 @@
 import { join } from 'node:path'
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
-import { createMcpServer, loadRPG } from '@pleaseai/rpg-mcp/server'
-import { executeExplore, executeFetch, executeSearch, executeStats } from '@pleaseai/rpg-mcp/tools'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import { createMcpServer, loadRPG } from '@pleaseai/repo-mcp/server'
+import { executeExplore, executeFetch, executeSearch, executeStats } from '@pleaseai/repo-mcp/tools'
 import { beforeAll, describe, expect, it } from 'vitest'
 
 describe('MCP Integration Tests', () => {
   let rpg: RepositoryPlanningGraph
 
   beforeAll(async () => {
-    const fixturePath = join(__dirname, 'fixtures', 'sample-rpg.json')
+    const fixturePath = join(__dirname, '../../../tests/fixtures', 'sample-rpg.json')
     rpg = await loadRPG(fixturePath)
   })
 

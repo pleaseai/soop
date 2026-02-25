@@ -1,7 +1,7 @@
-import type { FileFeatureGroup } from '@pleaseai/rpg-encoder/reorganization'
-import { DomainDiscovery } from '@pleaseai/rpg-encoder/reorganization/domain-discovery'
-import { HierarchyBuilder } from '@pleaseai/rpg-encoder/reorganization/hierarchy-builder'
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph/rpg'
+import type { FileFeatureGroup } from '@pleaseai/repo-encoder/reorganization'
+import { DomainDiscovery } from '@pleaseai/repo-encoder/reorganization/domain-discovery'
+import { HierarchyBuilder } from '@pleaseai/repo-encoder/reorganization/hierarchy-builder'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph/rpg'
 import { describe, expect, it, vi } from 'vitest'
 
 /**

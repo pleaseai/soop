@@ -3,14 +3,14 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
-import { getHeadCommitSha } from '@pleaseai/rpg-utils/git-helpers'
-import { resolveGitBinary } from '@pleaseai/rpg-utils/git-path'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import { getHeadCommitSha } from '@pleaseai/repo-utils/git-helpers'
+import { resolveGitBinary } from '@pleaseai/repo-utils/git-path'
 import { Command } from 'commander'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { installHooks } from '../packages/cli/src/commands/hooks'
-import { ensureGitignoreEntry, generateCIWorkflow, registerInitCommand } from '../packages/cli/src/commands/init'
-import { registerSyncCommand } from '../packages/cli/src/commands/sync'
+import { installHooks } from '../src/commands/hooks'
+import { ensureGitignoreEntry, generateCIWorkflow, registerInitCommand } from '../src/commands/init'
+import { registerSyncCommand } from '../src/commands/sync'
 
 function git(cwd: string, args: string[]): string {
   return execFileSync(resolveGitBinary(), args, {
@@ -32,20 +32,20 @@ describe('ensureGitignoreEntry', () => {
   })
 
   it('should create .gitignore when it does not exist', async () => {
-    await ensureGitignoreEntry(tempDir, '.rpg/local/')
+    await ensureGitignoreEntry(tempDir, '.repo/local/')
 
     const content = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
-    expect(content).toContain('.rpg/local/')
-    expect(content).toContain('# RPG local data')
+    expect(content).toContain('.repo/local/')
+    expect(content).toContain('# Repo local data')
   })
 
   it('should skip if pattern already exists in .gitignore', async () => {
     await writeFile(
       path.join(tempDir, '.gitignore'),
-      '# existing\n.rpg/local/\n',
+      '# existing\n.repo/local/\n',
     )
 
-    await ensureGitignoreEntry(tempDir, '.rpg/local/')
+    await ensureGitignoreEntry(tempDir, '.repo/local/')
 
     const content = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
     // Should appear exactly once
@@ -59,12 +59,12 @@ describe('ensureGitignoreEntry', () => {
       'node_modules/\ndist/\n',
     )
 
-    await ensureGitignoreEntry(tempDir, '.rpg/local/')
+    await ensureGitignoreEntry(tempDir, '.repo/local/')
 
     const content = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
     expect(content).toContain('node_modules/')
-    expect(content).toContain('.rpg/local/')
-    expect(content).toContain('# RPG local data')
+    expect(content).toContain('.repo/local/')
+    expect(content).toContain('# Repo local data')
   })
 
   it('should add separator when .gitignore does not end with newline', async () => {
@@ -73,11 +73,11 @@ describe('ensureGitignoreEntry', () => {
       'node_modules/',
     )
 
-    await ensureGitignoreEntry(tempDir, '.rpg/local/')
+    await ensureGitignoreEntry(tempDir, '.repo/local/')
 
     const content = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
     expect(content).toContain('node_modules/')
-    expect(content).toContain('.rpg/local/')
+    expect(content).toContain('.repo/local/')
     // Should have a newline separator before the RPG section
     expect(content).not.toMatch(/node_modules\/# RPG/)
   })
@@ -97,13 +97,13 @@ describe('generateCIWorkflow', () => {
   it('should generate workflow file from template', async () => {
     await generateCIWorkflow(tempDir)
 
-    const workflowPath = path.join(tempDir, '.github', 'workflows', 'rpg-encode.yml')
+    const workflowPath = path.join(tempDir, '.github', 'workflows', 'repo-encode.yml')
     expect(existsSync(workflowPath)).toBe(true)
 
     const content = await readFile(workflowPath, 'utf-8')
-    expect(content).toContain('name: RPG Encode')
-    expect(content).toContain('rpg encode')
-    expect(content).toContain('rpg evolve')
+    expect(content).toContain('name: Repo Encode')
+    expect(content).toContain('repo encode')
+    expect(content).toContain('repo evolve')
     expect(content).toContain('[skip ci]')
   })
 
@@ -111,14 +111,14 @@ describe('generateCIWorkflow', () => {
     const workflowDir = path.join(tempDir, '.github', 'workflows')
     mkdirSync(workflowDir, { recursive: true })
     await writeFile(
-      path.join(workflowDir, 'rpg-encode.yml'),
+      path.join(workflowDir, 'repo-encode.yml'),
       'existing content',
     )
 
     await generateCIWorkflow(tempDir)
 
     const content = await readFile(
-      path.join(workflowDir, 'rpg-encode.yml'),
+      path.join(workflowDir, 'repo-encode.yml'),
       'utf-8',
     )
     expect(content).toBe('existing content')
@@ -139,30 +139,30 @@ describe('rpg init command', () => {
     rmSync(tempDir, { recursive: true, force: true })
   })
 
-  it('should create .rpg/config.json and local directories', async () => {
+  it('should create .repo/config.json and local directories', async () => {
     const program = new Command()
     program.exitOverride()
     registerInitCommand(program)
     await program.parseAsync(['node', 'rpg', 'init', tempDir])
 
     // config.json created with default settings
-    const configPath = path.join(tempDir, '.rpg', 'config.json')
+    const configPath = path.join(tempDir, '.repo', 'config.json')
     expect(existsSync(configPath)).toBe(true)
     const config = JSON.parse(await readFile(configPath, 'utf-8'))
     expect(config.include).toEqual(['**/*.ts', '**/*.js', '**/*.py', '**/*.rs', '**/*.go', '**/*.java'])
     expect(config.exclude).toEqual(['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**'])
 
     // local/vectors/ directory created
-    expect(existsSync(path.join(tempDir, '.rpg', 'local', 'vectors'))).toBe(true)
+    expect(existsSync(path.join(tempDir, '.repo', 'local', 'vectors'))).toBe(true)
 
     // .gitignore updated
     const gitignore = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
-    expect(gitignore).toContain('.rpg/local/')
+    expect(gitignore).toContain('.repo/local/')
   })
 
-  it('should skip config creation if .rpg/config.json already exists', async () => {
+  it('should skip config creation if .repo/config.json already exists', async () => {
     // Pre-create config
-    const rpgDir = path.join(tempDir, '.rpg')
+    const rpgDir = path.join(tempDir, '.repo')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(
       path.join(rpgDir, 'config.json'),
@@ -195,9 +195,9 @@ describe('rpg init command', () => {
     const stat = statSync(postMerge)
     expect(stat.mode & 0o111).toBeGreaterThan(0)
 
-    // Hooks should contain rpg sync
+    // Hooks should contain repo sync
     const content = await readFile(postMerge, 'utf-8')
-    expect(content).toContain('rpg sync')
+    expect(content).toContain('repo sync')
   })
 
   it('should generate CI workflow with --ci flag', async () => {
@@ -206,11 +206,11 @@ describe('rpg init command', () => {
     registerInitCommand(program)
     await program.parseAsync(['node', 'rpg', 'init', tempDir, '--ci'])
 
-    const workflowPath = path.join(tempDir, '.github', 'workflows', 'rpg-encode.yml')
+    const workflowPath = path.join(tempDir, '.github', 'workflows', 'repo-encode.yml')
     expect(existsSync(workflowPath)).toBe(true)
 
     const content = await readFile(workflowPath, 'utf-8')
-    expect(content).toContain('name: RPG Encode')
+    expect(content).toContain('name: Repo Encode')
   })
 
   it('should run initial encode with --encode flag', async () => {
@@ -225,7 +225,7 @@ describe('rpg init command', () => {
     await program.parseAsync(['node', 'rpg', 'init', tempDir, '--encode'])
 
     // graph.json should be created with commit stamp
-    const graphPath = path.join(tempDir, '.rpg', 'graph.json')
+    const graphPath = path.join(tempDir, '.repo', 'graph.json')
     expect(existsSync(graphPath)).toBe(true)
 
     const graph = JSON.parse(await readFile(graphPath, 'utf-8'))
@@ -315,7 +315,7 @@ describe('installHooks', () => {
   })
 })
 
-describe('rpg sync command', () => {
+describe('repo sync command', () => {
   let tempDir: string
   let originalCwd: () => string
 
@@ -346,7 +346,7 @@ describe('rpg sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: getHeadCommitSha(tempDir) },
     })
-    const rpgDir = path.join(tempDir, '.rpg')
+    const rpgDir = path.join(tempDir, '.repo')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
 
@@ -403,7 +403,7 @@ describe('rpg sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.rpg')
+    const rpgDir = path.join(tempDir, '.repo')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
 
@@ -427,7 +427,7 @@ describe('rpg sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: getHeadCommitSha(tempDir) },
     })
-    const rpgDir = path.join(tempDir, '.rpg')
+    const rpgDir = path.join(tempDir, '.repo')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
 
@@ -445,7 +445,7 @@ describe('rpg sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: getHeadCommitSha(tempDir) },
     })
-    const rpgDir = path.join(tempDir, '.rpg')
+    const rpgDir = path.join(tempDir, '.repo')
     const localDir = path.join(rpgDir, 'local')
     mkdirSync(localDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
@@ -470,7 +470,7 @@ describe('rpg sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.rpg')
+    const rpgDir = path.join(tempDir, '.repo')
     const localDir = path.join(rpgDir, 'local')
     mkdirSync(localDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
@@ -503,7 +503,7 @@ describe('rpg sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.rpg')
+    const rpgDir = path.join(tempDir, '.repo')
     const localDir = path.join(rpgDir, 'local')
     mkdirSync(localDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
@@ -533,7 +533,7 @@ describe('rpg sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.rpg')
+    const rpgDir = path.join(tempDir, '.repo')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
 
@@ -565,7 +565,7 @@ describe('rpg sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.rpg')
+    const rpgDir = path.join(tempDir, '.repo')
     const localDir = path.join(rpgDir, 'local')
     mkdirSync(localDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())

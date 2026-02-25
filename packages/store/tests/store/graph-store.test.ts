@@ -1,7 +1,7 @@
-import type { GraphStore } from '@pleaseai/rpg-store/graph-store'
-import type { EdgeAttrs, NodeAttrs } from '@pleaseai/rpg-store/types'
-import { SQLiteGraphStore } from '@pleaseai/rpg-store/sqlite'
-import { SurrealGraphStore } from '@pleaseai/rpg-store/surreal'
+import type { GraphStore } from '@pleaseai/repo-store/graph-store'
+import type { EdgeAttrs, NodeAttrs } from '@pleaseai/repo-store/types'
+import { SQLiteGraphStore } from '@pleaseai/repo-store/sqlite'
+import { SurrealGraphStore } from '@pleaseai/repo-store/surreal'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 // ==================== Test Fixtures ====================

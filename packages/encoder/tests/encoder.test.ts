@@ -2,8 +2,8 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { discoverFiles, RPGEncoder } from '@pleaseai/rpg-encoder'
-import { resolveGitBinary } from '@pleaseai/rpg-utils/git-path'
+import { discoverFiles, RPGEncoder } from '@pleaseai/repo-encoder'
+import { resolveGitBinary } from '@pleaseai/repo-utils/git-path'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Get current project root for testing
@@ -529,7 +529,7 @@ describe('RPGEncoder.injectDataFlows', () => {
 
   it('data flow edges survive serialization round-trip', async () => {
     const json = await result.rpg.toJSON()
-    const { RepositoryPlanningGraph } = await import('@pleaseai/rpg-graph')
+    const { RepositoryPlanningGraph } = await import('@pleaseai/repo-graph')
     const restored = await RepositoryPlanningGraph.fromJSON(json)
 
     const originalEdges = await result.rpg.getDataFlowEdges()

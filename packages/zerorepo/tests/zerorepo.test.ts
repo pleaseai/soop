@@ -1,4 +1,4 @@
-import { ZeroRepo } from '@pleaseai/rpg-zerorepo'
+import { ZeroRepo } from '@pleaseai/repo-zerorepo'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('zeroRepo', () => {
