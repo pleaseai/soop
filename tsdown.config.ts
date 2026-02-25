@@ -70,7 +70,7 @@ export default defineConfig([
     inlineOnly: false,
   },
   // Launcher scripts: compiled from scripts/launcher/*.ts → packages/soop/dist/launcher-{cli,mcp}.mjs
-  // These are pure Node.js scripts (no native deps) used by bin/repo and bin/soop-mcp shims
+  // These are pure Node.js scripts (no native deps) used by bin/soop and bin/soop-mcp shims
   {
     entry: {
       'launcher-cli': './scripts/launcher/cli.ts',

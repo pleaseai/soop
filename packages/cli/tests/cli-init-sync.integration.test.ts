@@ -49,7 +49,7 @@ describe('ensureGitignoreEntry', () => {
 
     const content = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
     // Should appear exactly once
-    const matches = content.match(/\.repo\/local\//g)
+    const matches = content.match(/\.soop\/local\//g)
     expect(matches).toHaveLength(1)
   })
 
@@ -101,10 +101,10 @@ describe('generateCIWorkflow', () => {
     expect(existsSync(workflowPath)).toBe(true)
 
     const content = await readFile(workflowPath, 'utf-8')
-    expect(content).toContain('name: Repo Encode')
-    expect(content).toContain('repo encode')
-    expect(content).toContain('repo evolve')
-    expect(content).toContain('[skip ci]')
+    expect(content).toContain('name: Soop Encode')
+    expect(content).toContain('soop encode')
+    expect(content).toContain('soop evolve')
+    expect(content).toContain('chore(soop): update graph')
   })
 
   it('should skip if workflow file already exists', async () => {
@@ -146,14 +146,14 @@ describe('rpg init command', () => {
     await program.parseAsync(['node', 'rpg', 'init', tempDir])
 
     // config.json created with default settings
-    const configPath = path.join(tempDir, '.repo', 'config.json')
+    const configPath = path.join(tempDir, '.soop', 'config.json')
     expect(existsSync(configPath)).toBe(true)
     const config = JSON.parse(await readFile(configPath, 'utf-8'))
     expect(config.include).toEqual(['**/*.ts', '**/*.js', '**/*.py', '**/*.rs', '**/*.go', '**/*.java'])
     expect(config.exclude).toEqual(['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**'])
 
     // local/vectors/ directory created
-    expect(existsSync(path.join(tempDir, '.repo', 'local', 'vectors'))).toBe(true)
+    expect(existsSync(path.join(tempDir, '.soop', 'local', 'vectors'))).toBe(true)
 
     // .gitignore updated
     const gitignore = await readFile(path.join(tempDir, '.gitignore'), 'utf-8')
@@ -162,7 +162,7 @@ describe('rpg init command', () => {
 
   it('should skip config creation if .soop/config.json already exists', async () => {
     // Pre-create config
-    const rpgDir = path.join(tempDir, '.repo')
+    const rpgDir = path.join(tempDir, '.soop')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(
       path.join(rpgDir, 'config.json'),
@@ -195,9 +195,9 @@ describe('rpg init command', () => {
     const stat = statSync(postMerge)
     expect(stat.mode & 0o111).toBeGreaterThan(0)
 
-    // Hooks should contain repo sync
+    // Hooks should contain soop sync
     const content = await readFile(postMerge, 'utf-8')
-    expect(content).toContain('repo sync')
+    expect(content).toContain('soop sync')
   })
 
   it('should generate CI workflow with --ci flag', async () => {
@@ -210,7 +210,7 @@ describe('rpg init command', () => {
     expect(existsSync(workflowPath)).toBe(true)
 
     const content = await readFile(workflowPath, 'utf-8')
-    expect(content).toContain('name: Repo Encode')
+    expect(content).toContain('name: Soop Encode')
   })
 
   it('should run initial encode with --encode flag', async () => {
@@ -225,7 +225,7 @@ describe('rpg init command', () => {
     await program.parseAsync(['node', 'rpg', 'init', tempDir, '--encode'])
 
     // graph.json should be created with commit stamp
-    const graphPath = path.join(tempDir, '.repo', 'graph.json')
+    const graphPath = path.join(tempDir, '.soop', 'graph.json')
     expect(existsSync(graphPath)).toBe(true)
 
     const graph = JSON.parse(await readFile(graphPath, 'utf-8'))
@@ -346,7 +346,7 @@ describe('repo sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: getHeadCommitSha(tempDir) },
     })
-    const rpgDir = path.join(tempDir, '.repo')
+    const rpgDir = path.join(tempDir, '.soop')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
 
@@ -403,7 +403,7 @@ describe('repo sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.repo')
+    const rpgDir = path.join(tempDir, '.soop')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
 
@@ -427,7 +427,7 @@ describe('repo sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: getHeadCommitSha(tempDir) },
     })
-    const rpgDir = path.join(tempDir, '.repo')
+    const rpgDir = path.join(tempDir, '.soop')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
 
@@ -445,7 +445,7 @@ describe('repo sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: getHeadCommitSha(tempDir) },
     })
-    const rpgDir = path.join(tempDir, '.repo')
+    const rpgDir = path.join(tempDir, '.soop')
     const localDir = path.join(rpgDir, 'local')
     mkdirSync(localDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
@@ -470,7 +470,7 @@ describe('repo sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.repo')
+    const rpgDir = path.join(tempDir, '.soop')
     const localDir = path.join(rpgDir, 'local')
     mkdirSync(localDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
@@ -503,7 +503,7 @@ describe('repo sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.repo')
+    const rpgDir = path.join(tempDir, '.soop')
     const localDir = path.join(rpgDir, 'local')
     mkdirSync(localDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
@@ -533,7 +533,7 @@ describe('repo sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.repo')
+    const rpgDir = path.join(tempDir, '.soop')
     mkdirSync(rpgDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())
 
@@ -565,7 +565,7 @@ describe('repo sync command', () => {
       rootPath: tempDir,
       github: { owner: '', repo: 'test', commit: headSha },
     })
-    const rpgDir = path.join(tempDir, '.repo')
+    const rpgDir = path.join(tempDir, '.soop')
     const localDir = path.join(rpgDir, 'local')
     mkdirSync(localDir, { recursive: true })
     await writeFile(path.join(rpgDir, 'graph.json'), await rpg.toJSON())

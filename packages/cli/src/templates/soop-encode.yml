@@ -42,20 +42,20 @@ jobs:
           if [ ! -f ".soop/graph.json" ]; then
             echo "No existing graph — running full encode"
             mkdir -p .soop
-            repo encode . -o .soop/graph.json --stamp $EMBED_FLAG
+            soop encode . -o .soop/graph.json --stamp $EMBED_FLAG
           else
-            LAST_COMMIT=$(repo last-commit .soop/graph.json 2>/dev/null || echo "")
+            LAST_COMMIT=$(soop last-commit .soop/graph.json 2>/dev/null || echo "")
             if [ -z "$LAST_COMMIT" ]; then
               echo "No commit stamp — running full encode"
-              repo encode . -o .soop/graph.json --stamp $EMBED_FLAG
+              soop encode . -o .soop/graph.json --stamp $EMBED_FLAG
             else
               echo "Evolving from $LAST_COMMIT..HEAD"
-              repo evolve --rpg .soop/graph.json -c "$LAST_COMMIT..HEAD" --stamp || {
+              soop evolve --graph .soop/graph.json -c "$LAST_COMMIT..HEAD" --stamp || {
                 echo "Evolve failed, falling back to full encode"
-                repo encode . -o .soop/graph.json --stamp $EMBED_FLAG
+                soop encode . -o .soop/graph.json --stamp $EMBED_FLAG
               }
               # Re-generate embeddings after evolve
-              repo embed --rpg .soop/graph.json --model $EMBED_MODEL --stamp
+              soop embed --graph .soop/graph.json --model $EMBED_MODEL --stamp
             fi
           fi
 

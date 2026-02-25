@@ -48,7 +48,7 @@ export function registerInitCommand(program: Command): void {
           const absPath = path.resolve(repoPath)
 
           // 1. Create .soop/ directory structure
-          const repoDir = path.join(absPath, '.repo')
+          const repoDir = path.join(absPath, '.soop')
           const localDir = path.join(repoDir, 'local')
 
           if (existsSync(path.join(repoDir, 'config.json'))) {

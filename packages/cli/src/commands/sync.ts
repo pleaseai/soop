@@ -26,7 +26,7 @@ export function registerSyncCommand(program: Command): void {
     .action(
       async (options: { force?: boolean }) => {
         const repoPath = process.cwd()
-        const repoDir = path.join(repoPath, '.repo')
+        const repoDir = path.join(repoPath, '.soop')
         const canonicalPath = path.join(repoDir, 'graph.json')
         const localDir = path.join(repoDir, 'local')
         const localGraphPath = path.join(localDir, 'graph.json')

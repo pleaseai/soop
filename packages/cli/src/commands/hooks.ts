@@ -6,13 +6,13 @@ import { createLogger } from '@pleaseai/soop-utils/logger'
 const log = createLogger('hooks')
 
 const HOOK_CONTENT = `#!/bin/sh
-# Repo Please auto-sync hook — installed by "repo init --hooks"
-# Runs repo sync after git operations. Failures do not block git.
+# Repo Please auto-sync hook — installed by "soop init --hooks"
+# Runs soop sync after git operations. Failures do not block git.
 
-if command -v repo >/dev/null 2>&1; then
-  repo sync || echo "repo sync failed (exit $?), run 'repo sync' manually to debug" >&2
+if command -v soop >/dev/null 2>&1; then
+  soop sync || echo "soop sync failed (exit $?), run 'soop sync' manually to debug" >&2
 elif command -v bunx >/dev/null 2>&1; then
-  bunx repo sync || echo "repo sync failed (exit $?), run 'repo sync' manually to debug" >&2
+  bunx soop sync || echo "soop sync failed (exit $?), run 'soop sync' manually to debug" >&2
 fi
 `
 
