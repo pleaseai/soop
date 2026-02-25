@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RPG (Repository Planning Graph) is a TypeScript/Bun implementation of two research papers:
+**repo please** is a TypeScript/Bun implementation of two research papers:
 - **RPG-ZeroRepo**: Repository generation from specifications (Intent → Code)
 - **RPG-Encoder**: Repository understanding via graph encoding (Code → Intent)
 
 The core data structure is the **Repository Planning Graph (RPG)** - a hierarchical dual-view graph combining semantic features with structural metadata.
+
+> Note: "RPG" (Repository Planning Graph) as a concept name is preserved in class names (`RepositoryPlanningGraph`, `RPGEncoder`, etc.). Only the brand/CLI/package names have changed to "repo please" / `repo` / `@pleaseai/repo`.
 
 ## Build & Development Commands
 
@@ -32,7 +34,7 @@ bun run test:unit
 bun run test:integration
 
 # Run single test file
-bun run test tests/graph.test.ts
+bun run test packages/graph/tests/graph.test.ts
 
 # Run specific test by name
 bun run test -t "should create node"
@@ -61,29 +63,29 @@ bun run typecheck
 # CLI (development)
 bun run packages/cli/src/cli.ts encode ./my_project
 
-# Initialize RPG in a repository
-rpg init [path] [--hooks] [--ci] [--encode]
+# Initialize repo please in a repository
+repo init [path] [--hooks] [--ci] [--encode]
 
 # Sync canonical graph to local with incremental evolve
-rpg sync [--force]
+repo sync [--force]
 
 # Stamp config.github.commit with current HEAD SHA
-rpg stamp <rpg-file>
+repo stamp <repo-file>
 
 # Print last encoded commit SHA
-rpg last-commit <rpg-file>
+repo last-commit <repo-file>
 ```
 
 ## Two-Tier RPG Data Management
 
-RPG uses a two-tier architecture for data management:
+repo please uses a two-tier architecture for data management:
 
-**Tier 1 (CI)**: On main push, `rpg encode`/`rpg evolve` runs in GitHub Actions and commits `.rpg/graph.json` to git.
+**Tier 1 (CI)**: On main push, `repo encode`/`repo evolve` runs in GitHub Actions and commits `.repo/graph.json` to git.
 
-**Tier 2 (Local)**: `rpg sync` copies the canonical graph to `.rpg/local/`, applies incremental evolve for local branch changes, and builds vector indices. Local data is gitignored.
+**Tier 2 (Local)**: `repo sync` copies the canonical graph to `.repo/local/`, applies incremental evolve for local branch changes, and builds vector indices. Local data is gitignored.
 
 ```
-.rpg/
+.repo/
   graph.json          # Canonical RPG (git committed, CI-managed)
   config.json         # Encode/sync settings (git committed)
   cache/              # Semantic cache (gitignored)
@@ -98,26 +100,27 @@ RPG uses a two-tier architecture for data management:
 
 ```bash
 # Initialize with CI workflow and git hooks
-rpg init --ci --hooks --encode
+repo init --ci --hooks --encode
 
 # Or step by step:
-rpg init                     # Create .rpg/ structure
-rpg encode . -o .rpg/graph.json --stamp  # Initial encode
-rpg sync                     # Copy to local + evolve
+repo init                      # Create .repo/ structure
+repo encode . -o .repo/graph.json --stamp  # Initial encode
+repo sync                      # Copy to local + evolve
 ```
 
 ### Commit tracking
 
-The `--stamp` flag on `encode`/`evolve` records the HEAD SHA in `config.github.commit`. The CI workflow uses `rpg last-commit` to determine the commit range for incremental evolve.
+The `--stamp` flag on `encode`/`evolve` records the HEAD SHA in `config.github.commit`. The CI workflow uses `repo last-commit` to determine the commit range for incremental evolve.
 
 ## Architecture
 
 ### Workspace Structure
 
-The project uses **Bun workspaces** with 8 packages under `packages/`. All packages are `private: true`; publishing is done via the root `@pleaseai/rpg` umbrella package.
+The project uses **Bun workspaces** with a private monorepo root (`version: 0.0.0`) and 9 packages under `packages/`. The published package is `packages/repo` (`@pleaseai/repo`); all other packages are `private: true` and bundled inline.
 
 ```
 packages/
+├── repo/      # Published: @pleaseai/repo (umbrella package, bin/repo, bin/repo-mcp)
 ├── utils/     # Layer 0: AST parser, LLM interface, git helpers, logger (independent)
 ├── store/     # Layer 0: Storage interfaces & implementations (independent)
 ├── graph/     # Layer 1: RPG data structures (→ store)
@@ -133,14 +136,14 @@ packages/
 Cross-package imports use workspace package names:
 ```typescript
 // Correct: workspace package imports
-import { RepositoryPlanningGraph } from '@pleaseai/rpg-graph'
-import { ASTParser } from '@pleaseai/rpg-utils/ast'
-import { RPGEncoder } from '@pleaseai/rpg-encoder'
+import { RepositoryPlanningGraph } from '@pleaseai/repo-graph'
+import { ASTParser } from '@pleaseai/repo-utils/ast'
+import { RPGEncoder } from '@pleaseai/repo-encoder'
 
 // Sub-path exports are available for fine-grained imports:
-import { SQLiteGraphStore } from '@pleaseai/rpg-store/sqlite'
-import { DataFlowEdgeSchema } from '@pleaseai/rpg-graph/edge'
-import { SemanticSearch } from '@pleaseai/rpg-encoder/semantic-search'
+import { SQLiteGraphStore } from '@pleaseai/repo-store/sqlite'
+import { DataFlowEdgeSchema } from '@pleaseai/repo-graph/edge'
+import { SemanticSearch } from '@pleaseai/repo-encoder/semantic-search'
 ```
 
 Within the same package, use relative imports:
@@ -164,14 +167,14 @@ import { DataFlowDetector } from './data-flow'
 
 | Package | Purpose |
 |---------|---------|
-| `@pleaseai/rpg-utils` | AST parser (tree-sitter), LLM interface (OpenAI/Anthropic/Google), git helpers, logger |
-| `@pleaseai/rpg-store` | Storage interfaces (GraphStore, VectorStore, TextSearchStore) & implementations (SQLite, SurrealDB, LanceDB) |
-| `@pleaseai/rpg-graph` | RPG data structures (Node, Edge, RPG class) |
-| `@pleaseai/rpg-encoder` | Code → RPG extraction (semantic lifting, structural reorganization, artifact grounding, evolution) |
-| `@pleaseai/rpg-tools` | Agentic tools (SearchNode, FetchNode, ExploreRPG) for graph navigation |
-| `@pleaseai/rpg-zerorepo` | Intent → Code generation (proposal construction, implementation planning, code generation) |
-| `@pleaseai/rpg-mcp` | MCP server for Claude Code integration |
-| `@pleaseai/rpg-cli` | CLI entry point |
+| `@pleaseai/repo-utils` | AST parser (tree-sitter), LLM interface (OpenAI/Anthropic/Google), git helpers, logger |
+| `@pleaseai/repo-store` | Storage interfaces (GraphStore, VectorStore, TextSearchStore) & implementations (SQLite, SurrealDB, LanceDB) |
+| `@pleaseai/repo-graph` | RPG data structures (Node, Edge, RPG class) |
+| `@pleaseai/repo-encoder` | Code → RPG extraction (semantic lifting, structural reorganization, artifact grounding, evolution) |
+| `@pleaseai/repo-tools` | Agentic tools (SearchNode, FetchNode, ExploreRPG) for graph navigation |
+| `@pleaseai/repo-zerorepo` | Intent → Code generation (proposal construction, implementation planning, code generation) |
+| `@pleaseai/repo-mcp` | MCP server for Claude Code integration |
+| `@pleaseai/repo-cli` | CLI entry point |
 
 ### Key Pipelines
 
@@ -187,7 +190,7 @@ import { DataFlowDetector } from './data-flow'
 
 ### Store Implementations
 
-The `@pleaseai/rpg-store` package provides the storage layer with decomposed interfaces:
+The `@pleaseai/repo-store` package provides the storage layer with decomposed interfaces:
 
 | Store | Module | Engine | Search |
 |-------|--------|--------|--------|
@@ -201,11 +204,11 @@ The `@pleaseai/rpg-store` package provides the storage layer with decomposed int
 
 **Import pattern** — store implementations are NOT re-exported from the barrel to avoid transitive native module loading:
 ```typescript
-import { SQLiteGraphStore } from '@pleaseai/rpg-store/sqlite'
-import { SurrealGraphStore } from '@pleaseai/rpg-store/surreal'
-import { LocalVectorStore, LocalGraphStore, LocalTextSearchStore } from '@pleaseai/rpg-store/local' // zero-dependency defaults
-import { LanceDBVectorStore } from '@pleaseai/rpg-store/lancedb' // optional, requires @lancedb/lancedb
-import { DefaultContextStore } from '@pleaseai/rpg-store/default-context-store'
+import { SQLiteGraphStore } from '@pleaseai/repo-store/sqlite'
+import { SurrealGraphStore } from '@pleaseai/repo-store/surreal'
+import { LocalVectorStore, LocalGraphStore, LocalTextSearchStore } from '@pleaseai/repo-store/local' // zero-dependency defaults
+import { LanceDBVectorStore } from '@pleaseai/repo-store/lancedb' // optional, requires @lancedb/lancedb
+import { DefaultContextStore } from '@pleaseai/repo-store/default-context-store'
 ```
 
 ### Key Libraries
@@ -228,13 +231,13 @@ import { DefaultContextStore } from '@pleaseai/rpg-store/default-context-store'
 
 ## MCP Server
 
-RPG provides an MCP (Model Context Protocol) server for Claude Code integration.
+repo please provides an MCP (Model Context Protocol) server for Claude Code integration.
 
 ### Running the MCP Server
 
 ```bash
 # Development mode
-bun run mcp <rpg-file.json>
+bun run mcp <repo-file.json>
 
 # Example with sample fixture
 bun run mcp tests/fixtures/sample-rpg.json
@@ -244,11 +247,11 @@ bun run mcp tests/fixtures/sample-rpg.json
 
 | Tool | Description |
 |------|-------------|
-| `rpg_search` | Semantic code search by features or file patterns |
-| `rpg_fetch` | Retrieve entity details, source code, and feature paths |
-| `rpg_explore` | Traverse the graph along functional/dependency edges |
-| `rpg_encode` | Convert a repository into an RPG |
-| `rpg_stats` | Get graph statistics (node/edge counts) |
+| `repo_search` | Semantic code search by features or file patterns |
+| `repo_fetch` | Retrieve entity details, source code, and feature paths |
+| `repo_explore` | Traverse the graph along functional/dependency edges |
+| `repo_encode` | Convert a repository into an RPG |
+| `repo_stats` | Get graph statistics (node/edge counts) |
 
 ### Claude Code Configuration
 
@@ -257,9 +260,9 @@ Add to your Claude Code settings (`.claude/settings.json` or `~/.config/claude/s
 ```json
 {
   "mcpServers": {
-    "rpg": {
+    "repo": {
       "command": "bun",
-      "args": ["run", "/path/to/rpg/packages/mcp/src/server.ts", "/path/to/rpg-file.json"],
+      "args": ["run", "/path/to/repo/packages/mcp/src/server.ts", "/path/to/repo-file.json"],
       "env": {}
     }
   }
@@ -271,9 +274,9 @@ Or with the installed package:
 ```json
 {
   "mcpServers": {
-    "rpg": {
-      "command": "rpg-mcp",
-      "args": ["/path/to/rpg-file.json"]
+    "repo": {
+      "command": "repo-mcp",
+      "args": ["/path/to/repo-file.json"]
     }
   }
 }
@@ -285,22 +288,22 @@ All git commit messages, code comments, GitHub issues, pull request titles/descr
 
 ## Design Decisions
 
-- **Bun workspaces**: Modular package structure with explicit dependency management, all `private: true`, single umbrella publish
+- **Bun workspaces**: Monorepo with private root (`version: 0.0.0`) and `packages/repo` as the published umbrella package; all `@pleaseai/repo-*` workspace packages are `private: true`
 - **Vitest over Bun Test**: Jest compatibility for planned MCP server development
-- **LanceDB over ChromaDB**: No external server required, Bun-native, disk-based persistence — available as an optional high-performance vector store via `@pleaseai/rpg-store/lancedb`; `LocalVectorStore` (zero-dependency JSON store) is the current default everywhere, with LanceDB as an opt-in upgrade
-- **All workspace packages bundled inline**: `@pleaseai/rpg-*` are all `private: true` and not published to npm; tsdown `noExternal` bundles them into the CLI/MCP/library outputs so `npm install -g @pleaseai/rpg` works without 404 errors
+- **LanceDB over ChromaDB**: No external server required, Bun-native, disk-based persistence — available as an optional high-performance vector store via `@pleaseai/repo-store/lancedb`; `LocalVectorStore` (zero-dependency JSON store) is the current default everywhere, with LanceDB as an opt-in upgrade
+- **All workspace packages bundled inline**: `@pleaseai/repo-*` are all `private: true` and not published to npm; tsdown `noExternal` bundles them into the CLI/MCP/library outputs so `npm install -g @pleaseai/repo` works without 404 errors
 - **Paper-based implementation**: Original implementation based on research papers, not forked from Microsoft code
-- **Dual GraphStore backends**: SQLiteGraphStore (better-sqlite3) and SurrealGraphStore (native graph relations) in `@pleaseai/rpg-store` for evaluation
+- **Dual GraphStore backends**: SQLiteGraphStore (better-sqlite3) and SurrealGraphStore (native graph relations) in `@pleaseai/repo-store` for evaluation
 
 ## Logging
 
-The project uses [`consola`](https://github.com/unjs/consola) for structured logging via `@pleaseai/rpg-utils/logger`.
+The project uses [`consola`](https://github.com/unjs/consola) for structured logging via `@pleaseai/repo-utils/logger`.
 
 ### Usage
 
 ```typescript
 // In library packages — use createLogger with a tag
-import { createLogger } from '@pleaseai/rpg-utils/logger'
+import { createLogger } from '@pleaseai/repo-utils/logger'
 const log = createLogger('MyModule')
 log.info('Processing...')       // [MyModule] Processing...
 log.warn('Fallback used')       // [MyModule] Fallback used
@@ -308,11 +311,11 @@ log.error('Operation failed')   // [MyModule] Operation failed
 log.debug('Verbose details')    // Hidden unless log level >= 4
 
 // In MCP server — use createStderrLogger (stdout reserved for JSON-RPC)
-import { createStderrLogger } from '@pleaseai/rpg-utils/logger'
+import { createStderrLogger } from '@pleaseai/repo-utils/logger'
 const log = createStderrLogger('MCP')
 
 // Set global log level (affects all loggers: createLogger children + createStderrLogger instances)
-import { setLogLevel, LogLevels } from '@pleaseai/rpg-utils/logger'
+import { setLogLevel, LogLevels } from '@pleaseai/repo-utils/logger'
 setLogLevel(LogLevels.debug)    // Enable debug output
 ```
 
@@ -353,6 +356,7 @@ If `better-sqlite3` native bindings are compiled for a different Node.js version
 ### Vitest CLI
 - `--include` is not a valid CLI option; use positional arguments (`vitest run 'pattern'`) or workspace projects (`--project=unit`)
 - Test file naming: `*.integration.test.ts` for integration tests, `*.test.ts` for unit tests
+- Test files live in `packages/*/tests/` — run a single package's tests with e.g. `bun run test packages/encoder/tests/semantic.test.ts`
 
 ### CI shallow clones
 - `actions/checkout@v6` defaults to `fetch-depth: 1` — tests using `HEAD~1..HEAD` or specific commit hashes will fail
@@ -395,7 +399,7 @@ All Voyage 4 models (including local `voyage-4-nano`) share the same embedding s
 
 ### CI Workflow Model Selection
 
-The `rpg init --ci` template automatically selects the embedding model:
+The `repo init --ci` template automatically selects the embedding model:
 
 - `VOYAGE_API_KEY` set → `voyage-ai/voyage-4`
 - `VOYAGE_API_KEY` not set → `transformers/voyageai/voyage-4-nano` (free, no API key required)

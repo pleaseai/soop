@@ -1,11 +1,11 @@
-# RPG: Repository Planning Graph
+# repo please: Repository Planning Graph
 
 A unified framework for repository understanding and generation based on the Repository Planning Graph (RPG) representation.
 
-[![codecov](https://codecov.io/gh/pleaseai/rpg/graph/badge.svg?token=PfprF4qUBw)](https://codecov.io/gh/pleaseai/rpg)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_rpg&metric=security_rating&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_rpg)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_rpg&metric=vulnerabilities&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_rpg)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_rpg&metric=bugs&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_rpg)
+[![codecov](https://codecov.io/gh/pleaseai/repo/graph/badge.svg?token=PfprF4qUBw)](https://codecov.io/gh/pleaseai/repo)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_repo&metric=security_rating&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_repo)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_repo&metric=vulnerabilities&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_repo)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_repo&metric=bugs&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_repo)
 
 ## Overview
 
@@ -93,8 +93,8 @@ Extract RPG from existing codebases through three mechanisms:
 curl -fsSL https://bun.sh/install | bash
 
 # Clone and install
-git clone https://github.com/pleaseai/rpg.git
-cd rpg
+git clone https://github.com/pleaseai/repo.git
+cd repo
 bun install
 ```
 
@@ -103,7 +103,7 @@ bun install
 ### Repository Generation (ZeroRepo)
 
 ```typescript
-import { ZeroRepo } from 'rpg-graph'
+import { ZeroRepo } from '@pleaseai/repo'
 
 // Initialize with repository specification
 const zerorepo = new ZeroRepo({
@@ -125,7 +125,7 @@ await zerorepo.generateRepository(rpg, './generated_repo')
 ### Repository Understanding (Encoder)
 
 ```typescript
-import { RPGEncoder, SearchNode, FetchNode, ExploreRPG } from 'rpg-graph'
+import { RPGEncoder, SearchNode, FetchNode, ExploreRPG } from '@pleaseai/repo'
 
 // Encode existing repository
 const encoder = new RPGEncoder('./my_project')
@@ -163,24 +163,24 @@ await encoder.evolve({ commitRange: 'HEAD~5..HEAD' })
 
 ```bash
 # Encode a repository
-rpg encode ./my_project -o rpg.json
+repo encode ./my_project -o repo.json
 
 # Encode with a specific LLM provider/model
-rpg encode ./my_project -m google                    # Google Gemini (default model)
-rpg encode ./my_project -m openai/gpt-5.2            # OpenAI with specific model
-rpg encode ./my_project -m anthropic/claude-haiku-4.5 # Anthropic Haiku
-rpg encode ./my_project -m claude-code/haiku          # Claude Code (no API key needed)
-rpg encode ./my_project --no-llm                      # Heuristic only (no LLM)
+repo encode ./my_project -m google                    # Google Gemini (default model)
+repo encode ./my_project -m openai/gpt-5.2            # OpenAI with specific model
+repo encode ./my_project -m anthropic/claude-haiku-4.5 # Anthropic Haiku
+repo encode ./my_project -m claude-code/haiku          # Claude Code (no API key needed)
+repo encode ./my_project --no-llm                      # Heuristic only (no LLM)
 
 # Generate from specification
-rpg generate --spec "A REST API for user management" -o ./output
+repo generate --spec "A REST API for user management" -o ./output
 
 # Search in RPG
-rpg search --rpg rpg.json --term "authentication"
+repo search --rpg repo.json --term "authentication"
 
 # Evolve with commits (also supports -m/--model)
-rpg evolve --rpg rpg.json --commits HEAD~5..HEAD
-rpg evolve --rpg rpg.json -m google --commits HEAD~5..HEAD
+repo evolve --rpg repo.json --commits HEAD~5..HEAD
+repo evolve --rpg repo.json -m google --commits HEAD~5..HEAD
 ```
 
 #### Model Configuration
@@ -197,47 +197,28 @@ The `-m, --model` option uses `provider/model` format. If the model is omitted, 
 ## Project Structure
 
 ```
-rpg/
-├── src/
-│   ├── index.ts              # Main exports
-│   ├── cli.ts                # CLI entry point
+repo-please-monorepo/              # Private monorepo root (not published)
+├── packages/
+│   ├── repo/                      # Published package: @pleaseai/repo
+│   │   ├── src/index.ts           # Main exports (re-exports all workspace packages)
+│   │   ├── bin/repo               # CLI binary
+│   │   ├── bin/repo-mcp           # MCP server binary
+│   │   └── package.json
 │   │
-│   ├── graph/                # RPG data structures
-│   │   ├── index.ts
-│   │   ├── node.ts           # Node types (HighLevel, LowLevel)
-│   │   ├── edge.ts           # Edge types (Functional, Dependency)
-│   │   └── rpg.ts            # RepositoryPlanningGraph class
-│   │
-│   ├── encoder/              # Code → RPG extraction
-│   │   ├── index.ts
-│   │   ├── semantic.ts       # Semantic lifting
-│   │   ├── structure.ts      # Structural reorganization
-│   │   ├── grounding.ts      # Artifact grounding
-│   │   └── evolution.ts      # Incremental updates
-│   │
-│   ├── zerorepo/             # Intent → Code generation
-│   │   ├── index.ts
-│   │   ├── proposal.ts       # Proposal-level construction
-│   │   ├── implementation.ts # Implementation-level construction
-│   │   └── codegen.ts        # Code generation
-│   │
-│   ├── tools/                # Agentic operation tools
-│   │   ├── index.ts
-│   │   ├── search.ts         # SearchNode
-│   │   ├── fetch.ts          # FetchNode
-│   │   └── explore.ts        # ExploreRPG
-│   │
-│   └── utils/                # Utilities
-│       ├── index.ts
-│       ├── ast.ts            # AST analysis (tree-sitter)
-│       ├── llm.ts            # LLM interface (OpenAI/Anthropic/Google/Claude Code)
-│       └── vector.ts         # Vector database (LanceDB)
+│   ├── utils/    # @pleaseai/repo-utils   — AST parser, LLM, git helpers, logger
+│   ├── store/    # @pleaseai/repo-store   — Storage interfaces & implementations
+│   ├── graph/    # @pleaseai/repo-graph   — RPG data structures
+│   ├── encoder/  # @pleaseai/repo-encoder — Code → RPG extraction
+│   ├── tools/    # @pleaseai/repo-tools   — Agentic navigation tools
+│   ├── zerorepo/ # @pleaseai/repo-zerorepo — Intent → Code generation
+│   ├── mcp/      # @pleaseai/repo-mcp    — MCP server
+│   └── cli/      # @pleaseai/repo-cli    — CLI entry point
 │
 ├── tests/
+│   └── fixtures/                  # Shared test fixtures (sample-rpg.json, superjson)
 ├── docs/
-├── package.json
-├── tsconfig.json
-├── biome.json
+├── scripts/
+├── package.json                   # Monorepo root (private, version 0.0.0)
 └── README.md
 ```
 
