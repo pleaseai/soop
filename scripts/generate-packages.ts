@@ -110,7 +110,7 @@ async function buildBinary(
     outfile,
     target: target as Parameters<typeof Bun.build>[0]['target'],
     compile: true,
-    bytecode: true,
+    bytecode: target.split('-')[1] !== 'windows', // https://github.com/oven-sh/bun/issues/18416
     minify: true,
     // Embed all @pleaseai/* workspace packages; exclude heavy native/optional deps
     external: [
