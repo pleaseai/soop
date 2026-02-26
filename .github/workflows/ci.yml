@@ -14,6 +14,9 @@ jobs:
   typecheck:
     runs-on: ubuntu-latest
     steps:
+      - name: Skip for release-please branches
+        if: startsWith(github.head_ref, 'release-please--')
+        run: echo "Release-please branch — skipping typecheck" && exit 0
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
@@ -22,6 +25,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
+      - name: Skip for release-please branches
+        if: startsWith(github.head_ref, 'release-please--')
+        run: echo "Release-please branch — skipping lint" && exit 0
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
@@ -30,6 +36,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - name: Skip for release-please branches
+        if: startsWith(github.head_ref, 'release-please--')
+        run: echo "Release-please branch — skipping tests" && exit 0
       - uses: actions/checkout@v6
         with:
           fetch-depth: 2
@@ -47,6 +56,9 @@ jobs:
   integration-test:
     runs-on: ubuntu-latest
     steps:
+      - name: Skip for release-please branches
+        if: startsWith(github.head_ref, 'release-please--')
+        run: echo "Release-please branch — skipping integration tests" && exit 0
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
