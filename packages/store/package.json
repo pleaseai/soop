@@ -19,7 +19,7 @@
     "./local": "./src/local/index.ts"
   },
   "dependencies": {
-    "surrealdb": "^2.0.0-alpha.17",
+    "surrealdb": "^2.0.0",
     "@surrealdb/node": "^2.6.0"
   },
   "optionalDependencies": {
