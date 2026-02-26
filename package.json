@@ -27,7 +27,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf packages/soop/dist"
   },
-  "packageManager": "bun@1.3.9",
+  "packageManager": "bun@1.3.10",
   "dependencies": {
     "tree-sitter": "0.25.0",
     "tree-sitter-c": "0.24.1",
