@@ -145,8 +145,14 @@ jobs:
         if: ${{ github.event.inputs.dry_run != 'true' }}
         run: |
           for dir in npm/soop-*/; do
-            echo "Publishing $dir..."
-            (cd "$dir" && npm publish --access public --provenance)
+            name=$(cat "$dir/package.json" | python3 -c "import json,sys; print(json.load(sys.stdin)['name'])")
+            version=$(cat "$dir/package.json" | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
+            if npm view "${name}@${version}" version 2>/dev/null | grep -q "${version}"; then
+              echo "Skipping $name@$version (already published)"
+            else
+              echo "Publishing $dir..."
+              (cd "$dir" && npm publish --access public --provenance)
+            fi
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -154,7 +160,14 @@ jobs:
       # Publish main @pleaseai/soop package (OIDC trusted publishing — no token needed)
       - name: Publish main package
         if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: cd packages/soop && npm publish --access public --provenance
+        run: |
+          name=$(cat packages/soop/package.json | python3 -c "import json,sys; print(json.load(sys.stdin)['name'])")
+          version=$(cat packages/soop/package.json | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
+          if npm view "${name}@${version}" version 2>/dev/null | grep -q "${version}"; then
+            echo "Skipping ${name}@${version} (already published)"
+          else
+            cd packages/soop && npm publish --access public --provenance
+          fi
 
       # Dry run — show what would be published
       - name: Dry run summary
