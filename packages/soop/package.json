@@ -1,6 +1,6 @@
 {
   "name": "@pleaseai/soop",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Repository Planning Graph - A unified framework for repository understanding and generation",
   "type": "module",
   "files": [
@@ -48,13 +48,13 @@
     "tree-sitter-typescript": "0.23.2"
   },
   "optionalDependencies": {
-    "@pleaseai/soop-darwin-arm64": "0.1.11",
-    "@pleaseai/soop-darwin-x64": "0.1.11",
-    "@pleaseai/soop-linux-x64-glibc": "0.1.11",
-    "@pleaseai/soop-linux-arm64-glibc": "0.1.11",
-    "@pleaseai/soop-linux-x64-musl": "0.1.11",
-    "@pleaseai/soop-linux-arm64-musl": "0.1.11",
-    "@pleaseai/soop-win32-x64": "0.1.11",
+    "@pleaseai/soop-darwin-arm64": "0.1.13",
+    "@pleaseai/soop-darwin-x64": "0.1.13",
+    "@pleaseai/soop-linux-x64-glibc": "0.1.13",
+    "@pleaseai/soop-linux-arm64-glibc": "0.1.13",
+    "@pleaseai/soop-linux-x64-musl": "0.1.13",
+    "@pleaseai/soop-linux-arm64-musl": "0.1.13",
+    "@pleaseai/soop-win32-x64": "0.1.13",
     "@huggingface/transformers": "^3.8.1",
     "@lancedb/lancedb": "^0.13.0",
     "@surrealdb/node": "^2.6.0",
