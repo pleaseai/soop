@@ -19,7 +19,7 @@
       },
       "devDependencies": {
         "@ai-sdk/anthropic": "^3.0.36",
-        "@ai-sdk/google": "^3.0.21",
+        "@ai-sdk/google": "^3.0.31",
         "@ai-sdk/openai": "^3.0.25",
         "@antfu/eslint-config": "^7.2.0",
         "@pleaseai/soop-cli": "workspace:*",
@@ -176,7 +176,7 @@
       "version": "0.1.4",
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.36",
-        "@ai-sdk/google": "^3.0.21",
+        "@ai-sdk/google": "^3.0.31",
         "@ai-sdk/openai": "^3.0.25",
         "ai": "^6.0.70",
         "ai-sdk-provider-claude-code": "^3.4.0",
@@ -215,7 +215,7 @@
 
     "@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.41", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.14", "@vercel/oidc": "3.1.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-dYNhtvEomccNNGSxfSP8f4g6yPcoDHyQ6Rb7dALFE0FvvVP9UqfFWi3D2dLIz0VVKaSkiNLQAJ7lsdTVlBdRrw=="],
 
-    "@ai-sdk/google": ["@ai-sdk/google@3.0.29", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.15" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-x0hcU10AA+i1ZUQHloGD5qXWsB+Y8qnxlmFUef6Ly4rB53MGVbQExkI9nOKiCO3mu2TGiiNoQMeKWSeQVLfRUA=="],
+    "@ai-sdk/google": ["@ai-sdk/google@3.0.31", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.15" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-RVNz8WFSIRbXbYDBE6JvlE2escWPJimBCs22LzKEYH7DNfl/X7cHNa1LFho4PsY6Ib0JmbzB8s2+i0wHs/wNCg=="],
 
     "@ai-sdk/openai": ["@ai-sdk/openai@3.0.27", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.14" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-pLMxWOypwroXiK9dxNpn60/HGhWWWDEOJ3lo9vZLoxvpJNtKnLKojwVIvlW3yEjlD7ll1+jUO2uzsABNTaP5Yg=="],
 

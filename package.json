@@ -51,7 +51,7 @@
     "@pleaseai/soop-utils": "workspace:*",
     "@pleaseai/soop-zerorepo": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.36",
-    "@ai-sdk/google": "^3.0.21",
+    "@ai-sdk/google": "^3.0.31",
     "@ai-sdk/openai": "^3.0.25",
     "@antfu/eslint-config": "^7.2.0",
     "@types/better-sqlite3": "^7.6.13",
