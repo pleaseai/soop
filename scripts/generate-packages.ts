@@ -8,6 +8,7 @@
  * Usage: bun run scripts/generate-packages.ts
  */
 
+import { existsSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -104,12 +105,16 @@ async function buildBinary(
   outfile: string,
   target: string,
 ): Promise<void> {
+  // Ensure the output directory exists before Bun.build — compile mode silently
+  // succeeds without writing if the directory is missing.
+  await mkdir(join(outfile, '..'), { recursive: true })
   console.log(`  Building ${outfile} for ${target}...`)
   const result = await Bun.build({
     entrypoints: [entrypoint],
-    outfile,
-    target: target as Parameters<typeof Bun.build>[0]['target'],
-    compile: true,
+    compile: {
+      target: target as Bun.Build.CompileTarget,
+      outfile,
+    },
     bytecode: target.split('-')[1] !== 'windows', // https://github.com/oven-sh/bun/issues/18416
     minify: true,
     // Embed all @pleaseai/* workspace packages; exclude heavy native/optional deps
@@ -142,6 +147,12 @@ async function buildBinary(
       console.error(`    ${log.message}`)
     }
     throw new Error(`Bun.build failed for ${outfile} on ${target}`)
+  }
+
+  if (!existsSync(outfile)) {
+    throw new Error(
+      `Bun.build reported success but output file does not exist: ${outfile} (target: ${target})`,
+    )
   }
 }
 
@@ -204,7 +215,11 @@ if (filterPrefix && BUILD_TARGETS.length === 0) {
   process.exit(1)
 }
 
-console.log(`Building Soop Please binaries v${VERSION} for ${BUILD_TARGETS.length} targets${filterPrefix ? ` (filter: ${filterPrefix})` : ''}...\n`)
+// --skip-missing: skip targets where cross-compilation fails (local dev only)
+// Without this flag (CI default), build failures cause an immediate error.
+const skipMissing = process.argv.includes('--skip-missing')
+
+console.log(`Building Soop Please binaries v${VERSION} for ${BUILD_TARGETS.length} targets${filterPrefix ? ` (filter: ${filterPrefix})` : ''}${skipMissing ? ' (--skip-missing)' : ''}...\n`)
 
 // Compile binaries for each target
 for (const target of BUILD_TARGETS) {
@@ -215,20 +230,30 @@ for (const target of BUILD_TARGETS) {
 
   console.log(`\n[${target.packageSuffix}] target=${target.bunTarget}`)
 
-  await buildBinary(
-    join(ROOT, 'packages', 'cli', 'src', 'cli.ts'),
-    join(pkgDir, repoBin),
-    target.bunTarget,
-  )
+  try {
+    await buildBinary(
+      join(ROOT, 'packages', 'cli', 'src', 'cli.ts'),
+      join(pkgDir, repoBin),
+      target.bunTarget,
+    )
 
-  await buildBinary(
-    join(ROOT, 'packages', 'mcp', 'src', 'server.ts'),
-    join(pkgDir, mcpBin),
-    target.bunTarget,
-  )
+    await buildBinary(
+      join(ROOT, 'packages', 'mcp', 'src', 'server.ts'),
+      join(pkgDir, mcpBin),
+      target.bunTarget,
+    )
 
-  await generatePackageJson(target)
-  console.log(`  Generated npm/soop-${target.packageSuffix}/package.json`)
+    await generatePackageJson(target)
+    console.log(`  Generated npm/soop-${target.packageSuffix}/package.json`)
+  }
+  catch (err) {
+    if (skipMissing) {
+      console.warn(`  Skipping ${target.packageSuffix}: ${err instanceof Error ? err.message : String(err)}`)
+    }
+    else {
+      throw err
+    }
+  }
 }
 
 // Sync optionalDependencies in packages/soop/package.json so versions stay in sync with VERSION
