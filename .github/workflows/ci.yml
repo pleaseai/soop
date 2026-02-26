@@ -14,38 +14,63 @@ jobs:
   typecheck:
     runs-on: ubuntu-latest
     steps:
-      - name: Skip for release-please branches
-        if: startsWith(github.head_ref, 'release-please--')
-        run: echo "Release-please branch — skipping typecheck" && exit 0
+      - name: Check if release-please branch
+        id: branch-check
+        run: |
+          if [[ "${{ github.head_ref }}" == release-please--* ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Release-please branch — skipping typecheck"
+          fi
       - uses: actions/checkout@v6
+        if: steps.branch-check.outputs.skip != 'true'
       - uses: oven-sh/setup-bun@v2
+        if: steps.branch-check.outputs.skip != 'true'
       - run: bun install --frozen-lockfile
+        if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run typecheck
+        if: steps.branch-check.outputs.skip != 'true'
 
   lint:
     runs-on: ubuntu-latest
     steps:
-      - name: Skip for release-please branches
-        if: startsWith(github.head_ref, 'release-please--')
-        run: echo "Release-please branch — skipping lint" && exit 0
+      - name: Check if release-please branch
+        id: branch-check
+        run: |
+          if [[ "${{ github.head_ref }}" == release-please--* ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Release-please branch — skipping lint"
+          fi
       - uses: actions/checkout@v6
+        if: steps.branch-check.outputs.skip != 'true'
       - uses: oven-sh/setup-bun@v2
+        if: steps.branch-check.outputs.skip != 'true'
       - run: bun install --frozen-lockfile
+        if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run lint
+        if: steps.branch-check.outputs.skip != 'true'
 
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Skip for release-please branches
-        if: startsWith(github.head_ref, 'release-please--')
-        run: echo "Release-please branch — skipping tests" && exit 0
+      - name: Check if release-please branch
+        id: branch-check
+        run: |
+          if [[ "${{ github.head_ref }}" == release-please--* ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Release-please branch — skipping tests"
+          fi
       - uses: actions/checkout@v6
+        if: steps.branch-check.outputs.skip != 'true'
         with:
           fetch-depth: 2
       - uses: oven-sh/setup-bun@v2
+        if: steps.branch-check.outputs.skip != 'true'
       - run: bun install --frozen-lockfile
+        if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run test:unit -- --coverage --coverage.reportsDirectory=./coverage/unit
+        if: steps.branch-check.outputs.skip != 'true'
       - uses: codecov/codecov-action@v5
+        if: steps.branch-check.outputs.skip != 'true'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: pleaseai/soop
@@ -56,17 +81,26 @@ jobs:
   integration-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Skip for release-please branches
-        if: startsWith(github.head_ref, 'release-please--')
-        run: echo "Release-please branch — skipping integration tests" && exit 0
+      - name: Check if release-please branch
+        id: branch-check
+        run: |
+          if [[ "${{ github.head_ref }}" == release-please--* ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Release-please branch — skipping integration tests"
+          fi
       - uses: actions/checkout@v6
+        if: steps.branch-check.outputs.skip != 'true'
         with:
           fetch-depth: 0
           submodules: true
       - uses: oven-sh/setup-bun@v2
+        if: steps.branch-check.outputs.skip != 'true'
       - run: bun install --frozen-lockfile
+        if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run test:integration -- --coverage --coverage.reportsDirectory=./coverage/integration
+        if: steps.branch-check.outputs.skip != 'true'
       - uses: codecov/codecov-action@v5
+        if: steps.branch-check.outputs.skip != 'true'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: pleaseai/soop
