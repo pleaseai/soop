@@ -108,20 +108,12 @@
     },
     "packages/soop": {
       "name": "@pleaseai/soop",
-      "version": "0.1.11",
+      "version": "0.1.12",
       "bin": {
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
       },
       "dependencies": {
-        "@pleaseai/soop-cli": "workspace:*",
-        "@pleaseai/soop-encoder": "workspace:*",
-        "@pleaseai/soop-graph": "workspace:*",
-        "@pleaseai/soop-mcp": "workspace:*",
-        "@pleaseai/soop-store": "workspace:*",
-        "@pleaseai/soop-tools": "workspace:*",
-        "@pleaseai/soop-utils": "workspace:*",
-        "@pleaseai/soop-zerorepo": "workspace:*",
         "tree-sitter": "0.25.0",
         "tree-sitter-c": "0.24.1",
         "tree-sitter-c-sharp": "0.23.1",
