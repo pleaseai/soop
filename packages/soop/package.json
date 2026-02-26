@@ -5,7 +5,9 @@
   "type": "module",
   "files": [
     "dist/",
-    "bin/"
+    "bin/",
+    "README.md",
+    "LICENSE"
   ],
   "main": "dist/src/index.mjs",
   "types": "dist/src/index.d.mts",
