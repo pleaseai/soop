@@ -35,14 +35,6 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@pleaseai/soop-cli": "workspace:*",
-    "@pleaseai/soop-encoder": "workspace:*",
-    "@pleaseai/soop-graph": "workspace:*",
-    "@pleaseai/soop-mcp": "workspace:*",
-    "@pleaseai/soop-store": "workspace:*",
-    "@pleaseai/soop-tools": "workspace:*",
-    "@pleaseai/soop-utils": "workspace:*",
-    "@pleaseai/soop-zerorepo": "workspace:*",
     "tree-sitter": "0.25.0",
     "tree-sitter-c": "0.24.1",
     "tree-sitter-c-sharp": "0.23.1",
