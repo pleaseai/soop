@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/pleaseai/soop/compare/v0.1.11...v0.1.12) (2026-02-26)
+
+
+### Bug Fixes
+
+* **build:** fix Bun.build compile API and add robustness to generate-packages script ([#131](https://github.com/pleaseai/soop/issues/131)) ([24e8609](https://github.com/pleaseai/soop/commit/24e86096ef0dac509d59417ad424e875eb31a4e9))
+
 ## [0.1.11](https://github.com/pleaseai/soop/compare/v0.1.10...v0.1.11) (2026-02-25)
 
 
