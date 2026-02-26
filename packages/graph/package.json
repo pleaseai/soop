@@ -16,7 +16,7 @@
   "dependencies": {
     "@pleaseai/soop-store": "workspace:*",
     "@pleaseai/soop-utils": "workspace:*",
-    "graphology": "^0.25.4",
+    "graphology": "^0.26.0",
     "graphology-types": "^0.24.8"
   },
   "peerDependencies": {
