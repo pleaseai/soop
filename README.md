@@ -3,9 +3,10 @@
 A unified framework for repository understanding and generation based on the Repository Planning Graph (RPG) representation.
 
 [![codecov](https://codecov.io/gh/pleaseai/soop/graph/badge.svg?token=PfprF4qUBw)](https://codecov.io/gh/pleaseai/soop)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_repo&metric=security_rating&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_repo)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_repo&metric=vulnerabilities&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_repo)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_repo&metric=bugs&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_repo)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_soop&metric=alert_status&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_soop)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_soop&metric=security_rating&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_soop)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_soop&metric=vulnerabilities&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_soop)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=pleaseai_soop&metric=bugs&token=689e64c38ea80939aaaa4089f723cfc1f879d9c1)](https://sonarcloud.io/summary/new_code?id=pleaseai_soop)
 
 ## Overview
 
