@@ -35,6 +35,7 @@ await writeFile(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`)
 
 if (updated > 0) {
   console.log(`Bumped ${updated} optionalDependencies to v${version}`)
-} else {
+}
+else {
   console.log(`optionalDependencies already at v${version}`)
 }
