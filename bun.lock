@@ -200,7 +200,18 @@
     },
   },
   "trustedDependencies": [
+    "tree-sitter-java",
+    "tree-sitter-kotlin",
+    "tree-sitter",
+    "tree-sitter-cpp",
+    "tree-sitter-go",
+    "tree-sitter-typescript",
+    "tree-sitter-ruby",
+    "tree-sitter-c-sharp",
+    "tree-sitter-c",
+    "tree-sitter-python",
     "better-sqlite3",
+    "tree-sitter-rust",
   ],
   "packages": {
     "@ai-sdk/anthropic": ["@ai-sdk/anthropic@3.0.46", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.15" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-zXJPiNHaIiQ6XUqLeSYZ3ZbSzjqt1pNWEUf2hlkXlmmw8IF8KI0ruuGaDwKCExmtuNRf0E4TDxhsc9wRgWTzpw=="],
@@ -421,9 +432,21 @@
 
     "@pleaseai/soop-cli": ["@pleaseai/soop-cli@workspace:packages/cli"],
 
+    "@pleaseai/soop-darwin-arm64": ["@pleaseai/soop-darwin-arm64@0.1.14", "", { "os": "darwin", "cpu": "arm64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-33mUscM2mtSA7ynfSWU/sxUCq/nbEy70ZrE0HOZdcC6E9Clk7Zkl371mT7+prGUB/Qnfc28/NlTXzyaUsukjYw=="],
+
+    "@pleaseai/soop-darwin-x64": ["@pleaseai/soop-darwin-x64@0.1.14", "", { "os": "darwin", "cpu": "x64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-FlmxBmPqO9FKCP494Wz0FPf/M7QjUhTesoZ+/m4bo3ZEftganjB7Y9Tc02DTDgK+bK7q2NiAhskt7EKz33uWSA=="],
+
     "@pleaseai/soop-encoder": ["@pleaseai/soop-encoder@workspace:packages/encoder"],
 
     "@pleaseai/soop-graph": ["@pleaseai/soop-graph@workspace:packages/graph"],
+
+    "@pleaseai/soop-linux-arm64-glibc": ["@pleaseai/soop-linux-arm64-glibc@0.1.14", "", { "os": "linux", "cpu": "arm64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-4xJYoUaklFxvIibFJpap67hRqGEjZe/I4VUIzEjSbg+J40QBoj/JQVHTvxOUuYlyhXMyZppDO4EU9SqmvUsyOw=="],
+
+    "@pleaseai/soop-linux-arm64-musl": ["@pleaseai/soop-linux-arm64-musl@0.1.14", "", { "os": "linux", "cpu": "arm64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-Suz6cPdUe366d57y4WSudxkBRBrLdBZkxZv0CLRSvsfDCnvHiPtKf5cxzWwXIgzkpZ5mmSggEpXxASC+XusBZg=="],
+
+    "@pleaseai/soop-linux-x64-glibc": ["@pleaseai/soop-linux-x64-glibc@0.1.14", "", { "os": "linux", "cpu": "x64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-by3/hpU7BBv/08KjWgWviXeW4urwW/8qlnnRaN4f2OyCEmGw3iZSN0pnI8tdx7mwYc35gSAFJwAyD7Qzyjflfw=="],
+
+    "@pleaseai/soop-linux-x64-musl": ["@pleaseai/soop-linux-x64-musl@0.1.14", "", { "os": "linux", "cpu": "x64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-2JfHFffekjPcOFsjlyHea+wObBgURPky0T3wIR6NeLR54fFfNWrFBHNjCbYS/iaeHeaMHweY5Wk0DynX9vBAyQ=="],
 
     "@pleaseai/soop-mcp": ["@pleaseai/soop-mcp@workspace:packages/mcp"],
 
@@ -432,6 +455,8 @@
     "@pleaseai/soop-tools": ["@pleaseai/soop-tools@workspace:packages/tools"],
 
     "@pleaseai/soop-utils": ["@pleaseai/soop-utils@workspace:packages/utils"],
+
+    "@pleaseai/soop-win32-x64": ["@pleaseai/soop-win32-x64@0.1.14", "", { "os": "win32", "cpu": "x64", "bin": { "soop": "soop.exe", "soop-mcp": "soop-mcp.exe" } }, "sha512-FMD0sRpV/vdrT21n6bgqp3v6ueg3iGmVB9WCBmoCjGZB/cO9VCFuIdZeshGED688+T037mAeiXcf0/kOSKJO+g=="],
 
     "@pleaseai/soop-zerorepo": ["@pleaseai/soop-zerorepo@workspace:packages/zerorepo"],
 

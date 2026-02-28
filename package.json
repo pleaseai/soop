@@ -71,7 +71,18 @@
     "zod": "^4.0.0"
   },
   "trustedDependencies": [
-    "better-sqlite3"
+    "better-sqlite3",
+    "tree-sitter",
+    "tree-sitter-c",
+    "tree-sitter-c-sharp",
+    "tree-sitter-cpp",
+    "tree-sitter-go",
+    "tree-sitter-java",
+    "tree-sitter-kotlin",
+    "tree-sitter-python",
+    "tree-sitter-ruby",
+    "tree-sitter-rust",
+    "tree-sitter-typescript"
   ],
   "repository": {
     "type": "git",
