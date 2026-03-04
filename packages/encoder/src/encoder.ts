@@ -951,9 +951,12 @@ export class RPGEncoder {
 
       const filePath = path.join(repoPath, sourceNode.metadata.path)
       try {
-        // Synchronous pre-check: catch '..' traversal and absolute paths without I/O
+        // Synchronous pre-check: catch '..' traversal and absolute paths without I/O.
+        // Compare against path.resolve(repoPath) (not realpath) so the check works
+        // correctly when repoPath itself is a symlink.
         const preResolved = path.resolve(repoPath, sourceNode.metadata.path)
-        if (!preResolved.startsWith(resolvedRepo + path.sep) && preResolved !== resolvedRepo) {
+        const repoBase = path.resolve(repoPath)
+        if (!preResolved.startsWith(repoBase + path.sep) && preResolved !== repoBase) {
           log.warn(`getCrossBoundaryExcerpts: skipping out-of-bounds path: ${sourceNode.metadata.path}`)
           continue
         }
@@ -972,7 +975,7 @@ export class RPGEncoder {
           const MAX_EXCERPT_LINE_LENGTH = 300
           const rawLine = lines[lineIdx]!.trim()
           const excerptLine = rawLine.length > MAX_EXCERPT_LINE_LENGTH
-            ? rawLine.slice(0, MAX_EXCERPT_LINE_LENGTH) + ' ...[truncated]'
+            ? `${rawLine.slice(0, MAX_EXCERPT_LINE_LENGTH)} ...[truncated]`
             : rawLine
           excerpts.push(
             `[${srcArea} → ${tgtArea}] ${sourceNode.metadata.path}:${edge.line}: ${excerptLine}`,
