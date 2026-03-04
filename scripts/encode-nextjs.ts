@@ -56,7 +56,10 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+try {
+  await main()
+}
+catch (error) {
   console.error('Fatal:', error)
   process.exit(1)
-})
+}

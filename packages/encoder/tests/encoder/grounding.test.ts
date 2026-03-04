@@ -2,6 +2,10 @@ import { ArtifactGrounder, computeLCA } from '@pleaseai/soop-encoder/grounding'
 import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
 import { describe, expect, it } from 'vitest'
 
+async function createTestRPG() {
+  return RepositoryPlanningGraph.create({ name: 'test' })
+}
+
 describe('computeLCA (PathTrie)', () => {
   it('should return empty array for empty input', () => {
     const result = computeLCA(new Set())
@@ -98,10 +102,6 @@ describe('computeLCA (PathTrie)', () => {
 })
 
 describe('ArtifactGrounder', () => {
-  async function createTestRPG() {
-    return RepositoryPlanningGraph.create({ name: 'test' })
-  }
-
   it('should populate metadata.path for HighLevelNodes with single directory', async () => {
     const rpg = await createTestRPG()
 

@@ -194,8 +194,8 @@ describe('LLMClient', () => {
         allowedTools: ['Read', 'Write'],
       }
 
-      // eslint-disable-next-line no-new
-      new LLMClient({ provider: 'claude-code', claudeCodeSettings: settings })
+      const _client = new LLMClient({ provider: 'claude-code', claudeCodeSettings: settings })
+      expect(_client).toBeDefined()
 
       expect(vi.mocked(createClaudeCode)).toHaveBeenCalledWith({ defaultSettings: settings })
     })
@@ -204,8 +204,8 @@ describe('LLMClient', () => {
       const { createClaudeCode } = await import('ai-sdk-provider-claude-code')
       vi.mocked(createClaudeCode).mockClear()
 
-      // eslint-disable-next-line no-new
-      new LLMClient({ provider: 'claude-code' })
+      const _client = new LLMClient({ provider: 'claude-code' })
+      expect(_client).toBeDefined()
 
       expect(vi.mocked(createClaudeCode)).toHaveBeenCalledWith(undefined)
     })
@@ -214,8 +214,8 @@ describe('LLMClient', () => {
       const { createClaudeCode } = await import('ai-sdk-provider-claude-code')
       vi.mocked(createClaudeCode).mockClear()
 
-      // eslint-disable-next-line no-new
-      new LLMClient({ provider: 'claude-code', apiKey: 'should-be-ignored' })
+      const _client = new LLMClient({ provider: 'claude-code', apiKey: 'should-be-ignored' })
+      expect(_client).toBeDefined()
 
       expect(vi.mocked(createClaudeCode)).toHaveBeenCalledWith(undefined)
     })

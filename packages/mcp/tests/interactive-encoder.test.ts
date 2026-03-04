@@ -64,8 +64,8 @@ describe('InteractiveState', () => {
 
     it('should handle entities with no source code', () => {
       state.entities = [
-        makeEntity('a.ts:function:foo:1', undefined),
-        makeEntity('a.ts:function:bar:5', undefined),
+        makeEntity('a.ts:function:foo:1'),
+        makeEntity('a.ts:function:bar:5'),
       ]
       state.buildBatches()
       // Zero tokens per entity, so all fit in one batch

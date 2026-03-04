@@ -99,9 +99,10 @@ function findBinary(): string {
     dir = parent
   }
 
+  const searchPathList = searchPaths.map(p => `  - ${p}`).join('\n')
   throw new Error(
     `Could not find the ${packageName} binary.\n`
-    + `Searched:\n${searchPaths.map(p => `  - ${p}`).join('\n')}\n\n`
+    + `Searched:\n${searchPathList}\n\n`
     + `Make sure @pleaseai/soop is installed — the optional platform package `
     + `should be installed automatically on supported platforms.\n`
     + `If you used --no-optional, re-run without that flag.`,

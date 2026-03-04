@@ -1,6 +1,13 @@
 import { HuggingFaceEmbedding } from '@pleaseai/soop-encoder/embedding'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+function cosineSimilarity(a: number[], b: number[]): number {
+  const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0)
+  const magnitudeA = Math.sqrt(a.reduce((sum, v) => sum + v * v, 0))
+  const magnitudeB = Math.sqrt(b.reduce((sum, v) => sum + v * v, 0))
+  return dotProduct / (magnitudeA * magnitudeB)
+}
+
 /**
  * Integration tests for HuggingFace embedding with MongoDB LEAF models
  *
@@ -77,13 +84,6 @@ describe('huggingFace Embedding Integration', () => {
   // 2. Semantic Similarity
   // ============================================================================
   describe('semantic similarity', () => {
-    function cosineSimilarity(a: number[], b: number[]): number {
-      const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0)
-      const magnitudeA = Math.sqrt(a.reduce((sum, v) => sum + v * v, 0))
-      const magnitudeB = Math.sqrt(b.reduce((sum, v) => sum + v * v, 0))
-      return dotProduct / (magnitudeA * magnitudeB)
-    }
-
     it('should produce similar embeddings for semantically similar texts', async () => {
       const [embed1, embed2, embed3] = await Promise.all([
         irEmbedding.embed('The quick brown fox jumps over the lazy dog'),
