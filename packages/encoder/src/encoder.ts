@@ -974,9 +974,11 @@ export class RPGEncoder {
           const tgtArea = nodeAreaMap.get(edge.target)
           const MAX_EXCERPT_LINE_LENGTH = 300
           const rawLine = lines[lineIdx]!.trim()
-          const excerptLine = rawLine.length > MAX_EXCERPT_LINE_LENGTH
+          const truncatedLine = rawLine.length > MAX_EXCERPT_LINE_LENGTH
             ? `${rawLine.slice(0, MAX_EXCERPT_LINE_LENGTH)} ...[truncated]`
             : rawLine
+          // Escape backticks to prevent prompt injection via malicious source content
+          const excerptLine = truncatedLine.replace(/`/g, '\\`')
           excerpts.push(
             `[${srcArea} → ${tgtArea}] ${sourceNode.metadata.path}:${edge.line}: ${excerptLine}`,
           )
