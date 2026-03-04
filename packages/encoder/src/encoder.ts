@@ -859,8 +859,7 @@ export class RPGEncoder {
       treesNames,
       treesInfo,
       summaryInvokes,
-      // TODO: populate crossCode with actual cross-boundary code excerpts (currently always empty)
-      '',
+      await this.getCrossBoundaryExcerpts(rpg, this.repoPath),
     )
 
     try {
@@ -877,6 +876,93 @@ export class RPGEncoder {
       const msg = error instanceof Error ? error.message : String(error)
       log.warn(`Cross-area data flow analysis failed: ${msg}`)
     }
+  }
+
+  /**
+   * Build code excerpts for cross-area dependency edges.
+   * For each dependency edge whose source and target belong to different domain areas,
+   * reads the import/call line from the source file.
+   */
+  private async getCrossBoundaryExcerpts(
+    rpg: RepositoryPlanningGraph,
+    repoPath: string,
+  ): Promise<string> {
+    const lowLevelNodes = await rpg.getLowLevelNodes()
+    const functionalEdges = await rpg.getFunctionalEdges()
+
+    // Build a map from node id → domain area by walking up functional edges
+    const parentMap = new Map<string, string>()
+    for (const fe of functionalEdges) {
+      parentMap.set(fe.target, fe.source)
+    }
+
+    function findDomainArea(nodeId: string): string | undefined {
+      let current = nodeId
+      const visited = new Set<string>()
+      while (current) {
+        if (visited.has(current))
+          break
+        visited.add(current)
+        if (current.startsWith('domain:') && !current.includes('/')) {
+          return current.replace('domain:', '')
+        }
+        const parent = parentMap.get(current)
+        if (!parent)
+          break
+        current = parent
+      }
+      return undefined
+    }
+
+    // Build node → area mapping for all low-level nodes
+    const nodeAreaMap = new Map<string, string>()
+    for (const node of lowLevelNodes) {
+      const area = findDomainArea(node.id)
+      if (area) {
+        nodeAreaMap.set(node.id, area)
+      }
+    }
+
+    // Get dependency edges and filter for cross-area
+    const depEdges = await rpg.getDependencyEdges()
+    const crossAreaEdges = depEdges.filter((e) => {
+      const srcArea = nodeAreaMap.get(e.source)
+      const tgtArea = nodeAreaMap.get(e.target)
+      return srcArea && tgtArea && srcArea !== tgtArea
+    })
+
+    if (crossAreaEdges.length === 0) {
+      return ''
+    }
+
+    // For each cross-area edge (up to 50), read the import/call line from source file
+    const excerpts: string[] = []
+    const nodeMap = new Map(lowLevelNodes.map(n => [n.id, n]))
+
+    for (const edge of crossAreaEdges.slice(0, 50)) {
+      const sourceNode = nodeMap.get(edge.source)
+      if (!sourceNode?.metadata?.path || edge.line == null)
+        continue
+
+      const filePath = path.join(repoPath, sourceNode.metadata.path)
+      try {
+        const content = await readFile(filePath, 'utf-8')
+        const lines = content.split('\n')
+        const lineIdx = edge.line - 1
+        if (lineIdx >= 0 && lineIdx < lines.length) {
+          const srcArea = nodeAreaMap.get(edge.source)
+          const tgtArea = nodeAreaMap.get(edge.target)
+          excerpts.push(
+            `[${srcArea} → ${tgtArea}] ${sourceNode.metadata.path}:${edge.line}: ${lines[lineIdx]!.trim()}`,
+          )
+        }
+      }
+      catch {
+        // File may not exist or be unreadable — skip
+      }
+    }
+
+    return excerpts.join('\n')
   }
 
   private parseDataFlowEdges(

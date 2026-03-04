@@ -544,6 +544,97 @@ describe('RPGEncoder.injectDataFlows', () => {
   })
 })
 
+describe('RPGEncoder.getCrossBoundaryExcerpts', () => {
+  it('produces excerpts for cross-area dependency edges', async () => {
+    // Create a temporary directory with two files in different areas
+    const tmpDir = path.join(os.tmpdir(), `rpg-cross-${Date.now()}`)
+    const srcA = path.join(tmpDir, 'a.ts')
+    const srcB = path.join(tmpDir, 'b.ts')
+    fs.mkdirSync(tmpDir, { recursive: true })
+    fs.writeFileSync(srcA, 'import { foo } from "./b"\nfoo()\n')
+    fs.writeFileSync(srcB, 'export function foo() {}\n')
+
+    try {
+      const { RepositoryPlanningGraph } = await import('@pleaseai/soop-graph')
+      const rpg = await RepositoryPlanningGraph.create({ name: 'cross-test' })
+
+      // Create two domain areas
+      await rpg.addHighLevelNode({ id: 'domain:areaA', feature: { description: 'Area A' } })
+      await rpg.addHighLevelNode({ id: 'domain:areaB', feature: { description: 'Area B' } })
+
+      // Create file nodes
+      await rpg.addLowLevelNode({
+        id: 'file-a',
+        feature: { description: 'file a' },
+        metadata: { entityType: 'file', path: 'a.ts' },
+      })
+      await rpg.addLowLevelNode({
+        id: 'file-b',
+        feature: { description: 'file b' },
+        metadata: { entityType: 'file', path: 'b.ts' },
+      })
+
+      // Link files to areas via functional edges
+      await rpg.addFunctionalEdge({ source: 'domain:areaA', target: 'file-a' })
+      await rpg.addFunctionalEdge({ source: 'domain:areaB', target: 'file-b' })
+
+      // Add a cross-area dependency edge with line number
+      await rpg.addDependencyEdge({
+        source: 'file-a',
+        target: 'file-b',
+        dependencyType: 'import',
+        line: 1,
+        symbol: 'foo',
+      })
+
+      // Access the private method via prototype trick
+      const encoder = new RPGEncoder(tmpDir, { include: ['**/*.ts'] })
+      const getCrossBoundaryExcerpts = (encoder as any).getCrossBoundaryExcerpts.bind(encoder)
+      const result: string = await getCrossBoundaryExcerpts(rpg, tmpDir)
+
+      expect(result).toContain('areaA')
+      expect(result).toContain('areaB')
+      expect(result).toContain('a.ts:1')
+      expect(result).toContain('import { foo } from "./b"')
+    }
+    finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true })
+    }
+  })
+
+  it('returns empty string when no cross-area edges exist', async () => {
+    const { RepositoryPlanningGraph } = await import('@pleaseai/soop-graph')
+    const rpg = await RepositoryPlanningGraph.create({ name: 'no-cross-test' })
+
+    // Single area with two files — no cross-area edges
+    await rpg.addHighLevelNode({ id: 'domain:area', feature: { description: 'Area' } })
+    await rpg.addLowLevelNode({
+      id: 'file-a',
+      feature: { description: 'file a' },
+      metadata: { entityType: 'file', path: 'a.ts' },
+    })
+    await rpg.addLowLevelNode({
+      id: 'file-b',
+      feature: { description: 'file b' },
+      metadata: { entityType: 'file', path: 'b.ts' },
+    })
+    await rpg.addFunctionalEdge({ source: 'domain:area', target: 'file-a' })
+    await rpg.addFunctionalEdge({ source: 'domain:area', target: 'file-b' })
+    await rpg.addDependencyEdge({
+      source: 'file-a',
+      target: 'file-b',
+      dependencyType: 'import',
+      line: 1,
+    })
+
+    const encoder = new RPGEncoder('/tmp/test', { include: ['**/*.ts'] })
+    const getCrossBoundaryExcerpts = (encoder as any).getCrossBoundaryExcerpts.bind(encoder)
+    const result: string = await getCrossBoundaryExcerpts(rpg, '/tmp/test')
+
+    expect(result).toBe('')
+  })
+})
+
 describe('RPGEncoder.injectDependencies', () => {
   let allSrcResult: Awaited<ReturnType<RPGEncoder['encode']>>
   let singleFileResult: Awaited<ReturnType<RPGEncoder['encode']>>

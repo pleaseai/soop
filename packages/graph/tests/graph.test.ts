@@ -141,6 +141,40 @@ describe('edge', () => {
     expect(edge.targetSymbol).toBe('ParentClass')
   })
 
+  it('symbol and targetSymbol survive serialize→deserialize round-trip', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'symbol-test' })
+
+    await rpg.addLowLevelNode({
+      id: 'file-a',
+      feature: { description: 'file a' },
+      metadata: { entityType: 'file', path: '/a.ts' },
+    })
+    await rpg.addLowLevelNode({
+      id: 'file-b',
+      feature: { description: 'file b' },
+      metadata: { entityType: 'file', path: '/b.ts' },
+    })
+
+    await rpg.addDependencyEdge({
+      source: 'file-a',
+      target: 'file-b',
+      dependencyType: 'call',
+      symbol: 'myFunction',
+      targetSymbol: 'renamedFunction',
+      line: 42,
+    })
+
+    const json = await rpg.toJSON()
+    const restored = await RepositoryPlanningGraph.fromJSON(json)
+
+    const depEdges = await restored.getDependencyEdges()
+    expect(depEdges).toHaveLength(1)
+    expect(depEdges[0]!.symbol).toBe('myFunction')
+    expect(depEdges[0]!.targetSymbol).toBe('renamedFunction')
+    expect(depEdges[0]!.line).toBe(42)
+    expect(depEdges[0]!.dependencyType).toBe('call')
+  })
+
   it('createDependencyEdge symbol and targetSymbol are optional', () => {
     const edge = createDependencyEdge({
       source: 'a',
