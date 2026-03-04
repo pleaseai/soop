@@ -19,11 +19,13 @@ export {
   EdgeSchema,
   EdgeType,
   FunctionalEdgeSchema,
+  isDataFlowEdge,
   isDependencyEdge,
   isFunctionalEdge,
+  LegacyDataFlowEdgeSchema,
 } from './edge'
 
-export type { BaseEdge, DataFlowEdge, DependencyEdge, Edge, FunctionalEdge } from './edge'
+export type { BaseEdge, DataFlowEdge, DependencyEdge, Edge, FunctionalEdge, LegacyDataFlowEdge } from './edge'
 
 // Node types and utilities
 export {

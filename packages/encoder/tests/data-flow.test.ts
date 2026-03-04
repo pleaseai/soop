@@ -44,18 +44,18 @@ describe('DataFlowDetector', () => {
       const flows = detector.detectInterModuleFlows([fileA, fileB])
 
       expect(flows).toHaveLength(2)
-      expect(flows).toContainEqual({
-        from: 'src/util.ts:file',
-        to: 'src/auth.ts:file',
+      expect(flows).toContainEqual(expect.objectContaining({
+        source: 'src/util.ts:file',
+        target: 'src/auth.ts:file',
         dataId: 'format',
         dataType: 'import',
-      })
-      expect(flows).toContainEqual({
-        from: 'src/util.ts:file',
-        to: 'src/auth.ts:file',
+      }))
+      expect(flows).toContainEqual(expect.objectContaining({
+        source: 'src/util.ts:file',
+        target: 'src/auth.ts:file',
         dataId: 'validate',
         dataType: 'import',
-      })
+      }))
     })
 
     it('handles multiple imports from same module', () => {
@@ -419,12 +419,12 @@ function calculate(x: number): number {
 
       // All flows should have required fields
       flows.forEach((flow: DataFlowEdge) => {
-        expect(flow.from).toBeDefined()
-        expect(flow.to).toBeDefined()
+        expect(flow.source).toBeDefined()
+        expect(flow.target).toBeDefined()
         expect(flow.dataId).toBeDefined()
         expect(flow.dataType).toBeDefined()
-        expect(typeof flow.from).toBe('string')
-        expect(typeof flow.to).toBe('string')
+        expect(typeof flow.source).toBe('string')
+        expect(typeof flow.target).toBe('string')
         expect(typeof flow.dataId).toBe('string')
         expect(typeof flow.dataType).toBe('string')
       })

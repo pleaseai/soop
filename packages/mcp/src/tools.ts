@@ -57,9 +57,10 @@ export type FetchInput = z.infer<typeof FetchInputSchema>
  */
 export const ExploreInputSchema = z.object({
   startNode: z.string(),
-  edgeType: z.enum(['containment', 'dependency', 'all']).default('all'),
+  edgeType: z.enum(['containment', 'dependency', 'data_flow', 'all']).default('all'),
   maxDepth: z.number().default(3),
   direction: z.enum(['downstream', 'upstream', 'both']).default('downstream'),
+  dependencyType: z.enum(['import', 'call', 'inherit', 'implement', 'use']).optional().describe('Filter dependency edges by their dependency type'),
 })
 
 export type ExploreInput = z.infer<typeof ExploreInputSchema>
@@ -219,6 +220,7 @@ export async function executeExplore(rpg: RepositoryPlanningGraph | null, input:
     edgeType: input.edgeType as ExploreEdgeType,
     maxDepth: input.maxDepth,
     direction: input.direction,
+    dependencyType: input.dependencyType,
   })
 
   return {

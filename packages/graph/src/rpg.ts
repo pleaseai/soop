@@ -10,17 +10,16 @@ import {
   createDependencyEdge,
   createFunctionalEdge,
   DataFlowEdgeSchema,
-
+  isDataFlowEdge,
   isDependencyEdge,
   isFunctionalEdge,
+  LegacyDataFlowEdgeSchema,
 } from './edge'
 import {
   createHighLevelNode,
   createLowLevelNode,
-
   isHighLevelNode,
   isLowLevelNode,
-
 } from './node'
 
 const log = createLogger('RPG')
@@ -91,14 +90,13 @@ export type SerializedRPG = z.infer<typeof SerializedRPGSchema>
  *
  * A hierarchical, dual-view graph G = (V, E) that combines:
  * - Nodes: High-level (architectural) and Low-level (implementation)
- * - Edges: Functional (hierarchy) and Dependency (imports/calls)
+ * - Edges: Functional (hierarchy), Dependency (imports/calls), and DataFlow (inter-module communication)
  *
  * Delegates storage to a ContextStore (graph + text + vector).
  */
 export class RepositoryPlanningGraph {
   private readonly context: ContextStore
   private readonly config: RPGConfig
-  private readonly dataFlowEdges: DataFlowEdge[] = []
 
   constructor(config: RPGConfig, context: ContextStore) {
     this.config = config
@@ -308,25 +306,26 @@ export class RepositoryPlanningGraph {
   // ==================== Data Flow Edge Operations ====================
 
   async addDataFlowEdge(params: {
-    from: string
-    to: string
+    source: string
+    target: string
     dataId: string
     dataType: string
     transformation?: string
   }): Promise<DataFlowEdge> {
-    if (!(await this.hasNode(params.from))) {
-      throw new Error(`Source node "${params.from}" not found`)
+    if (!(await this.hasNode(params.source))) {
+      throw new Error(`Source node "${params.source}" not found`)
     }
-    if (params.from !== params.to && !(await this.hasNode(params.to))) {
-      throw new Error(`Target node "${params.to}" not found`)
+    if (params.source !== params.target && !(await this.hasNode(params.target))) {
+      throw new Error(`Target node "${params.target}" not found`)
     }
     const edge = createDataFlowEdge(params)
-    this.dataFlowEdges.push(edge)
+    await this.addEdge(edge)
     return edge
   }
 
   async getDataFlowEdges(): Promise<DataFlowEdge[]> {
-    return [...this.dataFlowEdges]
+    const results = await this.context.graph.getEdges({ type: 'data_flow' })
+    return results.map(r => attrsToEdge(r.source, r.target, r.attrs)).filter(isDataFlowEdge)
   }
 
   // ==================== Graph Operations ====================
@@ -451,20 +450,25 @@ export class RepositoryPlanningGraph {
 
   async serialize(): Promise<SerializedRPG> {
     const nodes = await this.getNodes()
-    const edges = await this.getEdges()
+    const allEdges = await this.getEdges()
+
+    // Separate data flow edges from other edges for backward compat serialization
+    const regularEdges = allEdges.filter(e => e.type !== 'data_flow')
+    const dataFlowEdges = allEdges.filter(isDataFlowEdge)
+
     const result: SerializedRPG = {
       version: '1.0.0',
       config: this.config,
       nodes: [...nodes].sort((a, b) => a.id.localeCompare(b.id)),
-      edges: [...edges].sort(
+      edges: [...regularEdges].sort(
         (a, b) => a.source.localeCompare(b.source) || a.target.localeCompare(b.target),
       ),
     }
-    if (this.dataFlowEdges.length > 0) {
-      result.dataFlowEdges = [...this.dataFlowEdges].sort(
+    if (dataFlowEdges.length > 0) {
+      result.dataFlowEdges = [...dataFlowEdges].sort(
         (a, b) =>
-          a.from.localeCompare(b.from)
-          || a.to.localeCompare(b.to)
+          a.source.localeCompare(b.source)
+          || a.target.localeCompare(b.target)
           || a.dataId.localeCompare(b.dataId),
       )
     }
@@ -493,15 +497,30 @@ export class RepositoryPlanningGraph {
       await rpg.addEdge(edge)
     }
 
-    // Import data flow edges with individual validation
+    // Import data flow edges with individual validation (supports both legacy from/to and new source/target)
     if (parsed.dataFlowEdges) {
       for (const dfEdge of parsed.dataFlowEdges) {
-        const result = DataFlowEdgeSchema.safeParse(dfEdge)
-        if (result.success) {
-          rpg.dataFlowEdges.push(result.data)
+        // Try new format first (source/target with type)
+        const newResult = DataFlowEdgeSchema.safeParse(dfEdge)
+        if (newResult.success) {
+          await rpg.addEdge(newResult.data)
+          continue
+        }
+        // Try legacy format (from/to without type)
+        const legacyResult = LegacyDataFlowEdgeSchema.safeParse(dfEdge)
+        if (legacyResult.success) {
+          const legacy = legacyResult.data
+          const edge = createDataFlowEdge({
+            source: legacy.from,
+            target: legacy.to,
+            dataId: legacy.dataId,
+            dataType: legacy.dataType,
+            transformation: legacy.transformation,
+          })
+          await rpg.addEdge(edge)
         }
         else {
-          log.warn(`Skipping invalid dataFlowEdge during deserialization: ${result.error.message}`)
+          log.warn(`Skipping invalid dataFlowEdge during deserialization: ${legacyResult.error.message}`)
         }
       }
     }
@@ -533,11 +552,14 @@ export class RepositoryPlanningGraph {
 
     let functionalCount = 0
     let dependencyCount = 0
+    let dataFlowCount = 0
     for (const { attrs } of allEdges) {
       if (attrs.type === 'functional')
         functionalCount++
       else if (attrs.type === 'dependency')
         dependencyCount++
+      else if (attrs.type === 'data_flow')
+        dataFlowCount++
     }
 
     return {
@@ -547,7 +569,7 @@ export class RepositoryPlanningGraph {
       lowLevelNodeCount: lowLevelCount,
       functionalEdgeCount: functionalCount,
       dependencyEdgeCount: dependencyCount,
-      ...(this.dataFlowEdges.length > 0 && { dataFlowEdgeCount: this.dataFlowEdges.length }),
+      ...(dataFlowCount > 0 && { dataFlowEdgeCount: dataFlowCount }),
     }
   }
 
