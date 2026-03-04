@@ -9,7 +9,7 @@ import type { FileFeatureGroup } from './reorganization'
 import type { EntityInput, SemanticFeature, SemanticOptions } from './semantic'
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { readdir, readFile, realpath, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
 import { ASTParser } from '@pleaseai/soop-utils/ast'
@@ -937,25 +937,45 @@ export class RPGEncoder {
       return ''
     }
 
-    // For each cross-area edge (up to 50), read the import/call line from source file
+    // For each cross-area edge (up to MAX_CROSS_BOUNDARY_EXCERPTS), read the import/call line from source file
+    const MAX_CROSS_BOUNDARY_EXCERPTS = 50 // cap to stay within LLM prompt budget
     const excerpts: string[] = []
     const nodeMap = new Map(lowLevelNodes.map(n => [n.id, n]))
+    // Resolve repoPath once outside the loop (handles symlinks in repoPath itself)
+    const resolvedRepo = await realpath(repoPath)
 
-    for (const edge of crossAreaEdges.slice(0, 50)) {
+    for (const edge of crossAreaEdges.slice(0, MAX_CROSS_BOUNDARY_EXCERPTS)) {
       const sourceNode = nodeMap.get(edge.source)
       if (!sourceNode?.metadata?.path || edge.line == null)
         continue
 
       const filePath = path.join(repoPath, sourceNode.metadata.path)
       try {
-        const content = await readFile(filePath, 'utf-8')
+        // Synchronous pre-check: catch '..' traversal and absolute paths without I/O
+        const preResolved = path.resolve(repoPath, sourceNode.metadata.path)
+        if (!preResolved.startsWith(resolvedRepo + path.sep) && preResolved !== resolvedRepo) {
+          log.warn(`getCrossBoundaryExcerpts: skipping out-of-bounds path: ${sourceNode.metadata.path}`)
+          continue
+        }
+        // Resolve symlinks for the actual read; throws ENOENT if file missing (caught below)
+        const resolvedFile = await realpath(filePath)
+        if (!resolvedFile.startsWith(resolvedRepo + path.sep) && resolvedFile !== resolvedRepo) {
+          log.warn(`getCrossBoundaryExcerpts: skipping symlink out-of-bounds: ${sourceNode.metadata.path}`)
+          continue
+        }
+        const content = await readFile(resolvedFile, 'utf-8')
         const lines = content.split('\n')
         const lineIdx = edge.line - 1
         if (lineIdx >= 0 && lineIdx < lines.length) {
           const srcArea = nodeAreaMap.get(edge.source)
           const tgtArea = nodeAreaMap.get(edge.target)
+          const MAX_EXCERPT_LINE_LENGTH = 300
+          const rawLine = lines[lineIdx]!.trim()
+          const excerptLine = rawLine.length > MAX_EXCERPT_LINE_LENGTH
+            ? rawLine.slice(0, MAX_EXCERPT_LINE_LENGTH) + ' ...[truncated]'
+            : rawLine
           excerpts.push(
-            `[${srcArea} → ${tgtArea}] ${sourceNode.metadata.path}:${edge.line}: ${lines[lineIdx]!.trim()}`,
+            `[${srcArea} → ${tgtArea}] ${sourceNode.metadata.path}:${edge.line}: ${excerptLine}`,
           )
         }
       }

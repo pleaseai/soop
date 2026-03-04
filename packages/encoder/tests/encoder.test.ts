@@ -596,6 +596,7 @@ describe('RPGEncoder.getCrossBoundaryExcerpts', () => {
       expect(result).toContain('areaB')
       expect(result).toContain('a.ts:1')
       expect(result).toContain('import { foo } from "./b"')
+      expect(result).toMatch(/\[areaA → areaB\] a\.ts:1: .+/)
     }
     finally {
       fs.rmSync(tmpDir, { recursive: true, force: true })
@@ -627,11 +628,49 @@ describe('RPGEncoder.getCrossBoundaryExcerpts', () => {
       line: 1,
     })
 
-    const testRoot = path.join(os.tmpdir(), 'rpg-test')
+    const testRoot = path.join(os.tmpdir(), `rpg-no-cross-${Date.now()}`)
     const encoder = new RPGEncoder(testRoot, { include: ['**/*.ts'] })
     const getCrossBoundaryExcerpts = (encoder as any).getCrossBoundaryExcerpts.bind(encoder)
     const result: string = await getCrossBoundaryExcerpts(rpg, testRoot)
 
+    expect(result).toBe('')
+  })
+
+  it('returns empty string without throwing when source file does not exist', async () => {
+    const { RepositoryPlanningGraph } = await import('@pleaseai/soop-graph')
+    const rpg = await RepositoryPlanningGraph.create({ name: 'missing-file-test' })
+
+    // Two different areas
+    await rpg.addHighLevelNode({ id: 'domain:areaA', feature: { description: 'Area A' } })
+    await rpg.addHighLevelNode({ id: 'domain:areaB', feature: { description: 'Area B' } })
+
+    // File nodes with a path that does not exist on disk
+    await rpg.addLowLevelNode({
+      id: 'file-a',
+      feature: { description: 'file a' },
+      metadata: { entityType: 'file', path: 'nonexistent/missing.ts' },
+    })
+    await rpg.addLowLevelNode({
+      id: 'file-b',
+      feature: { description: 'file b' },
+      metadata: { entityType: 'file', path: 'nonexistent/other.ts' },
+    })
+
+    await rpg.addFunctionalEdge({ source: 'domain:areaA', target: 'file-a' })
+    await rpg.addFunctionalEdge({ source: 'domain:areaB', target: 'file-b' })
+    await rpg.addDependencyEdge({
+      source: 'file-a',
+      target: 'file-b',
+      dependencyType: 'import',
+      line: 1,
+    })
+
+    const testRoot = path.join(os.tmpdir(), `rpg-missing-${Date.now()}`)
+    const encoder = new RPGEncoder(testRoot, { include: ['**/*.ts'] })
+    const getCrossBoundaryExcerpts = (encoder as any).getCrossBoundaryExcerpts.bind(encoder)
+
+    // Should not throw even though files do not exist on disk
+    const result: string = await getCrossBoundaryExcerpts(rpg, testRoot)
     expect(result).toBe('')
   })
 })

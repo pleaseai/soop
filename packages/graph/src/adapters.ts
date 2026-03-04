@@ -11,7 +11,6 @@ import type {
   Node,
 } from './index'
 import type { StructuralMetadata } from './node'
-
 // ==================== Node Adapters ====================
 
 /** Convert a domain Node to generic NodeAttrs for storage */
@@ -127,7 +126,7 @@ export function edgeToAttrs(edge: Edge): EdgeAttrs {
   }
   else if (edge.type === 'dependency') {
     const de = edge as DependencyEdge
-    if (de.dependencyType)
+    if (de.dependencyType != null)
       attrs.dep_type = de.dependencyType
     if (de.isRuntime != null)
       attrs.is_runtime = de.isRuntime
@@ -152,6 +151,10 @@ export function attrsToEdge(source: string, target: string, attrs: EdgeAttrs): E
       siblingOrder: (attrs.sibling_order as number) ?? undefined,
       weight: (attrs.weight as number) ?? undefined,
     }
+  }
+
+  if (attrs.type !== 'dependency') {
+    throw new Error(`attrsToEdge: unexpected edge type "${attrs.type}" for "${source}→${target}"`)
   }
 
   return {

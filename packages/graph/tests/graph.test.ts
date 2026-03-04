@@ -1,9 +1,11 @@
 import {
+  attrsToEdge,
   createDataFlowEdge,
   createDependencyEdge,
   createFunctionalEdge,
   createHighLevelNode,
   createLowLevelNode,
+  edgeToAttrs,
   EdgeType,
   isDataFlowEdge,
   isDependencyEdge,
@@ -484,5 +486,101 @@ describe('DataFlowEdge', () => {
     expect(serialized.edges.every(e => (e as { type: string }).type !== 'data_flow')).toBe(true)
     // Data flow edges in separate array
     expect(serialized.dataFlowEdges).toHaveLength(1)
+  })
+})
+
+describe('edgeToAttrs / attrsToEdge', () => {
+  it('edgeToAttrs preserves symbol and targetSymbol for dependency edges', () => {
+    const edge = createDependencyEdge({
+      source: 'a',
+      target: 'b',
+      dependencyType: 'call',
+      symbol: 'myFunction',
+      targetSymbol: 'renamedFn',
+      line: 10,
+    })
+
+    const attrs = edgeToAttrs(edge)
+
+    expect(attrs.dep_symbol).toBe('myFunction')
+    expect(attrs.dep_target_symbol).toBe('renamedFn')
+    expect(attrs.dep_line).toBe(10)
+    expect(attrs.dep_type).toBe('call')
+    expect(attrs.type).toBe('dependency')
+  })
+
+  it('edgeToAttrs omits symbol fields when not set', () => {
+    const edge = createDependencyEdge({
+      source: 'a',
+      target: 'b',
+      dependencyType: 'import',
+    })
+
+    const attrs = edgeToAttrs(edge)
+
+    expect(attrs.dep_symbol).toBeUndefined()
+    expect(attrs.dep_target_symbol).toBeUndefined()
+  })
+
+  it('attrsToEdge reconstructs symbol and targetSymbol correctly', () => {
+    const attrs = {
+      type: 'dependency',
+      dep_type: 'call',
+      dep_symbol: 'myFunction',
+      dep_target_symbol: 'renamedFn',
+      dep_line: 10,
+    }
+
+    const edge = attrsToEdge('a', 'b', attrs)
+
+    expect(edge.type).toBe('dependency')
+    expect(edge.source).toBe('a')
+    expect(edge.target).toBe('b')
+    if (edge.type === 'dependency') {
+      expect(edge.symbol).toBe('myFunction')
+      expect(edge.targetSymbol).toBe('renamedFn')
+      expect(edge.line).toBe(10)
+      expect(edge.dependencyType).toBe('call')
+    }
+  })
+
+  it('attrsToEdge round-trips dependency edge with symbol fields', () => {
+    const original = createDependencyEdge({
+      source: 'module-x',
+      target: 'module-y',
+      dependencyType: 'inherit',
+      symbol: 'ChildClass',
+      targetSymbol: 'BaseClass',
+      line: 42,
+    })
+
+    const attrs = edgeToAttrs(original)
+    const restored = attrsToEdge('module-x', 'module-y', attrs)
+
+    expect(restored.type).toBe('dependency')
+    if (restored.type === 'dependency') {
+      expect(restored.symbol).toBe('ChildClass')
+      expect(restored.targetSymbol).toBe('BaseClass')
+      expect(restored.line).toBe(42)
+      expect(restored.dependencyType).toBe('inherit')
+    }
+  })
+
+  it('attrsToEdge round-trips functional edge', () => {
+    const original = createFunctionalEdge({
+      source: 'parent',
+      target: 'child',
+      level: 2,
+      siblingOrder: 3,
+    })
+
+    const attrs = edgeToAttrs(original)
+    const restored = attrsToEdge('parent', 'child', attrs)
+
+    expect(restored.type).toBe('functional')
+    if (restored.type === 'functional') {
+      expect(restored.level).toBe(2)
+      expect(restored.siblingOrder).toBe(3)
+    }
   })
 })
