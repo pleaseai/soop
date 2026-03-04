@@ -3,7 +3,6 @@
  */
 import type { EdgeAttrs, NodeAttrs } from '@pleaseai/soop-store/types'
 import type {
-  DataFlowEdge,
   DependencyEdge,
   Edge,
   FunctionalEdge,
@@ -12,7 +11,6 @@ import type {
   Node,
 } from './index'
 import type { StructuralMetadata } from './node'
-
 // ==================== Node Adapters ====================
 
 /** Convert a domain Node to generic NodeAttrs for storage */
@@ -126,23 +124,19 @@ export function edgeToAttrs(edge: Edge): EdgeAttrs {
     if (fe.siblingOrder != null)
       attrs.sibling_order = fe.siblingOrder
   }
-  else if (edge.type === 'data_flow') {
-    const df = edge as DataFlowEdge
-    attrs.df_dataId = df.dataId
-    attrs.df_dataType = df.dataType
-    if (df.transformation != null)
-      attrs.df_transformation = df.transformation
-  }
-  else {
+  else if (edge.type === 'dependency') {
     const de = edge as DependencyEdge
-    if (de.dependencyType)
+    if (de.dependencyType != null)
       attrs.dep_type = de.dependencyType
     if (de.isRuntime != null)
       attrs.is_runtime = de.isRuntime
     if (de.line != null)
       attrs.dep_line = de.line
+    if (de.symbol != null)
+      attrs.dep_symbol = de.symbol
+    if (de.targetSymbol != null)
+      attrs.dep_target_symbol = de.targetSymbol
   }
-
   return attrs
 }
 
@@ -159,21 +153,8 @@ export function attrsToEdge(source: string, target: string, attrs: EdgeAttrs): E
     }
   }
 
-  if (attrs.type === 'data_flow') {
-    if (attrs.df_dataId == null || attrs.df_dataType == null) {
-      console.warn(`attrsToEdge: data_flow edge "${source}→${target}" missing df_dataId or df_dataType in store — possible data corruption`)
-    }
-    const dataId = attrs.df_dataId != null ? String(attrs.df_dataId) : ''
-    const dataType = attrs.df_dataType != null ? String(attrs.df_dataType) : ''
-    return {
-      source,
-      target,
-      type: 'data_flow' as const,
-      dataId,
-      dataType,
-      transformation: (attrs.df_transformation as string) ?? undefined,
-      weight: (attrs.weight as number) ?? undefined,
-    }
+  if (attrs.type !== 'dependency') {
+    throw new Error(`attrsToEdge: unexpected edge type "${attrs.type}" for "${source}→${target}"`)
   }
 
   return {
@@ -188,6 +169,8 @@ export function attrsToEdge(source: string, target: string, attrs: EdgeAttrs): E
     | 'use',
     isRuntime: (attrs.is_runtime as boolean) ?? undefined,
     line: (attrs.dep_line as number) ?? undefined,
+    symbol: (attrs.dep_symbol as string) ?? undefined,
+    targetSymbol: (attrs.dep_target_symbol as string) ?? undefined,
     weight: (attrs.weight as number) ?? undefined,
   }
 }

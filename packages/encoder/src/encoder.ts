@@ -9,7 +9,7 @@ import type { FileFeatureGroup } from './reorganization'
 import type { EntityInput, SemanticFeature, SemanticOptions } from './semantic'
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { readdir, readFile, realpath, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
 import { ASTParser } from '@pleaseai/soop-utils/ast'
@@ -859,8 +859,7 @@ export class RPGEncoder {
       treesNames,
       treesInfo,
       summaryInvokes,
-      // TODO: populate crossCode with actual cross-boundary code excerpts (currently always empty)
-      '',
+      await this.getCrossBoundaryExcerpts(rpg, this.repoPath),
     )
 
     try {
@@ -877,6 +876,121 @@ export class RPGEncoder {
       const msg = error instanceof Error ? error.message : String(error)
       log.warn(`Cross-area data flow analysis failed: ${msg}`)
     }
+  }
+
+  /**
+   * Build code excerpts for cross-area dependency edges.
+   * For each dependency edge whose source and target belong to different domain areas,
+   * reads the import/call line from the source file.
+   */
+  private async getCrossBoundaryExcerpts(
+    rpg: RepositoryPlanningGraph,
+    repoPath: string,
+  ): Promise<string> {
+    const lowLevelNodes = await rpg.getLowLevelNodes()
+    const functionalEdges = await rpg.getFunctionalEdges()
+
+    // Build a map from node id → domain area by walking up functional edges
+    const parentMap = new Map<string, string>()
+    for (const fe of functionalEdges) {
+      parentMap.set(fe.target, fe.source)
+    }
+
+    const areaCache = new Map<string, string | undefined>()
+    function findDomainArea(nodeId: string, visited = new Set<string>()): string | undefined {
+      if (areaCache.has(nodeId))
+        return areaCache.get(nodeId)
+      if (visited.has(nodeId))
+        return undefined
+      visited.add(nodeId)
+      let area: string | undefined
+      if (nodeId.startsWith('domain:') && !nodeId.includes('/')) {
+        area = nodeId.replace('domain:', '')
+      }
+      else {
+        const parent = parentMap.get(nodeId)
+        if (parent)
+          area = findDomainArea(parent, visited)
+      }
+      areaCache.set(nodeId, area)
+      return area
+    }
+
+    // Build node → area mapping for all low-level nodes
+    const nodeAreaMap = new Map<string, string>()
+    for (const node of lowLevelNodes) {
+      const area = findDomainArea(node.id)
+      if (area) {
+        nodeAreaMap.set(node.id, area)
+      }
+    }
+
+    // Get dependency edges and filter for cross-area
+    const depEdges = await rpg.getDependencyEdges()
+    const crossAreaEdges = depEdges.filter((e) => {
+      const srcArea = nodeAreaMap.get(e.source)
+      const tgtArea = nodeAreaMap.get(e.target)
+      return srcArea && tgtArea && srcArea !== tgtArea
+    })
+
+    if (crossAreaEdges.length === 0) {
+      return ''
+    }
+
+    // For each cross-area edge (up to MAX_CROSS_BOUNDARY_EXCERPTS), read the import/call line from source file
+    const MAX_CROSS_BOUNDARY_EXCERPTS = 50 // cap to stay within LLM prompt budget
+    const excerpts: string[] = []
+    const nodeMap = new Map(lowLevelNodes.map(n => [n.id, n]))
+    // Resolve repoPath once outside the loop (handles symlinks in repoPath itself)
+    const resolvedRepo = await realpath(repoPath)
+
+    for (const edge of crossAreaEdges.slice(0, MAX_CROSS_BOUNDARY_EXCERPTS)) {
+      const sourceNode = nodeMap.get(edge.source)
+      if (!sourceNode?.metadata?.path || edge.line == null)
+        continue
+
+      const filePath = path.join(repoPath, sourceNode.metadata.path)
+      try {
+        // Synchronous pre-check: catch '..' traversal and absolute paths without I/O.
+        // Compare against path.resolve(repoPath) (not realpath) so the check works
+        // correctly when repoPath itself is a symlink.
+        const preResolved = path.resolve(repoPath, sourceNode.metadata.path)
+        const repoBase = path.resolve(repoPath)
+        if (!preResolved.startsWith(repoBase + path.sep) && preResolved !== repoBase) {
+          log.warn(`getCrossBoundaryExcerpts: skipping out-of-bounds path: ${sourceNode.metadata.path}`)
+          continue
+        }
+        // Resolve symlinks for the actual read; throws ENOENT if file missing (caught below)
+        const resolvedFile = await realpath(filePath)
+        if (!resolvedFile.startsWith(resolvedRepo + path.sep) && resolvedFile !== resolvedRepo) {
+          log.warn(`getCrossBoundaryExcerpts: skipping symlink out-of-bounds: ${sourceNode.metadata.path}`)
+          continue
+        }
+        const content = await readFile(resolvedFile, 'utf-8')
+        const lines = content.split('\n')
+        const lineIdx = edge.line - 1
+        if (lineIdx >= 0 && lineIdx < lines.length) {
+          const srcArea = nodeAreaMap.get(edge.source)
+          const tgtArea = nodeAreaMap.get(edge.target)
+          const MAX_EXCERPT_LINE_LENGTH = 300
+          const rawLine = lines[lineIdx]!.trim()
+          const truncatedLine = rawLine.length > MAX_EXCERPT_LINE_LENGTH
+            ? `${rawLine.slice(0, MAX_EXCERPT_LINE_LENGTH)} ...[truncated]`
+            : rawLine
+          // Escape backticks to prevent prompt injection via malicious source content
+          const excerptLine = truncatedLine.replace(/`/g, '\\`')
+          excerpts.push(
+            `[${srcArea} → ${tgtArea}] ${sourceNode.metadata.path}:${edge.line}: ${excerptLine}`,
+          )
+        }
+      }
+      catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        log.warn(`Cross-boundary excerpt read failed for ${sourceNode.metadata.path}:${edge.line}: ${msg}`)
+      }
+    }
+
+    return excerpts.join('\n')
   }
 
   private parseDataFlowEdges(
