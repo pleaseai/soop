@@ -1,0 +1,9 @@
+#!/bin/sh
+# soop auto-sync hook — installed by "soop init --hooks"
+# Runs soop sync after git operations. Failures do not block git.
+
+if command -v soop >/dev/null 2>&1; then
+  soop sync || echo "soop sync failed (exit $?), run 'soop sync' manually to debug" >&2
+elif command -v bunx >/dev/null 2>&1; then
+  bunx soop sync || echo "soop sync failed (exit $?), run 'soop sync' manually to debug" >&2
+fi
