@@ -2,7 +2,10 @@ import { HuggingFaceEmbedding } from '@pleaseai/soop-encoder/embedding'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 function cosineSimilarity(a: number[], b: number[]): number {
-  const dotProduct = a.reduce((sum, val, i) => sum + val * b[i], 0)
+  if (a.length !== b.length) {
+    throw new Error(`Vector length mismatch: ${a.length} vs ${b.length}`)
+  }
+  const dotProduct = a.reduce((sum, val, i) => sum + val * b[i]!, 0)
   const magnitudeA = Math.sqrt(a.reduce((sum, v) => sum + v * v, 0))
   const magnitudeB = Math.sqrt(b.reduce((sum, v) => sum + v * v, 0))
   return dotProduct / (magnitudeA * magnitudeB)

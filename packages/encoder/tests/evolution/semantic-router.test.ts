@@ -23,8 +23,8 @@ describe('cosineSimilarity', () => {
     expect(cosineSimilarity([], [])).toBe(0)
   })
 
-  it('returns 0 for mismatched lengths', () => {
-    expect(cosineSimilarity([1, 2], [1, 2, 3])).toBe(0)
+  it('throws for mismatched lengths', () => {
+    expect(() => cosineSimilarity([1, 2], [1, 2, 3])).toThrow('Vector dimension mismatch: 2 vs 3')
   })
 
   it('returns 0 for zero vectors', () => {

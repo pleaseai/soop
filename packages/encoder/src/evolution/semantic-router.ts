@@ -286,7 +286,10 @@ export class SemanticRouter {
  * Compute cosine similarity between two vectors
  */
 export function cosineSimilarity(a: number[], b: number[]): number {
-  if (a.length !== b.length || a.length === 0) {
+  if (a.length !== b.length) {
+    throw new Error(`Vector dimension mismatch: ${a.length} vs ${b.length}`)
+  }
+  if (a.length === 0) {
     return 0
   }
 
