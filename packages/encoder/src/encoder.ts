@@ -896,22 +896,24 @@ export class RPGEncoder {
       parentMap.set(fe.target, fe.source)
     }
 
-    function findDomainArea(nodeId: string): string | undefined {
-      let current = nodeId
-      const visited = new Set<string>()
-      while (current) {
-        if (visited.has(current))
-          break
-        visited.add(current)
-        if (current.startsWith('domain:') && !current.includes('/')) {
-          return current.replace('domain:', '')
-        }
-        const parent = parentMap.get(current)
-        if (!parent)
-          break
-        current = parent
+    const areaCache = new Map<string, string | undefined>()
+    function findDomainArea(nodeId: string, visited = new Set<string>()): string | undefined {
+      if (areaCache.has(nodeId))
+        return areaCache.get(nodeId)
+      if (visited.has(nodeId))
+        return undefined
+      visited.add(nodeId)
+      let area: string | undefined
+      if (nodeId.startsWith('domain:') && !nodeId.includes('/')) {
+        area = nodeId.replace('domain:', '')
       }
-      return undefined
+      else {
+        const parent = parentMap.get(nodeId)
+        if (parent)
+          area = findDomainArea(parent, visited)
+      }
+      areaCache.set(nodeId, area)
+      return area
     }
 
     // Build node → area mapping for all low-level nodes
@@ -957,8 +959,9 @@ export class RPGEncoder {
           )
         }
       }
-      catch {
-        // File may not exist or be unreadable — skip
+      catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        log.warn(`Cross-boundary excerpt read failed for ${sourceNode.metadata.path}:${edge.line}: ${msg}`)
       }
     }
 

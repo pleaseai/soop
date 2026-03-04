@@ -627,9 +627,10 @@ describe('RPGEncoder.getCrossBoundaryExcerpts', () => {
       line: 1,
     })
 
-    const encoder = new RPGEncoder('/tmp/test', { include: ['**/*.ts'] })
+    const testRoot = path.join(os.tmpdir(), 'rpg-test')
+    const encoder = new RPGEncoder(testRoot, { include: ['**/*.ts'] })
     const getCrossBoundaryExcerpts = (encoder as any).getCrossBoundaryExcerpts.bind(encoder)
-    const result: string = await getCrossBoundaryExcerpts(rpg, '/tmp/test')
+    const result: string = await getCrossBoundaryExcerpts(rpg, testRoot)
 
     expect(result).toBe('')
   })

@@ -133,9 +133,9 @@ export function edgeToAttrs(edge: Edge): EdgeAttrs {
       attrs.is_runtime = de.isRuntime
     if (de.line != null)
       attrs.dep_line = de.line
-    if (de.symbol)
+    if (de.symbol != null)
       attrs.dep_symbol = de.symbol
-    if (de.targetSymbol)
+    if (de.targetSymbol != null)
       attrs.dep_target_symbol = de.targetSymbol
   }
   return attrs
