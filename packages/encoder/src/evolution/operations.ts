@@ -103,7 +103,7 @@ export async function insertNode(
   rpg: RepositoryPlanningGraph,
   entity: ChangedEntity,
   ctx: OperationContext,
-): Promise<void> {
+): Promise<{ newAreaCreated: boolean }> {
   // 1. Extract semantic feature
   const feature = await ctx.semanticExtractor.extract({
     type: entity.entityType,
@@ -116,7 +116,14 @@ export async function insertNode(
   })
 
   // 2. Find best parent via semantic routing
-  const parentId = await ctx.semanticRouter.findBestParent(feature.description)
+  let parentId = await ctx.semanticRouter.findBestParent(feature.description)
+
+  // 2b. If no suitable parent found, create a new area
+  let newAreaCreated = false
+  if (!parentId) {
+    parentId = await ctx.semanticRouter.createNewArea(feature.description)
+    newAreaCreated = true
+  }
 
   // 3. Create LowLevelNode
   await rpg.addLowLevelNode({
@@ -136,6 +143,8 @@ export async function insertNode(
   if (parentId) {
     await rpg.addFunctionalEdge({ source: parentId, target: entity.id })
   }
+
+  return { newAreaCreated }
 
   // 5. Inject dependency edges (file-level only)
   if (entity.entityType === 'file' && ctx.astParser) {

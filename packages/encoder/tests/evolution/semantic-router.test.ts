@@ -206,6 +206,96 @@ describe('semanticRouter', () => {
     expect(router.getLLMCalls()).toBe(0)
   })
 
+  it('returns null when LLM confidence is below threshold', async () => {
+    const mockLLM: LLMClient = {
+      completeJSON: vi.fn(async () => ({
+        selectedId: 'dir:src/auth',
+        confidence: 0.1, // below default threshold of 0.3
+      })),
+      complete: vi.fn(),
+    }
+
+    const router = new SemanticRouter(rpg, { llmClient: mockLLM })
+    const result = await router.findBestParent('completely unrelated feature')
+    expect(result).toBeNull()
+  })
+
+  it('accepts LLM routing when confidence is above threshold', async () => {
+    const mockLLM: LLMClient = {
+      completeJSON: vi.fn(async () => ({
+        selectedId: 'dir:src/auth',
+        confidence: 0.5, // above default threshold of 0.3
+      })),
+      complete: vi.fn(),
+    }
+
+    const router = new SemanticRouter(rpg, { llmClient: mockLLM })
+    const result = await router.findBestParent('user authentication')
+    expect(result).toBe('dir:src/auth')
+  })
+
+  it('uses custom confidence threshold', async () => {
+    const mockLLM: LLMClient = {
+      completeJSON: vi.fn(async () => ({
+        selectedId: 'dir:src/auth',
+        confidence: 0.6, // above 0.3 but below custom 0.8
+      })),
+      complete: vi.fn(),
+    }
+
+    const router = new SemanticRouter(rpg, { llmClient: mockLLM, confidenceThreshold: 0.8 })
+    const result = await router.findBestParent('some feature')
+    expect(result).toBeNull()
+  })
+
+  it('creates a new area via createNewArea', async () => {
+    const mockLLM: LLMClient = {
+      completeJSON: vi.fn(async () => ({
+        areaName: 'Monitoring',
+        subcategory: 'metrics collection',
+      })),
+      complete: vi.fn(),
+    }
+
+    const router = new SemanticRouter(rpg, { llmClient: mockLLM })
+    const leafId = await router.createNewArea('collect system performance metrics')
+
+    expect(leafId).toBe('domain:Monitoring/metrics collection')
+
+    // Verify nodes were created
+    const areaNode = await rpg.getNode('domain:Monitoring')
+    expect(areaNode).toBeDefined()
+    expect(areaNode!.type).toBe('high_level')
+
+    const leafNode = await rpg.getNode('domain:Monitoring/metrics collection')
+    expect(leafNode).toBeDefined()
+
+    // Verify edge exists
+    const edges = await rpg.getFunctionalEdges()
+    const areaToLeaf = edges.filter(
+      e => e.source === 'domain:Monitoring' && e.target === 'domain:Monitoring/metrics collection',
+    )
+    expect(areaToLeaf).toHaveLength(1)
+  })
+
+  it('creates new area with defaults when LLM fails', async () => {
+    const mockLLM: LLMClient = {
+      completeJSON: vi.fn(async () => {
+        throw new Error('API error')
+      }),
+      complete: vi.fn(),
+    }
+
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const router = new SemanticRouter(rpg, { llmClient: mockLLM })
+    const leafId = await router.createNewArea('some feature')
+
+    expect(leafId).toBe('domain:NewArea/general')
+    expect(await rpg.hasNode('domain:NewArea')).toBe(true)
+    expect(await rpg.hasNode('domain:NewArea/general')).toBe(true)
+    consoleSpy.mockRestore()
+  })
+
   it('descends through hierarchy to find best parent', async () => {
     // Create a deeper hierarchy: root → auth → auth/providers
     await rpg.addHighLevelNode({

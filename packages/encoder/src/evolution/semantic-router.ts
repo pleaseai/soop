@@ -5,6 +5,7 @@ import type { Embedding } from '../embedding'
 import type { SemanticRoutingResponse } from './prompts'
 import { isHighLevelNode } from '@pleaseai/soop-graph/node'
 import { createLogger } from '@pleaseai/soop-utils/logger'
+import { z } from 'zod/v4'
 import { buildSemanticRoutingPrompt, SemanticRoutingResponseSchema } from './prompts'
 
 const log = createLogger('SemanticRouter')
@@ -21,15 +22,17 @@ export class SemanticRouter {
   private readonly rpg: RepositoryPlanningGraph
   private readonly llmClient?: LLMClient
   private readonly embedding?: Embedding
+  private readonly confidenceThreshold: number
   private llmCalls = 0
 
   constructor(
     rpg: RepositoryPlanningGraph,
-    options?: { llmClient?: LLMClient, embedding?: Embedding },
+    options?: { llmClient?: LLMClient, embedding?: Embedding, confidenceThreshold?: number },
   ) {
     this.rpg = rpg
     this.llmClient = options?.llmClient
     this.embedding = options?.embedding
+    this.confidenceThreshold = options?.confidenceThreshold ?? 0.3
   }
 
   /**
@@ -138,6 +141,14 @@ export class SemanticRouter {
       this.llmCalls++
 
       if (response?.selectedId) {
+        // Check confidence threshold — low confidence means no good fit
+        if (response.confidence < this.confidenceThreshold) {
+          log.debug(
+            `LLM routing confidence ${response.confidence} below threshold ${this.confidenceThreshold} — returning null`,
+          )
+          return null
+        }
+
         // Validate the selected ID exists in candidates
         const valid = candidates.some(c => c.id === response.selectedId)
         if (valid) {
@@ -186,6 +197,68 @@ export class SemanticRouter {
     }
 
     return bestId
+  }
+
+  /**
+   * Create a new functional area for an entity that doesn't fit existing areas.
+   *
+   * Uses LLM to generate an area name from the entity feature, then creates
+   * a 2-level hierarchy: domain:NewArea/subcategory.
+   * Returns the leaf node ID.
+   */
+  async createNewArea(entityFeature: string): Promise<string> {
+    let areaName = 'NewArea'
+    let subcategory = 'general'
+
+    if (this.llmClient) {
+      try {
+        const response = await this.llmClient.completeJSON<{ areaName: string, subcategory: string }>(
+          `Given this code entity feature description, suggest a PascalCase functional area name and a lowercase subcategory name for organizing it.\n\nEntity feature: ${entityFeature}\n\nRespond with JSON: {"areaName": "PascalCaseName", "subcategory": "lowercase descriptive name"}`,
+          'You are a code architecture classifier. Respond with ONLY valid JSON.',
+          z.object({ areaName: z.string(), subcategory: z.string() }),
+        )
+        this.llmCalls++
+        if (response?.areaName) {
+          areaName = response.areaName
+        }
+        if (response?.subcategory) {
+          subcategory = response.subcategory
+        }
+      }
+      catch (error) {
+        this.llmCalls++
+        log.warn(
+          'LLM call failed for area name generation, using default:',
+          error instanceof Error ? error.message : String(error),
+        )
+      }
+    }
+
+    // Create the 2-level hierarchy
+    const areaId = `domain:${areaName}`
+    if (!(await this.rpg.hasNode(areaId))) {
+      await this.rpg.addHighLevelNode({
+        id: areaId,
+        feature: {
+          description: `provide ${areaName.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()} functionality`,
+          keywords: [areaName.toLowerCase()],
+        },
+      })
+    }
+
+    const leafId = `domain:${areaName}/${subcategory}`
+    if (!(await this.rpg.hasNode(leafId))) {
+      await this.rpg.addHighLevelNode({
+        id: leafId,
+        feature: {
+          description: subcategory,
+          keywords: subcategory.split(/\s+/),
+        },
+      })
+      await this.rpg.addFunctionalEdge({ source: areaId, target: leafId })
+    }
+
+    return leafId
   }
 
   /**

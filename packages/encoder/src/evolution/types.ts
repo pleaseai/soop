@@ -23,6 +23,8 @@ export interface EvolutionOptions {
   semantic?: SemanticOptions
   /** Whether to include source code in ChangedEntity objects (default: false) */
   includeSource?: boolean
+  /** Confidence threshold for semantic routing — below this, create a new area (default: 0.3) */
+  confidenceThreshold?: number
 }
 
 /**
@@ -47,6 +49,8 @@ export interface EvolutionResult {
   errors: Array<{ entity: string, phase: string, error: string }>
   /** Embedding store changes for incremental vector index updates */
   embeddingChanges?: { added: string[], removed: string[], modified: string[] }
+  /** Number of new functional areas created during evolution */
+  newAreasCreated: number
   /**
    * True when changeRatio (totalChanges / nodeCount) exceeds forceRegenerateThreshold.
    * When true, callers should discard the current graph and run a full `encode()` instead.

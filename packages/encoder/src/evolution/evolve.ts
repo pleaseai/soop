@@ -32,7 +32,7 @@ export class RPGEvolver {
     this.diffParser = new DiffParser(options.repoPath, this.astParser)
     this.semanticExtractor = new SemanticExtractor(options.semantic)
     const llmClient = this.createLLMClient()
-    this.semanticRouter = new SemanticRouter(rpg, { llmClient })
+    this.semanticRouter = new SemanticRouter(rpg, { llmClient, confidenceThreshold: options.confidenceThreshold })
   }
 
   async evolve(): Promise<EvolutionResult> {
@@ -46,6 +46,7 @@ export class RPGEvolver {
       duration: 0,
       llmCalls: 0,
       errors: [],
+      newAreasCreated: 0,
       requiresFullEncode: false,
     }
 
@@ -133,8 +134,11 @@ export class RPGEvolver {
     // Process insertions
     for (const entity of diffResult.insertions) {
       try {
-        await insertNode(this.rpg, entity, ctx)
+        const insertResult = await insertNode(this.rpg, entity, ctx)
         result.inserted++
+        if (insertResult.newAreaCreated) {
+          result.newAreasCreated++
+        }
         embeddingChanges.added.push(entity.id)
       }
       catch (error) {
