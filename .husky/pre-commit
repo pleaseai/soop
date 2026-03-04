@@ -1,10 +1,11 @@
 #!/bin/sh
 
+PROTECTED_BRANCH="main"
 branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 
-if [ "$branch" = "main" ]; then
+if [ "$branch" = "$PROTECTED_BRANCH" ]; then
   echo ""
-  echo "🚫 Direct commits to 'main' are not allowed."
+  echo "🚫 Direct commits to '$PROTECTED_BRANCH' are not allowed."
   echo "   Please create a feature branch and open a Pull Request."
   echo ""
   echo "   git checkout -b feature/my-change"
