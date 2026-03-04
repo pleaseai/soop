@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "enabledPlugins": {
     "claude-md-management@claude-plugins-official": true,
     "dev-tools@passionfactory": true,
@@ -6,9 +9,11 @@
     "review@passionfactory": true,
     "please@passionfactory": true,
     "testing@passionfactory": true,
+    "engineering-standards@passionfactory": true,
+    "tidy-first@passionfactory": true,
     "backend@passionfactory": true,
-    "typescript-lsp@language-server-please": true,
-    "eslint-lsp@language-server-please": true,
+    "typescript-lsp@code-intelligence": true,
+    "eslint-lsp@code-intelligence": true,
     "gatekeeper@pleaseai": true,
     "mcp-dev@pleaseai": true,
     "plugin-dev@claude-plugins-official": true
@@ -24,11 +29,16 @@
       "source": {
         "source": "github",
         "repo": "pleaseai/claude-code-plugins"
-      }
+      },
+      "autoUpdate": true
+    },
+    "code-intelligence": {
+      "source": {
+        "source": "github",
+        "repo": "chatbot-pf/code-intelligence"
+      },
+      "autoUpdate": true
     }
   },
-  "language": "english",
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  }
+  "language": "english"
 }
