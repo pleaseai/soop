@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "enabledPlugins": {
     "claude-md-management@claude-plugins-official": true,
     "dev-tools@passionfactory": true,
@@ -26,17 +29,16 @@
       "source": {
         "source": "github",
         "repo": "pleaseai/claude-code-plugins"
-      }
+      },
+      "autoUpdate": true
     },
     "code-intelligence": {
       "source": {
         "source": "github",
         "repo": "chatbot-pf/code-intelligence"
-      }
+      },
+      "autoUpdate": true
     }
   },
-  "language": "english",
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  }
+  "language": "english"
 }
