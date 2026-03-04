@@ -8,6 +8,8 @@ export const EdgeType = {
   Functional: 'functional',
   /** Dependency edges (imports, calls) */
   Dependency: 'dependency',
+  /** Data flow edges (inter-module communication) */
+  DataFlow: 'data_flow',
 } as const
 
 export type EdgeType = (typeof EdgeType)[keyof typeof EdgeType]
@@ -34,7 +36,7 @@ export const BaseEdgeSchema = z.object({
   /** Target node ID */
   target: z.string(),
   /** Edge type */
-  type: z.enum(['functional', 'dependency']),
+  type: z.enum(['functional', 'dependency', 'data_flow']),
   /** Optional edge weight */
   weight: z.number().optional(),
 })
@@ -76,20 +78,10 @@ export const DependencyEdgeSchema = BaseEdgeSchema.extend({
 export type DependencyEdge = z.infer<typeof DependencyEdgeSchema>
 
 /**
- * Union type for all edge types
- */
-export const EdgeSchema = z.discriminatedUnion('type', [FunctionalEdgeSchema, DependencyEdgeSchema])
-
-export type Edge = z.infer<typeof EdgeSchema>
-
-/**
  * Data flow edge for inter-module communication
  */
-export const DataFlowEdgeSchema = z.object({
-  /** Source module/subgraph */
-  from: z.string(),
-  /** Target module/subgraph */
-  to: z.string(),
+export const DataFlowEdgeSchema = BaseEdgeSchema.extend({
+  type: z.literal('data_flow'),
   /** Unique identifier for the data being passed */
   dataId: z.string(),
   /** Type or structure of the data */
@@ -101,16 +93,37 @@ export const DataFlowEdgeSchema = z.object({
 export type DataFlowEdge = z.infer<typeof DataFlowEdgeSchema>
 
 /**
+ * Union type for all edge types
+ */
+export const EdgeSchema = z.discriminatedUnion('type', [FunctionalEdgeSchema, DependencyEdgeSchema, DataFlowEdgeSchema])
+
+export type Edge = z.infer<typeof EdgeSchema>
+
+/**
+ * Legacy data flow edge schema for backward compatibility during deserialization
+ * Accepts the old { from, to } format and converts to { source, target }
+ */
+export const LegacyDataFlowEdgeSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  dataId: z.string(),
+  dataType: z.string(),
+  transformation: z.string().optional(),
+})
+
+export type LegacyDataFlowEdge = z.infer<typeof LegacyDataFlowEdgeSchema>
+
+/**
  * Create a data flow edge
  */
 export function createDataFlowEdge(params: {
-  from: string
-  to: string
+  source: string
+  target: string
   dataId: string
   dataType: string
   transformation?: string
 }): DataFlowEdge {
-  return DataFlowEdgeSchema.parse(params)
+  return DataFlowEdgeSchema.parse({ ...params, type: EdgeType.DataFlow })
 }
 
 /**
@@ -160,4 +173,11 @@ export function isFunctionalEdge(edge: Edge): edge is FunctionalEdge {
  */
 export function isDependencyEdge(edge: Edge): edge is DependencyEdge {
   return edge.type === EdgeType.Dependency
+}
+
+/**
+ * Check if an edge is a data flow edge
+ */
+export function isDataFlowEdge(edge: Edge): edge is DataFlowEdge {
+  return edge.type === EdgeType.DataFlow
 }

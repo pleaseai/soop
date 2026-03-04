@@ -504,12 +504,12 @@ describe('RPGEncoder.injectDataFlows', () => {
     const dataFlowEdges = await result.rpg.getDataFlowEdges()
     expect(dataFlowEdges.length).toBeGreaterThan(0)
     for (const edge of dataFlowEdges) {
-      expect(edge.from).toBeDefined()
-      expect(edge.to).toBeDefined()
+      expect(edge.source).toBeDefined()
+      expect(edge.target).toBeDefined()
       expect(edge.dataId).toBeDefined()
       expect(edge.dataType).toBeDefined()
-      expect(typeof edge.from).toBe('string')
-      expect(typeof edge.to).toBe('string')
+      expect(typeof edge.source).toBe('string')
+      expect(typeof edge.target).toBe('string')
       expect(typeof edge.dataId).toBe('string')
       expect(typeof edge.dataType).toBe('string')
     }

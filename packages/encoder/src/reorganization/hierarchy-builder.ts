@@ -7,10 +7,10 @@ import { buildHierarchicalConstructionPrompt } from './prompts'
 const log = createLogger('HierarchyBuilder')
 
 /**
- * Hierarchy Builder — construct 3-level semantic hierarchy from functional areas.
+ * Hierarchy Builder — construct 2-5 level semantic hierarchy from functional areas.
  *
  * Implements paper §3.2 Step 2: "Hierarchical Aggregation"
- * - Assigns file groups to 3-level paths
+ * - Assigns file groups to 2-5 level paths
  * - Creates HighLevelNodes for each path segment
  * - Creates FunctionalEdges for the hierarchy
  * - Links file LowLevelNodes to their leaf HighLevelNodes
@@ -57,13 +57,12 @@ export class HierarchyBuilder {
     // Process each assignment path
     for (const [pathStr, groupLabels] of Object.entries(assignments)) {
       const segments = pathStr.split('/')
-      if (segments.length !== 3) {
+      if (segments.length < 2 || segments.length > 5) {
         continue // Skip invalid paths (should have been validated)
       }
 
-      const [area, category, subcategory] = segments as [string, string, string]
-
       // Create Level 0: Functional area
+      const area = segments[0]!
       const areaId = `domain:${area}`
       if (!createdNodes.has(areaId)) {
         createdNodes.add(areaId)
@@ -76,35 +75,25 @@ export class HierarchyBuilder {
         })
       }
 
-      // Create Level 1: Category
-      const categoryId = `domain:${area}/${category}`
-      if (!createdNodes.has(categoryId)) {
-        createdNodes.add(categoryId)
-        await this.rpg.addHighLevelNode({
-          id: categoryId,
-          feature: {
-            description: category,
-            keywords: category.split(/\s+/),
-          },
-        })
-        await this.rpg.addFunctionalEdge({ source: areaId, target: categoryId })
+      // Create intermediate levels dynamically
+      let parentId = areaId
+      for (let i = 1; i < segments.length; i++) {
+        const segmentId = `domain:${segments.slice(0, i + 1).join('/')}`
+        if (!createdNodes.has(segmentId)) {
+          createdNodes.add(segmentId)
+          await this.rpg.addHighLevelNode({
+            id: segmentId,
+            feature: {
+              description: segments[i]!,
+              keywords: segments[i]!.split(/\s+/),
+            },
+          })
+          await this.rpg.addFunctionalEdge({ source: parentId, target: segmentId })
+        }
+        parentId = segmentId
       }
 
-      // Create Level 2: Subcategory
-      const subcategoryId = `domain:${area}/${category}/${subcategory}`
-      if (!createdNodes.has(subcategoryId)) {
-        createdNodes.add(subcategoryId)
-        await this.rpg.addHighLevelNode({
-          id: subcategoryId,
-          feature: {
-            description: subcategory,
-            keywords: subcategory.split(/\s+/),
-          },
-        })
-        await this.rpg.addFunctionalEdge({ source: categoryId, target: subcategoryId })
-      }
-
-      // Link file LowLevelNodes to subcategory
+      // Link file LowLevelNodes to the leaf node
       for (const label of groupLabels) {
         const fileIds = groupToFileIds.get(label)
         if (!fileIds)
@@ -112,7 +101,7 @@ export class HierarchyBuilder {
         for (const fileId of fileIds) {
           const hasNode = await this.rpg.hasNode(fileId)
           if (hasNode) {
-            await this.rpg.addFunctionalEdge({ source: subcategoryId, target: fileId })
+            await this.rpg.addFunctionalEdge({ source: parentId, target: fileId })
           }
         }
       }
@@ -254,14 +243,20 @@ export class HierarchyBuilder {
     functionalAreas: string[],
   ): string | null {
     const segments = pathStr.split('/')
-    if (segments.length !== 3)
+    if (segments.length < 2 || segments.length > 5)
       return null
 
-    const [area, category, subcategory] = segments
-    if (!area || !category || !subcategory)
+    const area = segments[0]
+    if (!area)
       return null
-    if (category.trim().length === 0 || subcategory.trim().length === 0)
-      return null
+
+    // Validate all segments are non-empty
+    for (const segment of segments) {
+      if (!segment || segment.trim().length === 0)
+        return null
+    }
+
+    const restPath = segments.slice(1).join('/')
 
     // Exact match
     if (functionalAreas.includes(area))
@@ -271,21 +266,21 @@ export class HierarchyBuilder {
     const lowerArea = area.toLowerCase()
     const exactCI = functionalAreas.find(a => a.toLowerCase() === lowerArea)
     if (exactCI)
-      return `${exactCI}/${category}/${subcategory}`
+      return `${exactCI}/${restPath}`
 
     // Prefix match
     const prefixMatch = functionalAreas.find(
       a => a.toLowerCase().startsWith(lowerArea) || lowerArea.startsWith(a.toLowerCase()),
     )
     if (prefixMatch)
-      return `${prefixMatch}/${category}/${subcategory}`
+      return `${prefixMatch}/${restPath}`
 
     // Substring match (require minimum length to avoid false positives with short strings)
     const subMatch = functionalAreas.find(
       a => (lowerArea.length >= 4 && a.toLowerCase().includes(lowerArea)) || (a.toLowerCase().length >= 4 && lowerArea.includes(a.toLowerCase())),
     )
     if (subMatch)
-      return `${subMatch}/${category}/${subcategory}`
+      return `${subMatch}/${restPath}`
 
     return null
   }
@@ -321,30 +316,17 @@ export class HierarchyBuilder {
       })
     }
 
-    const categoryId = 'domain:Uncategorized/general purpose'
-    if (!createdNodes.has(categoryId)) {
-      createdNodes.add(categoryId)
+    const miscId = 'domain:Uncategorized/miscellaneous'
+    if (!createdNodes.has(miscId)) {
+      createdNodes.add(miscId)
       await this.rpg.addHighLevelNode({
-        id: categoryId,
-        feature: {
-          description: 'general purpose',
-          keywords: ['general'],
-        },
-      })
-      await this.rpg.addFunctionalEdge({ source: areaId, target: categoryId })
-    }
-
-    const subcategoryId = 'domain:Uncategorized/general purpose/miscellaneous'
-    if (!createdNodes.has(subcategoryId)) {
-      createdNodes.add(subcategoryId)
-      await this.rpg.addHighLevelNode({
-        id: subcategoryId,
+        id: miscId,
         feature: {
           description: 'miscellaneous',
           keywords: ['misc'],
         },
       })
-      await this.rpg.addFunctionalEdge({ source: categoryId, target: subcategoryId })
+      await this.rpg.addFunctionalEdge({ source: areaId, target: miscId })
     }
 
     // Link unassigned file nodes
@@ -352,7 +334,7 @@ export class HierarchyBuilder {
       for (const file of group.fileFeatures) {
         const hasNode = await this.rpg.hasNode(file.fileId)
         if (hasNode) {
-          await this.rpg.addFunctionalEdge({ source: subcategoryId, target: file.fileId })
+          await this.rpg.addFunctionalEdge({ source: miscId, target: file.fileId })
         }
       }
     }

@@ -160,10 +160,11 @@ async function generatePackageJson(target: Target): Promise<void> {
   const pkgDir = join(ROOT, 'npm', `soop-${target.packageSuffix}`)
   await mkdir(pkgDir, { recursive: true })
 
+  const libcSuffix = target.libc ? `-${target.libc}` : ''
   const pkg: Record<string, unknown> = {
     name: packageName(target.packageSuffix),
     version: VERSION,
-    description: `Soop Please binary for ${target.os}-${target.cpu}${target.libc ? `-${target.libc}` : ''}`,
+    description: `Soop Please binary for ${target.os}-${target.cpu}${libcSuffix}`,
     os: [target.os],
     cpu: [target.cpu],
     bin: {
@@ -219,7 +220,9 @@ if (filterPrefix && BUILD_TARGETS.length === 0) {
 // Without this flag (CI default), build failures cause an immediate error.
 const skipMissing = process.argv.includes('--skip-missing')
 
-console.log(`Building Soop Please binaries v${VERSION} for ${BUILD_TARGETS.length} targets${filterPrefix ? ` (filter: ${filterPrefix})` : ''}${skipMissing ? ' (--skip-missing)' : ''}...\n`)
+const filterStr = filterPrefix ? ` (filter: ${filterPrefix})` : ''
+const skipStr = skipMissing ? ' (--skip-missing)' : ''
+console.log(`Building Soop Please binaries v${VERSION} for ${BUILD_TARGETS.length} targets${filterStr}${skipStr}...\n`)
 
 // Compile binaries for each target
 for (const target of BUILD_TARGETS) {

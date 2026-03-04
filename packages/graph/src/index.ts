@@ -19,6 +19,7 @@ export {
   EdgeSchema,
   EdgeType,
   FunctionalEdgeSchema,
+  isDataFlowEdge,
   isDependencyEdge,
   isFunctionalEdge,
 } from './edge'

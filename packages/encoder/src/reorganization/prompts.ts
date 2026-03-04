@@ -8,7 +8,7 @@ export type DomainDiscoveryResponse = z.infer<typeof DomainDiscoveryResponseSche
 
 export const HierarchicalConstructionResponseSchema = z.object({
   assignments: z.record(
-    z.string().regex(/^[^/]+\/[^/]+\/[^/]+$/),
+    z.string().regex(/^[^/]+(\/[^/]+){1,4}$/),
     z.array(z.string()),
   ),
 })
@@ -99,13 +99,13 @@ export function buildHierarchicalConstructionPrompt(
   const areasStr = functionalAreas.map(a => `- ${a}`).join('\n')
 
   const system = `You are an expert repository refactoring specialist.
-Your goal is to reorganize file groups into a semantic 3-level hierarchy using the discovered functional areas.
+Your goal is to reorganize file groups into a semantic 2-5 level hierarchy using the discovered functional areas.
 
 ## Hard Requirements
 - Exhaustive coverage: every non-excluded group must be assigned to exactly one path. No group may be left unassigned.
 - No duplicates: each group label appears in exactly one path's array.
 - Meaningful assignments: groups assigned to the same path must share a coherent, specific semantic purpose.
-- Exactly 3 levels: every path must have the form <FunctionalArea>/<category>/<subcategory> — no more, no fewer slashes.
+- 2-5 levels: every path must have the form <FunctionalArea>/<level2>[/<level3>[/<level4>[/<level5>]]] — at least one slash, at most four slashes.
 - Use only the functional areas provided. Do not invent new top-level areas.
 
 ## Scope Constraints
@@ -113,9 +113,8 @@ Your goal is to reorganize file groups into a semantic 3-level hierarchy using t
 - All other groups must be assigned.
 
 ## Semantic Naming Rules
-- FunctionalArea: PascalCase, from the provided list (e.g., "DataProcessing").
-- category: lowercase, verb+object or noun phrase (e.g., "pipeline orchestration", "schema definition").
-- subcategory: lowercase, more specific verb+object or noun phrase (e.g., "task scheduling", "type validation").
+- FunctionalArea (level 1): PascalCase, from the provided list (e.g., "DataProcessing").
+- level 2+: lowercase, verb+object or noun phrase (e.g., "pipeline orchestration", "schema definition", "task scheduling").
 - Names must describe responsibility, not echo directory names.
 - NEVER use filler labels: "misc", "others", "core", "general", "utilities", "common", "other", "main".
 
@@ -125,18 +124,18 @@ Your goal is to reorganize file groups into a semantic 3-level hierarchy using t
 - Prefer fewer, denser paths over many shallow single-item paths — but never force unrelated groups together.
 
 ## Output Format
-Return a JSON object with an "assignments" key mapping 3-level paths to arrays of group labels.
+Return a JSON object with an "assignments" key mapping 2-5 level paths to arrays of group labels.
 
 Example:
 {"assignments": {
   "DataProcessing/pipeline orchestration/task scheduling": ["data_loader", "scheduler"],
-  "DataProcessing/data transformation/format conversion": ["converter"],
+  "DataProcessing/data transformation": ["converter"],
   "UserInterface/component rendering/layout management": ["ui", "layout"]
 }}`
 
   const repoContext = buildRepoContext(repoName, repoInfo)
 
-  const user = `${repoContext}Reorganize the following file groups into a 3-level semantic hierarchy.
+  const user = `${repoContext}Reorganize the following file groups into a 2-5 level semantic hierarchy.
 
 ## Discovered Functional Areas
 ${areasStr}
@@ -145,7 +144,7 @@ ${areasStr}
 
 ${formattedGroups}
 
-Assign each non-excluded group to a 3-level path (<FunctionalArea>/<category>/<subcategory>). Ensure every group is covered exactly once.`
+Assign each non-excluded group to a 2-5 level path (<FunctionalArea>/<level2>[/<level3>[/<level4>[/<level5>]]]). Ensure every group is covered exactly once.`
 
   return { system, user }
 }

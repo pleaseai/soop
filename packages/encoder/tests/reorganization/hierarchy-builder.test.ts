@@ -201,21 +201,18 @@ describe('hierarchyBuilder', () => {
     const builder = new HierarchyBuilder(rpg, mockClient as any)
     await builder.build(['Authentication', 'DataAccess'], groupsWithExtra)
 
-    // Check Uncategorized hierarchy was created
+    // Check Uncategorized hierarchy was created (2-level: Uncategorized/miscellaneous)
     const uncatArea = await rpg.getNode('domain:Uncategorized')
     expect(uncatArea).toBeDefined()
 
-    const uncatCat = await rpg.getNode('domain:Uncategorized/general purpose')
-    expect(uncatCat).toBeDefined()
-
-    const uncatSubcat = await rpg.getNode('domain:Uncategorized/general purpose/miscellaneous')
-    expect(uncatSubcat).toBeDefined()
+    const uncatMisc = await rpg.getNode('domain:Uncategorized/miscellaneous')
+    expect(uncatMisc).toBeDefined()
 
     // misc/utils.ts should be linked to miscellaneous subcategory
     const functionalEdges = await rpg.getFunctionalEdges()
     const miscEdge = functionalEdges.filter(
       e =>
-        e.source === 'domain:Uncategorized/general purpose/miscellaneous'
+        e.source === 'domain:Uncategorized/miscellaneous'
         && e.target === 'misc/utils.ts:file',
     )
     expect(miscEdge).toHaveLength(1)
@@ -257,7 +254,7 @@ describe('hierarchyBuilder', () => {
     expect(nodeIds).toContain('domain:Authentication/credential management/user verification')
   })
 
-  it('silently skips paths that do not have exactly 3 levels', async () => {
+  it('silently skips paths that have fewer than 2 or more than 5 levels', async () => {
     const rpg = await RepositoryPlanningGraph.create({ name: 'test' })
 
     for (const group of sampleFileGroups) {
@@ -272,15 +269,156 @@ describe('hierarchyBuilder', () => {
 
     const invalidAssignments = {
       assignments: {
-        'Authentication/credential management': ['auth'],
+        Authentication: ['auth', 'db'],
       },
     }
 
     const mockClient = createMockLLMClient(invalidAssignments)
     const builder = new HierarchyBuilder(rpg, mockClient as any)
-    // Invalid paths (not exactly 3 levels) are skipped — files go to Uncategorized
+    // Invalid paths (only 1 level) are skipped — files go to Uncategorized
     await builder.build(['Authentication'], sampleFileGroups)
 
+    const uncatArea = await rpg.getNode('domain:Uncategorized')
+    expect(uncatArea).toBeDefined()
+  })
+
+  it('accepts 2-level paths', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'test' })
+
+    for (const group of sampleFileGroups) {
+      for (const file of group.fileFeatures) {
+        await rpg.addLowLevelNode({
+          id: file.fileId,
+          feature: { description: file.description, keywords: file.keywords },
+          metadata: { entityType: 'file', path: file.filePath },
+        })
+      }
+    }
+
+    const twoLevelAssignments = {
+      assignments: {
+        'Authentication/credential management': ['auth'],
+        'DataAccess/query execution': ['db'],
+      },
+    }
+
+    const mockClient = createMockLLMClient(twoLevelAssignments)
+    const builder = new HierarchyBuilder(rpg, mockClient as any)
+    await builder.build(['Authentication', 'DataAccess'], sampleFileGroups)
+
+    // Verify 2-level hierarchy was created
+    const authArea = await rpg.getNode('domain:Authentication')
+    expect(authArea).toBeDefined()
+
+    const credMgmt = await rpg.getNode('domain:Authentication/credential management')
+    expect(credMgmt).toBeDefined()
+
+    // Auth files should be linked to the leaf node
+    const functionalEdges = await rpg.getFunctionalEdges()
+    const authFileEdges = functionalEdges.filter(
+      e =>
+        e.source === 'domain:Authentication/credential management'
+        && (e.target === 'auth/login.ts:file' || e.target === 'auth/token.ts:file'),
+    )
+    expect(authFileEdges).toHaveLength(2)
+  })
+
+  it('accepts 4-level paths', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'test' })
+
+    for (const group of sampleFileGroups) {
+      for (const file of group.fileFeatures) {
+        await rpg.addLowLevelNode({
+          id: file.fileId,
+          feature: { description: file.description, keywords: file.keywords },
+          metadata: { entityType: 'file', path: file.filePath },
+        })
+      }
+    }
+
+    const fourLevelAssignments = {
+      assignments: {
+        'Authentication/security/credential management/user verification': ['auth'],
+        'DataAccess/persistence/query execution/sql operations': ['db'],
+      },
+    }
+
+    const mockClient = createMockLLMClient(fourLevelAssignments)
+    const builder = new HierarchyBuilder(rpg, mockClient as any)
+    await builder.build(['Authentication', 'DataAccess'], sampleFileGroups)
+
+    // Verify 4-level hierarchy was created
+    const authArea = await rpg.getNode('domain:Authentication')
+    expect(authArea).toBeDefined()
+    const security = await rpg.getNode('domain:Authentication/security')
+    expect(security).toBeDefined()
+    const credMgmt = await rpg.getNode('domain:Authentication/security/credential management')
+    expect(credMgmt).toBeDefined()
+    const userVerif = await rpg.getNode('domain:Authentication/security/credential management/user verification')
+    expect(userVerif).toBeDefined()
+
+    // Auth files should be linked to the deepest leaf
+    const functionalEdges = await rpg.getFunctionalEdges()
+    const authFileEdges = functionalEdges.filter(
+      e =>
+        e.source === 'domain:Authentication/security/credential management/user verification'
+        && (e.target === 'auth/login.ts:file' || e.target === 'auth/token.ts:file'),
+    )
+    expect(authFileEdges).toHaveLength(2)
+  })
+
+  it('rejects 1-level paths (only area, no subcategories)', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'test' })
+
+    for (const group of sampleFileGroups) {
+      for (const file of group.fileFeatures) {
+        await rpg.addLowLevelNode({
+          id: file.fileId,
+          feature: { description: file.description, keywords: file.keywords },
+          metadata: { entityType: 'file', path: file.filePath },
+        })
+      }
+    }
+
+    const oneLevelAssignments = {
+      assignments: {
+        Authentication: ['auth', 'db'],
+      },
+    }
+
+    const mockClient = createMockLLMClient(oneLevelAssignments)
+    const builder = new HierarchyBuilder(rpg, mockClient as any)
+    await builder.build(['Authentication'], sampleFileGroups)
+
+    // 1-level paths are rejected — all files go to Uncategorized
+    const uncatArea = await rpg.getNode('domain:Uncategorized')
+    expect(uncatArea).toBeDefined()
+  })
+
+  it('rejects 6-level paths', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'test' })
+
+    for (const group of sampleFileGroups) {
+      for (const file of group.fileFeatures) {
+        await rpg.addLowLevelNode({
+          id: file.fileId,
+          feature: { description: file.description, keywords: file.keywords },
+          metadata: { entityType: 'file', path: file.filePath },
+        })
+      }
+    }
+
+    const sixLevelAssignments = {
+      assignments: {
+        'Authentication/a/b/c/d/e': ['auth', 'db'],
+      },
+    }
+
+    const mockClient = createMockLLMClient(sixLevelAssignments)
+    const builder = new HierarchyBuilder(rpg, mockClient as any)
+    await builder.build(['Authentication'], sampleFileGroups)
+
+    // 6-level paths are rejected — all files go to Uncategorized
     const uncatArea = await rpg.getNode('domain:Uncategorized')
     expect(uncatArea).toBeDefined()
   })

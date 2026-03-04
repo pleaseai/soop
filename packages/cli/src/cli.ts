@@ -466,14 +466,13 @@ const GIT_LFS_THRESHOLD = 10 * 1024 * 1024
 async function generateEmbeddings(
   rpg: RepositoryPlanningGraph,
   commit: string,
-  embedModelStr?: string,
+  embedModelStr: string = 'voyage-ai/voyage-code-3',
 ): Promise<SerializedEmbeddings> {
-  const modelStr = embedModelStr ?? 'voyage-ai/voyage-code-3'
-  const [providerPart] = modelStr.split('/')
+  const [providerPart] = embedModelStr.split('/')
 
   if (providerPart === 'transformers') {
     // Local HuggingFace model via @huggingface/transformers (ONNX)
-    const modelId = modelStr.slice('transformers/'.length)
+    const modelId = embedModelStr.slice('transformers/'.length)
     const embedding = new HuggingFaceEmbedding({ model: modelId })
 
     const manager = new EmbeddingManager(embedding, {
@@ -486,7 +485,7 @@ async function generateEmbeddings(
   }
 
   const { createOpenAI } = await import('@ai-sdk/openai')
-  const parsed = parseEmbedModelString(modelStr)
+  const parsed = parseEmbedModelString(embedModelStr)
 
   const provider = createOpenAI({
     baseURL: parsed.baseURL,
@@ -538,8 +537,8 @@ interface ParsedEmbedModel {
 /**
  * Parse embed model string like "voyage-ai/voyage-code-3" or "openai/text-embedding-3-small"
  */
-function parseEmbedModelString(modelStr: string): ParsedEmbedModel {
-  const [providerPart, ...modelParts] = modelStr.split('/')
+function parseEmbedModelString(embedModelStr: string): ParsedEmbedModel {
+  const [providerPart, ...modelParts] = embedModelStr.split('/')
   const model = modelParts.join('/') || providerPart!
 
   switch (providerPart) {

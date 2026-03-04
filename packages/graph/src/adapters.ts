@@ -3,6 +3,7 @@
  */
 import type { EdgeAttrs, NodeAttrs } from '@pleaseai/soop-store/types'
 import type {
+  DataFlowEdge,
   DependencyEdge,
   Edge,
   FunctionalEdge,
@@ -125,6 +126,13 @@ export function edgeToAttrs(edge: Edge): EdgeAttrs {
     if (fe.siblingOrder != null)
       attrs.sibling_order = fe.siblingOrder
   }
+  else if (edge.type === 'data_flow') {
+    const df = edge as DataFlowEdge
+    attrs.df_dataId = df.dataId
+    attrs.df_dataType = df.dataType
+    if (df.transformation != null)
+      attrs.df_transformation = df.transformation
+  }
   else {
     const de = edge as DependencyEdge
     if (de.dependencyType)
@@ -147,6 +155,23 @@ export function attrsToEdge(source: string, target: string, attrs: EdgeAttrs): E
       type: 'functional' as const,
       level: (attrs.level as number) ?? undefined,
       siblingOrder: (attrs.sibling_order as number) ?? undefined,
+      weight: (attrs.weight as number) ?? undefined,
+    }
+  }
+
+  if (attrs.type === 'data_flow') {
+    if (attrs.df_dataId == null || attrs.df_dataType == null) {
+      console.warn(`attrsToEdge: data_flow edge "${source}→${target}" missing df_dataId or df_dataType in store — possible data corruption`)
+    }
+    const dataId = attrs.df_dataId != null ? String(attrs.df_dataId) : ''
+    const dataType = attrs.df_dataType != null ? String(attrs.df_dataType) : ''
+    return {
+      source,
+      target,
+      type: 'data_flow' as const,
+      dataId,
+      dataType,
+      transformation: (attrs.df_transformation as string) ?? undefined,
       weight: (attrs.weight as number) ?? undefined,
     }
   }

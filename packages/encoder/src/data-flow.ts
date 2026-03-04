@@ -78,8 +78,8 @@ export class DataFlowDetector {
         // Create a data flow edge for each imported symbol
         for (const symbolName of importInfo.names) {
           const edge = this.createValidatedEdge({
-            from: importedNodeId,
-            to: file.nodeId,
+            source: importedNodeId,
+            target: file.nodeId,
             dataId: symbolName,
             dataType: 'import',
           })
@@ -165,7 +165,7 @@ export class DataFlowDetector {
     const seen = new Set<string>()
     const flows: DataFlowEdge[] = []
     for (const edge of allFlows) {
-      const key = `${edge.from}|${edge.to}|${edge.dataId}|${edge.dataType}`
+      const key = `${edge.source}|${edge.target}|${edge.dataId}|${edge.dataType}`
       if (!seen.has(key)) {
         seen.add(key)
         flows.push(edge)
@@ -260,14 +260,21 @@ export class DataFlowDetector {
    * Create and validate a DataFlowEdge
    * Returns the edge if valid, null otherwise
    */
-  private createValidatedEdge(edge: DataFlowEdge): DataFlowEdge | null {
+  private createValidatedEdge(params: {
+    source: string
+    target: string
+    dataId: string
+    dataType: string
+    transformation?: string
+  }): DataFlowEdge | null {
+    const edge = { ...params, type: 'data_flow' as const }
     const result = DataFlowEdgeSchema.safeParse(edge)
     if (result.success) {
       return result.data
     }
     log.warn(
-      `Invalid DataFlowEdge (from=${edge.from}, to=${edge.to}, `
-      + `dataId=${edge.dataId}): ${result.error.message}`,
+      `Invalid DataFlowEdge (source=${params.source}, target=${params.target}, `
+      + `dataId=${params.dataId}): ${result.error.message}`,
     )
     return null
   }
@@ -288,8 +295,8 @@ export class DataFlowDetector {
     for (const param of parameters) {
       if (this.isParameterUsedInFunctionCall(funcBody, param)) {
         const edge = this.createValidatedEdge({
-          from: nodeId,
-          to: nodeId,
+          source: nodeId,
+          target: nodeId,
           dataId: param,
           dataType: 'parameter',
         })
@@ -307,8 +314,8 @@ export class DataFlowDetector {
     const variables = this.findVariableChains(funcBody)
     for (const varName of variables) {
       const edge = this.createValidatedEdge({
-        from: nodeId,
-        to: nodeId,
+        source: nodeId,
+        target: nodeId,
         dataId: varName,
         dataType: 'variable_chain',
       })

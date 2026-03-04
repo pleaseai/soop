@@ -16,8 +16,10 @@ jobs:
     steps:
       - name: Check if release-please branch
         id: branch-check
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [[ "${{ github.head_ref }}" == release-please--* ]]; then
+          if [[ "$HEAD_REF" == release-please--* ]]; then
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "Release-please branch — skipping typecheck"
           fi
@@ -35,8 +37,10 @@ jobs:
     steps:
       - name: Check if release-please branch
         id: branch-check
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [[ "${{ github.head_ref }}" == release-please--* ]]; then
+          if [[ "$HEAD_REF" == release-please--* ]]; then
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "Release-please branch — skipping lint"
           fi
@@ -54,8 +58,10 @@ jobs:
     steps:
       - name: Check if release-please branch
         id: branch-check
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [[ "${{ github.head_ref }}" == release-please--* ]]; then
+          if [[ "$HEAD_REF" == release-please--* ]]; then
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "Release-please branch — skipping tests"
           fi
@@ -83,8 +89,10 @@ jobs:
     steps:
       - name: Check if release-please branch
         id: branch-check
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          if [[ "${{ github.head_ref }}" == release-please--* ]]; then
+          if [[ "$HEAD_REF" == release-please--* ]]; then
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "Release-please branch — skipping integration tests"
           fi

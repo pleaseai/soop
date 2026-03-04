@@ -424,8 +424,11 @@ async function initFromPrecomputedEmbeddings(
 
 // Run if executed directly
 if (import.meta.main) {
-  main().catch((error) => {
+  try {
+    await main()
+  }
+  catch (error) {
     log.fatal('Fatal error:', error)
     process.exit(1)
-  })
+  }
 }

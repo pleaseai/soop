@@ -1,6 +1,16 @@
 import { HuggingFaceEmbedding } from '@pleaseai/soop-encoder/embedding'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) {
+    throw new Error(`Vector length mismatch: ${a.length} vs ${b.length}`)
+  }
+  const dot = a.reduce((s, v, i) => s + v * b[i]!, 0)
+  const magA = Math.sqrt(a.reduce((s, v) => s + v * v, 0))
+  const magB = Math.sqrt(b.reduce((s, v) => s + v * v, 0))
+  return dot / (magA * magB)
+}
+
 /**
  * Integration tests for voyage-4-nano local embedding via @huggingface/transformers
  *
@@ -77,16 +87,6 @@ describe('voyage-4-nano Integration', () => {
   // ============================================================================
 
   describe('semantic similarity', () => {
-    function cosineSimilarity(a: number[], b: number[]): number {
-      if (a.length !== b.length) {
-        throw new Error(`Vector length mismatch: ${a.length} vs ${b.length}`)
-      }
-      const dot = a.reduce((s, v, i) => s + v * b[i]!, 0)
-      const magA = Math.sqrt(a.reduce((s, v) => s + v * v, 0))
-      const magB = Math.sqrt(b.reduce((s, v) => s + v * v, 0))
-      return dot / (magA * magB)
-    }
-
     it('should rank semantically similar texts higher than unrelated', async () => {
       const [auth1, auth2, weather] = await Promise.all([
         embedding.embed('function authenticate(user, password) { return validateCredentials(user, password); }'),

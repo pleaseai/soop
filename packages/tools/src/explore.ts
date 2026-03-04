@@ -1,10 +1,10 @@
-import type { Edge, Node, RepositoryPlanningGraph } from '@pleaseai/soop-graph'
-import { EdgeType } from '@pleaseai/soop-graph'
+import type { DependencyEdge, Edge, Node, RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { EdgeType, isDependencyEdge } from '@pleaseai/soop-graph'
 
 /**
  * Edge type for exploration
  */
-export type ExploreEdgeType = 'containment' | 'dependency' | 'all'
+export type ExploreEdgeType = 'containment' | 'dependency' | 'data_flow' | 'all'
 
 /**
  * Options for ExploreRPG
@@ -18,6 +18,8 @@ export interface ExploreOptions {
   maxDepth?: number
   /** Direction: downstream (out-edges), upstream (in-edges), or both */
   direction?: 'downstream' | 'upstream' | 'both'
+  /** Filter dependency edges by their dependency type */
+  dependencyType?: 'import' | 'call' | 'inherit' | 'implement' | 'use'
 }
 
 /**
@@ -59,7 +61,7 @@ export class ExploreRPG {
    * Traverse the graph from a starting node
    */
   async traverse(options: ExploreOptions): Promise<ExploreResult> {
-    const { startNode, edgeType, maxDepth = 3, direction = 'downstream' } = options
+    const { startNode, edgeType, maxDepth = 3, direction = 'downstream', dependencyType } = options
 
     const state: ExploreState = {
       visited: new Set<string>(),
@@ -69,7 +71,7 @@ export class ExploreRPG {
     }
 
     const edgeTypes = this.resolveEdgeTypes(edgeType)
-    await this.exploreNode(startNode, 0, maxDepth, direction, edgeTypes, state)
+    await this.exploreNode(startNode, 0, maxDepth, direction, edgeTypes, state, dependencyType)
 
     return {
       nodes: state.nodes,
@@ -84,11 +86,13 @@ export class ExploreRPG {
   private resolveEdgeTypes(edgeType: ExploreEdgeType): EdgeType[] {
     switch (edgeType) {
       case 'all':
-        return [EdgeType.Functional, EdgeType.Dependency]
+        return [EdgeType.Functional, EdgeType.Dependency, EdgeType.DataFlow]
       case 'containment':
         return [EdgeType.Functional]
       case 'dependency':
         return [EdgeType.Dependency]
+      case 'data_flow':
+        return [EdgeType.DataFlow]
     }
   }
 
@@ -102,6 +106,7 @@ export class ExploreRPG {
     direction: 'downstream' | 'upstream' | 'both',
     edgeTypes: EdgeType[],
     state: ExploreState,
+    dependencyType?: string,
   ): Promise<void> {
     if (depth > maxDepth || state.visited.has(nodeId)) {
       return
@@ -117,7 +122,7 @@ export class ExploreRPG {
     state.maxDepthReached = Math.max(state.maxDepthReached, depth)
 
     for (const et of edgeTypes) {
-      await this.processEdges(nodeId, depth, maxDepth, direction, et, state)
+      await this.processEdges(nodeId, depth, maxDepth, direction, et, state, dependencyType)
     }
   }
 
@@ -131,14 +136,26 @@ export class ExploreRPG {
     direction: 'downstream' | 'upstream' | 'both',
     edgeType: EdgeType,
     state: ExploreState,
+    dependencyType?: string,
   ): Promise<void> {
     if (direction === 'downstream' || direction === 'both') {
-      await this.processOutEdges(nodeId, depth, maxDepth, direction, edgeType, state)
+      await this.processOutEdges(nodeId, depth, maxDepth, direction, edgeType, state, dependencyType)
     }
 
     if (direction === 'upstream' || direction === 'both') {
-      await this.processInEdges(nodeId, depth, maxDepth, direction, edgeType, state)
+      await this.processInEdges(nodeId, depth, maxDepth, direction, edgeType, state, dependencyType)
     }
+  }
+
+  /**
+   * Check if an edge passes the dependency type filter
+   */
+  private matchesDependencyType(edge: Edge, dependencyType?: string): boolean {
+    if (!dependencyType)
+      return true
+    if (!isDependencyEdge(edge))
+      return true
+    return (edge as DependencyEdge).dependencyType === dependencyType
   }
 
   /**
@@ -151,11 +168,14 @@ export class ExploreRPG {
     direction: 'downstream' | 'upstream' | 'both',
     edgeType: EdgeType,
     state: ExploreState,
+    dependencyType?: string,
   ): Promise<void> {
     const edgeTypes = [edgeType]
     for (const edge of await this.rpg.getOutEdges(nodeId, edgeType)) {
+      if (!this.matchesDependencyType(edge, dependencyType))
+        continue
       this.addEdge(edge, state)
-      await this.exploreNode(edge.target, depth + 1, maxDepth, direction, edgeTypes, state)
+      await this.exploreNode(edge.target, depth + 1, maxDepth, direction, edgeTypes, state, dependencyType)
     }
   }
 
@@ -169,11 +189,14 @@ export class ExploreRPG {
     direction: 'downstream' | 'upstream' | 'both',
     edgeType: EdgeType,
     state: ExploreState,
+    dependencyType?: string,
   ): Promise<void> {
     const edgeTypes = [edgeType]
     for (const edge of await this.rpg.getInEdges(nodeId, edgeType)) {
+      if (!this.matchesDependencyType(edge, dependencyType))
+        continue
       this.addEdge(edge, state)
-      await this.exploreNode(edge.source, depth + 1, maxDepth, direction, edgeTypes, state)
+      await this.exploreNode(edge.source, depth + 1, maxDepth, direction, edgeTypes, state, dependencyType)
     }
   }
 

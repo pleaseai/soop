@@ -1,9 +1,11 @@
 import {
+  createDataFlowEdge,
   createDependencyEdge,
   createFunctionalEdge,
   createHighLevelNode,
   createLowLevelNode,
   EdgeType,
+  isDataFlowEdge,
   isDependencyEdge,
   isFunctionalEdge,
   isHighLevelNode,
@@ -289,5 +291,164 @@ describe('repositoryPlanningGraph', () => {
     expect((await restored.getStats()).nodeCount).toBe(2)
     expect((await restored.getStats()).edgeCount).toBe(1)
     expect(restored.getConfig().name).toBe('test-repo')
+  })
+})
+
+describe('DataFlowEdge', () => {
+  it('createDataFlowEdge creates valid edge with source/target', () => {
+    const edge = createDataFlowEdge({
+      source: 'module-a',
+      target: 'module-b',
+      dataId: 'UserData',
+      dataType: 'import',
+    })
+
+    expect(edge.type).toBe(EdgeType.DataFlow)
+    expect(edge.source).toBe('module-a')
+    expect(edge.target).toBe('module-b')
+    expect(edge.dataId).toBe('UserData')
+    expect(edge.dataType).toBe('import')
+    expect(isDataFlowEdge(edge)).toBe(true)
+  })
+
+  it('addDataFlowEdge stores edge in graph and getDataFlowEdges retrieves it', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'test-repo' })
+    await rpg.addHighLevelNode({
+      id: 'domain:auth',
+      feature: { description: 'authentication module' },
+    })
+    await rpg.addHighLevelNode({
+      id: 'domain:api',
+      feature: { description: 'API module' },
+    })
+
+    await rpg.addDataFlowEdge({
+      source: 'domain:auth',
+      target: 'domain:api',
+      dataId: 'AuthToken',
+      dataType: 'token',
+    })
+
+    const edges = await rpg.getDataFlowEdges()
+    expect(edges).toHaveLength(1)
+    expect(edges[0].source).toBe('domain:auth')
+    expect(edges[0].target).toBe('domain:api')
+    expect(edges[0].dataId).toBe('AuthToken')
+    expect(edges[0].dataType).toBe('token')
+    expect(edges[0].type).toBe('data_flow')
+  })
+
+  it('data flow edges survive serialize → deserialize round-trip', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'test-repo' })
+    await rpg.addHighLevelNode({
+      id: 'domain:auth',
+      feature: { description: 'authentication module' },
+    })
+    await rpg.addHighLevelNode({
+      id: 'domain:api',
+      feature: { description: 'API module' },
+    })
+    await rpg.addDataFlowEdge({
+      source: 'domain:auth',
+      target: 'domain:api',
+      dataId: 'AuthToken',
+      dataType: 'token',
+      transformation: 'encode',
+    })
+
+    const serialized = await rpg.serialize()
+    expect(serialized.dataFlowEdges).toBeDefined()
+    expect(serialized.dataFlowEdges).toHaveLength(1)
+
+    const json = await rpg.toJSON()
+    const restored = await RepositoryPlanningGraph.fromJSON(json)
+
+    const restoredEdges = await restored.getDataFlowEdges()
+    expect(restoredEdges).toHaveLength(1)
+    expect(restoredEdges[0].source).toBe('domain:auth')
+    expect(restoredEdges[0].target).toBe('domain:api')
+    expect(restoredEdges[0].dataId).toBe('AuthToken')
+    expect(restoredEdges[0].dataType).toBe('token')
+    expect(restoredEdges[0].transformation).toBe('encode')
+  })
+
+  it('data flow edges appear in getStats', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'test-repo' })
+    await rpg.addHighLevelNode({
+      id: 'domain:a',
+      feature: { description: 'module a' },
+    })
+    await rpg.addHighLevelNode({
+      id: 'domain:b',
+      feature: { description: 'module b' },
+    })
+    await rpg.addDataFlowEdge({
+      source: 'domain:a',
+      target: 'domain:b',
+      dataId: 'data',
+      dataType: 'import',
+    })
+
+    const stats = await rpg.getStats()
+    expect(stats.dataFlowEdgeCount).toBe(1)
+  })
+
+  it('deserializes legacy from/to format', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'test-repo' })
+    await rpg.addHighLevelNode({
+      id: 'domain:auth',
+      feature: { description: 'authentication module' },
+    })
+    await rpg.addHighLevelNode({
+      id: 'domain:api',
+      feature: { description: 'API module' },
+    })
+
+    // Simulate legacy JSON with from/to fields
+    const legacyJson = JSON.stringify({
+      version: '1.0.0',
+      config: { name: 'test-repo' },
+      nodes: [
+        { id: 'domain:auth', type: 'high_level', feature: { description: 'authentication module' } },
+        { id: 'domain:api', type: 'high_level', feature: { description: 'API module' } },
+      ],
+      edges: [],
+      dataFlowEdges: [
+        { from: 'domain:auth', to: 'domain:api', dataId: 'Token', dataType: 'auth' },
+      ],
+    })
+
+    const restored = await RepositoryPlanningGraph.fromJSON(legacyJson)
+    const edges = await restored.getDataFlowEdges()
+    expect(edges).toHaveLength(1)
+    expect(edges[0].source).toBe('domain:auth')
+    expect(edges[0].target).toBe('domain:api')
+    expect(edges[0].dataId).toBe('Token')
+  })
+
+  it('data flow edges are separate from regular edges in serialization', async () => {
+    const rpg = await RepositoryPlanningGraph.create({ name: 'test-repo' })
+    await rpg.addHighLevelNode({
+      id: 'domain:a',
+      feature: { description: 'module a' },
+    })
+    await rpg.addHighLevelNode({
+      id: 'domain:b',
+      feature: { description: 'module b' },
+    })
+    await rpg.addFunctionalEdge({ source: 'domain:a', target: 'domain:b' })
+    await rpg.addDataFlowEdge({
+      source: 'domain:a',
+      target: 'domain:b',
+      dataId: 'data',
+      dataType: 'import',
+    })
+
+    const serialized = await rpg.serialize()
+    // Regular edges should not include data_flow edges
+    expect(serialized.edges).toHaveLength(1)
+    expect(serialized.edges.every(e => (e as { type: string }).type !== 'data_flow')).toBe(true)
+    // Data flow edges in separate array
+    expect(serialized.dataFlowEdges).toHaveLength(1)
   })
 })

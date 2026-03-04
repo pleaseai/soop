@@ -882,7 +882,7 @@ export class RPGEncoder {
   private parseDataFlowEdges(
     text: string,
     validTreeNames: string[],
-  ): Array<{ from: string, to: string, dataId: string, dataType: string }> {
+  ): Array<{ source: string, target: string, dataId: string, dataType: string }> {
     // Extract from <solution> block
     const solutionMatch = text.match(/<solution>\s*([\s\S]*?)\s*<\/solution>/)
     const content = solutionMatch ? solutionMatch[1] : text
@@ -907,8 +907,8 @@ export class RPGEncoder {
         )
         .filter(e => validNames.has(e.source) && validNames.has(e.target) && e.source !== e.target)
         .map(e => ({
-          from: `domain:${e.source}`,
-          to: `domain:${e.target}`,
+          source: `domain:${e.source}`,
+          target: `domain:${e.target}`,
           dataId: String(e.data_id ?? e.dataId ?? 'data'),
           dataType: Array.isArray(e.data_type)
             ? String(e.data_type[0] ?? 'unknown')
