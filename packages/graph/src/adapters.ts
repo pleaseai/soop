@@ -160,12 +160,17 @@ export function attrsToEdge(source: string, target: string, attrs: EdgeAttrs): E
   }
 
   if (attrs.type === 'data_flow') {
+    if (attrs.df_dataId == null || attrs.df_dataType == null) {
+      console.warn(`attrsToEdge: data_flow edge "${source}→${target}" missing df_dataId or df_dataType in store — possible data corruption`)
+    }
+    const dataId = attrs.df_dataId != null ? String(attrs.df_dataId) : ''
+    const dataType = attrs.df_dataType != null ? String(attrs.df_dataType) : ''
     return {
       source,
       target,
       type: 'data_flow' as const,
-      dataId: attrs.df_dataId as string,
-      dataType: attrs.df_dataType as string,
+      dataId,
+      dataType,
       transformation: (attrs.df_transformation as string) ?? undefined,
       weight: (attrs.weight as number) ?? undefined,
     }

@@ -89,3 +89,4 @@ export interface FileChange {
 
 export const DEFAULT_DRIFT_THRESHOLD = 0.3
 export const DEFAULT_FORCE_REGENERATE_THRESHOLD = 0.5
+export const DEFAULT_CONFIDENCE_THRESHOLD = 0.3

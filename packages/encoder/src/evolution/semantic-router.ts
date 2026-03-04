@@ -7,6 +7,7 @@ import { isHighLevelNode } from '@pleaseai/soop-graph/node'
 import { createLogger } from '@pleaseai/soop-utils/logger'
 import { z } from 'zod/v4'
 import { buildSemanticRoutingPrompt, SemanticRoutingResponseSchema } from './prompts'
+import { DEFAULT_CONFIDENCE_THRESHOLD } from './types'
 
 const log = createLogger('SemanticRouter')
 
@@ -32,7 +33,7 @@ export class SemanticRouter {
     this.rpg = rpg
     this.llmClient = options?.llmClient
     this.embedding = options?.embedding
-    this.confidenceThreshold = options?.confidenceThreshold ?? 0.3
+    this.confidenceThreshold = options?.confidenceThreshold ?? DEFAULT_CONFIDENCE_THRESHOLD
   }
 
   /**
@@ -219,10 +220,10 @@ export class SemanticRouter {
         )
         this.llmCalls++
         if (response?.areaName) {
-          areaName = response.areaName
+          areaName = response.areaName.replace(/[/:\\]/g, '').slice(0, 64) || areaName
         }
         if (response?.subcategory) {
-          subcategory = response.subcategory
+          subcategory = response.subcategory.replace(/[/:\\]/g, '').slice(0, 64) || subcategory
         }
       }
       catch (error) {
@@ -232,6 +233,11 @@ export class SemanticRouter {
           error instanceof Error ? error.message : String(error),
         )
       }
+    }
+    else {
+      log.warn(
+        `createNewArea: no LLM client available, placing entity under default area "NewArea/general". Entity: "${entityFeature.slice(0, 80)}"`,
+      )
     }
 
     // Create the 2-level hierarchy

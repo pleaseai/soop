@@ -121,6 +121,9 @@ export class RPGEvolver {
           embeddingChanges.modified.push(mod.new.id)
         }
         result.prunedNodes += modResult.prunedNodes
+        if (modResult.newAreaCreated) {
+          result.newAreasCreated++
+        }
       }
       catch (error) {
         errors.push({

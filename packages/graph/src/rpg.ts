@@ -490,11 +490,21 @@ export class RepositoryPlanningGraph {
     // Import nodes and edges
     for (const nodeData of parsed.nodes) {
       const node = nodeData as Node
-      await rpg.addNode(node)
+      try {
+        await rpg.addNode(node)
+      }
+      catch (error) {
+        log.warn(`Skipping invalid node "${node.id}" during deserialization: ${error instanceof Error ? error.message : String(error)}`)
+      }
     }
     for (const edgeData of parsed.edges) {
       const edge = edgeData as Edge
-      await rpg.addEdge(edge)
+      try {
+        await rpg.addEdge(edge)
+      }
+      catch (error) {
+        log.warn(`Skipping invalid edge "${edge.source}→${edge.target}" during deserialization: ${error instanceof Error ? error.message : String(error)}`)
+      }
     }
 
     // Import data flow edges with individual validation (supports both legacy from/to and new source/target)
@@ -520,7 +530,7 @@ export class RepositoryPlanningGraph {
           await rpg.addEdge(edge)
         }
         else {
-          log.warn(`Skipping invalid dataFlowEdge during deserialization: ${legacyResult.error.message}`)
+          log.warn(`Skipping invalid dataFlowEdge during deserialization: new-format error: ${newResult.error.message}; legacy-format error: ${legacyResult.error.message}`)
         }
       }
     }

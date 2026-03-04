@@ -144,12 +144,12 @@ export async function insertNode(
     await rpg.addFunctionalEdge({ source: parentId, target: entity.id })
   }
 
-  return { newAreaCreated }
-
   // 5. Inject dependency edges (file-level only)
   if (entity.entityType === 'file' && ctx.astParser) {
     await injectDependencyEdges(rpg, entity, ctx)
   }
+
+  return { newAreaCreated }
 }
 
 /**
@@ -245,7 +245,7 @@ function resolveImportPath(sourceFile: string, modulePath: string): string | nul
  * 3. If drift > threshold: delete + insert (re-route)
  * 4. Else: in-place update
  *
- * Returns: { rerouted: boolean, prunedNodes: number }
+ * Returns: { rerouted: boolean, prunedNodes: number, newAreaCreated: boolean }
  */
 export async function processModification(
   rpg: RepositoryPlanningGraph,
@@ -253,13 +253,13 @@ export async function processModification(
   newEntity: ChangedEntity,
   ctx: OperationContext,
   driftThreshold: number = DEFAULT_DRIFT_THRESHOLD,
-): Promise<{ rerouted: boolean, prunedNodes: number }> {
+): Promise<{ rerouted: boolean, prunedNodes: number, newAreaCreated: boolean }> {
   // Find the existing node (may have line-number-based ID from initial encode)
   const existingNodeId = await findMatchingNode(rpg, oldEntity)
   if (!existingNodeId) {
     // Node not in graph — treat as insertion
-    await insertNode(rpg, newEntity, ctx)
-    return { rerouted: false, prunedNodes: 0 }
+    const insertResult = await insertNode(rpg, newEntity, ctx)
+    return { rerouted: false, prunedNodes: 0, newAreaCreated: insertResult.newAreaCreated }
   }
 
   // 1. Re-extract semantic feature for new version
@@ -281,8 +281,10 @@ export async function processModification(
   // 3. If significant drift: delete + insert (re-route to correct location)
   if (drift > driftThreshold) {
     const prunedNodes = await deleteNode(rpg, existingNodeId)
+    let rerouteNewAreaCreated = false
     try {
-      await insertNode(rpg, newEntity, ctx)
+      const rerouteResult = await insertNode(rpg, newEntity, ctx)
+      rerouteNewAreaCreated = rerouteResult.newAreaCreated
     }
     catch (error) {
       log.error(
@@ -291,7 +293,7 @@ export async function processModification(
       )
       throw error
     }
-    return { rerouted: true, prunedNodes }
+    return { rerouted: true, prunedNodes, newAreaCreated: rerouteNewAreaCreated }
   }
 
   // 4. In-place update (no re-routing needed)
@@ -306,7 +308,7 @@ export async function processModification(
     },
   })
 
-  return { rerouted: false, prunedNodes: 0 }
+  return { rerouted: false, prunedNodes: 0, newAreaCreated: false }
 }
 
 /**
