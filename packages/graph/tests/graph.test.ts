@@ -446,6 +446,7 @@ describe('DataFlowEdge', () => {
 
     const serialized = await rpg.serialize()
     // Regular edges should not include data_flow edges
+    expect(serialized.edges).toHaveLength(1)
     expect(serialized.edges.every(e => (e as { type: string }).type !== 'data_flow')).toBe(true)
     // Data flow edges in separate array
     expect(serialized.dataFlowEdges).toHaveLength(1)

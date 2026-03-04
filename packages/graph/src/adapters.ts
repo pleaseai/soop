@@ -130,7 +130,7 @@ export function edgeToAttrs(edge: Edge): EdgeAttrs {
     const df = edge as DataFlowEdge
     attrs.df_dataId = df.dataId
     attrs.df_dataType = df.dataType
-    if (df.transformation)
+    if (df.transformation != null)
       attrs.df_transformation = df.transformation
   }
   else {

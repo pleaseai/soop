@@ -269,7 +269,7 @@ describe('hierarchyBuilder', () => {
 
     const invalidAssignments = {
       assignments: {
-        Authentication: ['auth'],
+        Authentication: ['auth', 'db'],
       },
     }
 

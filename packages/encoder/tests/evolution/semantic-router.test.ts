@@ -287,13 +287,17 @@ describe('semanticRouter', () => {
     }
 
     const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const router = new SemanticRouter(rpg, { llmClient: mockLLM })
-    const leafId = await router.createNewArea('some feature')
+    try {
+      const router = new SemanticRouter(rpg, { llmClient: mockLLM })
+      const leafId = await router.createNewArea('some feature')
 
-    expect(leafId).toBe('domain:NewArea/general')
-    expect(await rpg.hasNode('domain:NewArea')).toBe(true)
-    expect(await rpg.hasNode('domain:NewArea/general')).toBe(true)
-    consoleSpy.mockRestore()
+      expect(leafId).toBe('domain:NewArea/general')
+      expect(await rpg.hasNode('domain:NewArea')).toBe(true)
+      expect(await rpg.hasNode('domain:NewArea/general')).toBe(true)
+    }
+    finally {
+      consoleSpy.mockRestore()
+    }
   })
 
   it('descends through hierarchy to find best parent', async () => {
