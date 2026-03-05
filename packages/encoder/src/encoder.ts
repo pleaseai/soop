@@ -496,6 +496,13 @@ interface ExtractionResult {
   parseResult: ParseResult
   sourceCode?: string
   relativePath: string
+  /** Deferred file summary data for batch LLM aggregation (Gap 4) */
+  pendingFileSummary?: {
+    fileEntityId: string
+    fileName: string
+    filePath: string
+    childFeatures: SemanticFeature[]
+  }
 }
 
 export class RPGEncoder {
@@ -1060,6 +1067,12 @@ export class RPGEncoder {
       log.info('Repo info: generated/provided')
     }
 
+    // Build repo skeleton once and share with semantic extractor for richer prompts (Gap 1)
+    if (this.llmClient) {
+      const skeleton = await this.buildRepoSkeleton()
+      this.semanticExtractor.setSkeleton(skeleton)
+    }
+
     // Phase 1: Semantic Lifting (including file->child functional edges)
     const warnings: string[] = []
     let files: string[]
@@ -1096,6 +1109,8 @@ export class RPGEncoder {
 
     // Buffer all extraction results for deduplication before adding to graph (Area 5)
     const allExtractionResults: ExtractionResult[] = []
+    // When LLM is available, defer file summaries to batch processing (Gap 4)
+    const deferFileSummary = !!this.llmClient
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]!
@@ -1103,7 +1118,7 @@ export class RPGEncoder {
       log.info(`[${i + 1}/${files.length}] ${displayPath}`)
       let extraction: ExtractionResult
       try {
-        extraction = await this.extractEntities(file)
+        extraction = await this.extractEntities(file, deferFileSummary)
       }
       catch (error) {
         const msg = `Failed to extract ${displayPath}: ${error instanceof Error ? error.message : String(error)}`
@@ -1120,6 +1135,37 @@ export class RPGEncoder {
     }
 
     log.info(`Phase 1 done: ${this.cacheHits} cache hits, ${this.cacheMisses} cache misses`)
+
+    // Batch file summary generation (Gap 4): replace per-file heuristic summaries with LLM batch
+    if (deferFileSummary) {
+      const pendingSummaries = allExtractionResults
+        .filter(r => r.pendingFileSummary !== undefined)
+        .map(r => r.pendingFileSummary!)
+
+      if (pendingSummaries.length > 0) {
+        log.info(`Phase 1 batch: generating file summaries for ${pendingSummaries.length} files...`)
+        try {
+          const batchSummaries = await this.semanticExtractor.aggregateFileFeaturesInBatch(pendingSummaries)
+          for (const result of allExtractionResults) {
+            const pending = result.pendingFileSummary
+            if (!pending)
+              continue
+            const summary = batchSummaries.get(pending.filePath)
+            if (summary) {
+              const fileEntity = result.entities.find(e => e.id === pending.fileEntityId)
+              if (fileEntity) {
+                fileEntity.feature = summary
+              }
+            }
+          }
+        }
+        catch (error) {
+          const msg = `Batch file summary generation failed: ${error instanceof Error ? error.message : String(error)}`
+          log.warn(`${msg}. File summaries will use heuristic.`)
+          warnings.push(msg)
+        }
+      }
+    }
 
     // Collect any LLM fallback warnings from the semantic extractor (e.g. batch failures)
     warnings.push(...this.semanticExtractor.getWarnings())
@@ -1247,9 +1293,13 @@ export class RPGEncoder {
   }
 
   /**
-   * Extract entities (functions, classes) from a file
+   * Extract entities (functions, classes) from a file.
+   *
+   * When deferFileSummary is true (Gap 4), uses a heuristic placeholder for the file-level
+   * summary and returns a pendingFileSummary entry so the caller can batch-aggregate
+   * summaries for all files in a single LLM call after the main loop.
    */
-  private async extractEntities(file: string): Promise<ExtractionResult> {
+  private async extractEntities(file: string, deferFileSummary = false): Promise<ExtractionResult> {
     const extraction = await extractEntitiesFromFile(file, this.repoPath, this.astParser)
     const entities: ExtractedEntity[] = []
 
@@ -1276,18 +1326,39 @@ export class RPGEncoder {
     // Step 3: Aggregate into file-level feature
     const fileId = extraction.fileEntityId
     const fileName = path.basename(extraction.relativePath, path.extname(extraction.relativePath))
-    const fileFeature
-      = directChildFeatures.length > 0
-        ? await this.semanticExtractor.aggregateFileFeatures(
-            directChildFeatures,
-            fileName,
-            extraction.relativePath,
-          )
-        : await this.extractSemanticFeature({
-            type: 'file',
-            name: fileName,
-            filePath: extraction.relativePath,
-          })
+
+    let fileFeature: SemanticFeature
+    let pendingFileSummary: ExtractionResult['pendingFileSummary']
+
+    if (deferFileSummary && directChildFeatures.length > 0) {
+      // Use heuristic as placeholder; the caller will replace with LLM batch result (Gap 4)
+      fileFeature = await this.semanticExtractor.aggregateFileFeatures(
+        directChildFeatures,
+        fileName,
+        extraction.relativePath,
+        /* skipLLM */ true,
+      )
+      pendingFileSummary = {
+        fileEntityId: fileId,
+        fileName,
+        filePath: extraction.relativePath,
+        childFeatures: directChildFeatures,
+      }
+    }
+    else if (directChildFeatures.length > 0) {
+      fileFeature = await this.semanticExtractor.aggregateFileFeatures(
+        directChildFeatures,
+        fileName,
+        extraction.relativePath,
+      )
+    }
+    else {
+      fileFeature = await this.extractSemanticFeature({
+        type: 'file',
+        name: fileName,
+        filePath: extraction.relativePath,
+      })
+    }
 
     entities.push({
       id: fileId,
@@ -1313,6 +1384,7 @@ export class RPGEncoder {
       parseResult: extraction.parseResult,
       sourceCode: extraction.sourceCode,
       relativePath: extraction.relativePath,
+      pendingFileSummary,
     }
   }
 

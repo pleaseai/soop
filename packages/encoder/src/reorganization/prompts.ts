@@ -314,6 +314,7 @@ export function buildBatchClassPrompt(
   repoName: string,
   repoInfo: string,
   classesCode: string,
+  skeleton?: string,
 ): {
   system: string
   user: string
@@ -352,13 +353,11 @@ Example:
   "EdgeSchema": ["define directed edge structure between graph nodes"]
 }`
 
+  const repoContext = buildRepoContext(repoName, repoInfo, skeleton)
+
   const user = `Extract semantic features for all classes in the following source code.
 
-## Repository Context
-Repository: ${repoName}
-${repoInfo}
-
-## Source Code
+${repoContext}## Source Code
 \`\`\`
 ${classesCode}
 \`\`\`
@@ -372,6 +371,7 @@ export function buildBatchFunctionPrompt(
   repoName: string,
   repoInfo: string,
   functionsCode: string,
+  skeleton?: string,
 ): {
   system: string
   user: string
@@ -408,18 +408,176 @@ Example:
   "computeCosineSimilarity": ["compute cosine similarity between two embedding vectors"]
 }`
 
+  const repoContext = buildRepoContext(repoName, repoInfo, skeleton)
+
   const user = `Extract semantic features for all standalone functions in the following source code.
 
-## Repository Context
-Repository: ${repoName}
-${repoInfo}
-
-## Source Code
+${repoContext}## Source Code
 \`\`\`
 ${functionsCode}
 \`\`\`
 
 Analyze every standalone function (not class methods). Return a single JSON object mapping function names to arrays of feature strings.`
+
+  return { system, user }
+}
+
+export function buildBatchTestClassPrompt(
+  repoName: string,
+  repoInfo: string,
+  classesCode: string,
+  skeleton?: string,
+): {
+  system: string
+  user: string
+} {
+  const system = `You are a code analyst extracting semantic feature descriptions from test class definitions.
+
+## Task
+Analyze every test class in the provided source code. For each test class, describe what it tests — not the test mechanics.
+
+## Key Principle
+Focus on the SUBJECT UNDER TEST, not the testing infrastructure.
+- Good: "validate graph node creation", "verify semantic feature extraction"
+- Bad: "test GraphEncoder", "call setUp and tearDown", "assert equals"
+
+## Coverage Rules
+- Include every test class present in the input.
+- For each test class, group its test methods by the core algorithm or feature they exercise.
+- Use the test method names and assertions to infer what functionality is being verified.
+
+## Feature Naming Rules
+- Use verb+object format in lowercase (e.g., "validate token batch processing", "verify schema constraint enforcement").
+- Each feature string must be 3-8 words.
+- Avoid test-specific verbs: do NOT use "test", "assert", "check", "verify", "mock", "stub".
+- Use domain verbs that describe the behavior being tested: "parse", "encode", "validate", "serialize", "traverse", "resolve", etc.
+
+## Output Format
+Return a single JSON object where:
+- Each key is the exact class name as it appears in the source.
+- Each value is either:
+  - An object mapping method names to arrays of feature strings — grouped by the target functionality.
+  - An array of feature strings — for data-only test fixtures.
+
+Example:
+{
+  "GraphEncoderTest": {
+    "testEncodeEmptyRepo": ["encode repository with no source files"],
+    "testEncodeWithClasses": ["extract class semantic features from source"]
+  }
+}`
+
+  const repoContext = buildRepoContext(repoName, repoInfo, skeleton)
+
+  const user = `Extract semantic features for all test classes in the following source code.
+
+${repoContext}## Source Code
+\`\`\`
+${classesCode}
+\`\`\`
+
+Analyze every test class, describing what functionality each test exercises. Return a single JSON object mapping class names to their feature descriptions.`
+
+  return { system, user }
+}
+
+export function buildBatchTestFunctionPrompt(
+  repoName: string,
+  repoInfo: string,
+  functionsCode: string,
+  skeleton?: string,
+): {
+  system: string
+  user: string
+} {
+  const system = `You are a code analyst extracting semantic feature descriptions from test function definitions.
+
+## Task
+Analyze every test function in the provided source code. Describe what each test verifies — not how it tests.
+
+## Key Principle
+Focus on the SUBJECT UNDER TEST, not the testing infrastructure.
+- Good: "validate graph node creation with metadata", "verify LLM fallback on timeout"
+- Bad: "test that function returns true", "call mock and assert"
+
+## Feature Naming Rules
+- Use verb+object format in lowercase (e.g., "validate batch token limit enforcement").
+- Each feature string must be 3-8 words.
+- Avoid test-specific verbs: do NOT use "test", "assert", "mock", "stub", "spy".
+- Use domain verbs: "validate", "verify", "encode", "parse", "traverse", "resolve", "serialize", etc.
+- Provide 1-2 feature strings per function: 1 for simple cases, 2 for multi-scenario tests.
+
+## Output Format
+Return a single JSON object where:
+- Each key is the exact function name as it appears in the source.
+- Each value is an array of 1-2 feature strings describing what is being tested.
+
+Example:
+{
+  "testEncodeEmptyRepo": ["encode repository with no source files"],
+  "testBatchRetryOnMissing": ["retry extraction for missing entities in batch", "recover partial batch results gracefully"]
+}`
+
+  const repoContext = buildRepoContext(repoName, repoInfo, skeleton)
+
+  const user = `Extract semantic features for all test functions in the following source code.
+
+${repoContext}## Source Code
+\`\`\`
+${functionsCode}
+\`\`\`
+
+Analyze every test function, describing what behavior each one exercises. Return a single JSON object mapping function names to arrays of feature strings.`
+
+  return { system, user }
+}
+
+export function buildBatchFileSummaryPrompt(
+  files: Array<{ fileName: string, filePath: string, features: string[] }>,
+  repoName?: string,
+  repoInfo?: string,
+  skeleton?: string,
+): {
+  system: string
+  user: string
+} {
+  const system = `You are a senior software analyst synthesizing file-level summaries from code entity features.
+
+## Task
+For each file, synthesize a single file-level description that captures what the file does as a whole.
+
+## Feature Naming Rules
+- Use verb+object format in lowercase (3-8 words).
+- Avoid vague verbs: do NOT use "handle", "manage", "process", "work with".
+- Use precise domain verbs: "parse", "encode", "validate", "serialize", "traverse", "coordinate", etc.
+- The description must reflect the file's dominant responsibility, not just list its contents.
+
+## Output Format
+Return a single JSON object mapping file paths to their summary objects.
+Each value must have "description" (string) and "keywords" (string array).
+
+Example:
+{
+  "src/utils/parser.ts": {"description": "parse source files into abstract syntax tree", "keywords": ["parser", "ast", "syntax"]},
+  "src/models/graph.ts": {"description": "store and traverse repository planning graph", "keywords": ["graph", "node", "edge"]}
+}`
+
+  const repoContext = buildRepoContext(repoName, repoInfo, skeleton)
+
+  const filesSections = files
+    .map((f) => {
+      const featuresList = f.features.map(feat => `  - ${feat}`).join('\n')
+      return `### ${f.filePath}\nFeatures:\n${featuresList}`
+    })
+    .join('\n\n')
+
+  const user = `Synthesize file-level summaries for the following files.
+
+${repoContext}## Files
+
+${filesSections}
+
+Return a single JSON object mapping each file path to its summary.`
 
   return { system, user }
 }
