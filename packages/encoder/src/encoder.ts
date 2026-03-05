@@ -502,6 +502,8 @@ interface ExtractionResult {
     fileName: string
     filePath: string
     childFeatures: SemanticFeature[]
+    /** Enriched entity info for richer LLM prompts (Gap 4-A) */
+    childEntities: Array<{ name: string, type: string, feature: SemanticFeature }>
   }
 }
 
@@ -1138,18 +1140,16 @@ export class RPGEncoder {
 
     // Batch file summary generation (Gap 4): replace per-file heuristic summaries with LLM batch
     if (deferFileSummary) {
-      const pendingSummaries = allExtractionResults
-        .filter(r => r.pendingFileSummary !== undefined)
-        .map(r => r.pendingFileSummary!)
+      // Pre-filter once to avoid iterating the full list multiple times (perf improvement)
+      const resultsWithPending = allExtractionResults.filter(r => r.pendingFileSummary !== undefined)
 
-      if (pendingSummaries.length > 0) {
+      if (resultsWithPending.length > 0) {
+        const pendingSummaries = resultsWithPending.map(r => r.pendingFileSummary!)
         log.info(`Phase 1 batch: generating file summaries for ${pendingSummaries.length} files...`)
         try {
           const batchSummaries = await this.semanticExtractor.aggregateFileFeaturesInBatch(pendingSummaries)
-          for (const result of allExtractionResults) {
-            const pending = result.pendingFileSummary
-            if (!pending)
-              continue
+          for (const result of resultsWithPending) {
+            const pending = result.pendingFileSummary!
             const summary = batchSummaries.get(pending.filePath)
             if (summary) {
               const fileEntity = result.entities.find(e => e.id === pending.fileEntityId)
@@ -1305,6 +1305,8 @@ export class RPGEncoder {
 
     // Step 1: Extract child entities first (functions, classes, methods)
     const childEntities: ExtractedEntity[] = []
+    // Track entity names alongside extracted entities for enriched file summary prompts (Gap 4-A)
+    const childEntityNames = new Map<ExtractedEntity, string>()
     for (const extracted of extraction.entities) {
       const extractedEntity = await this.convertCodeEntity(
         extracted.codeEntity,
@@ -1314,6 +1316,7 @@ export class RPGEncoder {
       )
       if (extractedEntity) {
         childEntities.push(extractedEntity)
+        childEntityNames.set(extractedEntity, extracted.codeEntity.name)
       }
     }
 
@@ -1322,6 +1325,15 @@ export class RPGEncoder {
     const directChildFeatures: SemanticFeature[] = childEntities
       .filter(e => e.metadata.entityType !== 'method')
       .map(e => e.feature)
+
+    // Build enriched entity list with names and types for Gap 4-A
+    const directChildEntities = childEntities
+      .filter(e => e.metadata.entityType !== 'method')
+      .map(e => ({
+        name: childEntityNames.get(e) ?? '(unknown)',
+        type: e.metadata.entityType,
+        feature: e.feature,
+      }))
 
     // Step 3: Aggregate into file-level feature
     const fileId = extraction.fileEntityId
@@ -1343,6 +1355,7 @@ export class RPGEncoder {
         fileName,
         filePath: extraction.relativePath,
         childFeatures: directChildFeatures,
+        childEntities: directChildEntities,
       }
     }
     else if (directChildFeatures.length > 0) {

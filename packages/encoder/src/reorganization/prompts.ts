@@ -533,7 +533,12 @@ Analyze every test function, describing what behavior each one exercises. Return
 }
 
 export function buildBatchFileSummaryPrompt(
-  files: Array<{ fileName: string, filePath: string, features: string[] }>,
+  files: Array<{
+    fileName: string
+    filePath: string
+    features: string[]
+    childEntities?: Array<{ name: string, type: string, feature: { description: string, subFeatures?: string[] } }>
+  }>,
   repoName?: string,
   repoInfo?: string,
   skeleton?: string,
@@ -566,6 +571,18 @@ Example:
 
   const filesSections = files
     .map((f) => {
+      // Gap 4-A: if enriched entity info is available, format as entity-name -> features map
+      // (mirrors Python summarize_file_batch feature_map format)
+      if (f.childEntities && f.childEntities.length > 0) {
+        const entityLines = f.childEntities.map((e) => {
+          const featureList = [e.feature.description, ...(e.feature.subFeatures ?? [])]
+            .map(feat => `    - ${feat}`)
+            .join('\n')
+          return `  ${e.type} ${e.name}:\n${featureList}`
+        }).join('\n')
+        return `### ${f.filePath}\nEntities:\n${entityLines}`
+      }
+      // Fallback: flat features list (when childEntities not provided)
       const featuresList = f.features.map(feat => `  - ${feat}`).join('\n')
       return `### ${f.filePath}\nFeatures:\n${featuresList}`
     })
