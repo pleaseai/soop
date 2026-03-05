@@ -222,6 +222,32 @@ import { DefaultContextStore } from '@pleaseai/soop-store/default-context-store'
 - **consola**: Structured logging with log levels and tagged output
 - **vitest**: Testing framework (Jest-compatible, for MCP compatibility)
 
+## Reference Implementation
+
+`vendor/RPG-ZeroRepo/` contains the **official Python reference implementation** by the paper authors (MIT license). It is tracked as a git submodule and kept read-only — do not modify it.
+
+### What it is
+
+- Language: Python 3.11+
+- Entry point: `main.py` → `zerorepo/` package
+- Config: `configs/zerorepo_config.yaml` (LLM provider, Docker, trae-agent settings)
+- Pipeline (3 phases):
+  1. **Property Level** (`zerorepo/rpg_gen/prop_level/`) — `FeatureSelectAgent` + `FeatureRefactorAgent` → feature tree → components
+  2. **Implementation Level** (`zerorepo/rpg_gen/impl_level/`) — `FileDesigner` + `FuncDesigner` + `TaskPlanner` → RPG graph + task batches
+  3. **Code Generation** (`zerorepo/code_gen/`) — `IterativeCodeGenerator` runs trae-agent inside Docker with TDD loop (test → implement → run → fix)
+
+### How our TypeScript implementation relates
+
+| Aspect | Reference (Python) | This project (TypeScript/Bun) |
+|--------|-------------------|-------------------------------|
+| ZeroRepo pipeline | `zerorepo/` | `packages/zerorepo/` |
+| RPG graph | `checkpoints/global_repo_rpg.json` | `packages/graph/` (`RepositoryPlanningGraph`) |
+| Encoder | Not yet open-sourced | `packages/encoder/` |
+| Storage | JSON checkpoints | `packages/store/` (SQLite, SurrealDB, LanceDB) |
+| Code gen agent | trae-agent (Docker) | Planned (Claude Code / Codex CLI) |
+
+When implementing new features, **always check the reference implementation first** for algorithm details, intermediate file schemas, and agent prompt designs.
+
 ## Reference Papers
 
 - RPG-ZeroRepo: https://arxiv.org/abs/2509.16198
