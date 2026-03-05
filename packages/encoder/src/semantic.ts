@@ -2,8 +2,15 @@ import type { ClaudeCodeSettings, CodexCliSettings, LLMProvider } from '@pleasea
 import { SemanticFeatureSchema as NodeSemanticFeatureSchema } from '@pleaseai/soop-graph/node'
 import { LLMClient } from '@pleaseai/soop-utils/llm'
 import { createLogger } from '@pleaseai/soop-utils/logger'
+import { Memory } from '@pleaseai/soop-utils/memory'
 import { z } from 'zod/v4'
-import { buildBatchClassPrompt, buildBatchFunctionPrompt } from './reorganization/prompts'
+import {
+  buildBatchClassPrompt,
+  buildBatchFileSummaryPrompt,
+  buildBatchFunctionPrompt,
+  buildBatchTestClassPrompt,
+  buildBatchTestFunctionPrompt,
+} from './reorganization/prompts'
 import { estimateEntityTokens } from './token-counter'
 
 const log = createLogger('SemanticExtractor')
@@ -38,6 +45,8 @@ export interface SemanticOptions {
   repoInfo?: string
   /** Maximum concurrent batch LLM requests (default: 4) */
   maxConcurrentBatches?: number
+  /** Repository directory skeleton (for richer batch prompts) */
+  skeleton?: string
 }
 
 /**
@@ -101,11 +110,28 @@ async function runConcurrent<T>(tasks: (() => Promise<T>)[], limit: number): Pro
 }
 
 /**
+ * Detect whether a file path belongs to a test file.
+ * Used to route test entities to test-specific prompts (Gap 3).
+ */
+function isTestFile(filePath: string): boolean {
+  const lower = filePath.toLowerCase()
+  return (
+    lower.includes('.test.')
+    || lower.includes('.spec.')
+    || lower.includes('__tests__')
+    || lower.includes('/test/')
+    || lower.includes('/tests/')
+    || lower.startsWith('test/')
+    || lower.startsWith('tests/')
+  )
+}
+
+/**
  * Semantic extractor using LLM or heuristics
  */
 export class SemanticExtractor {
   private readonly llmClient?: LLMClient
-  private readonly options: SemanticOptions
+  private options: SemanticOptions
   private readonly warnings: string[] = []
 
   constructor(options: SemanticOptions = {}) {
@@ -140,6 +166,14 @@ export class SemanticExtractor {
    */
   getLLMClient(): LLMClient | undefined {
     return this.llmClient
+  }
+
+  /**
+   * Set the repository skeleton for use in batch extraction prompts.
+   * Call this after the skeleton is built (async) before batch extraction starts.
+   */
+  setSkeleton(skeleton: string): void {
+    this.options = { ...this.options, skeleton }
   }
 
   /**
@@ -197,14 +231,26 @@ export class SemanticExtractor {
 
     // Process if LLM is available
     if (this.llmClient) {
-      // Process class groups with batch LLM
-      if (classGroups.length > 0) {
-        await this.processClassGroupBatches(classGroups, inputs, resultMap)
+      // Split class groups into regular and test (Gap 3)
+      const testClassGroups = classGroups.filter(g => isTestFile(g.classEntity.filePath))
+      const regularClassGroups = classGroups.filter(g => !isTestFile(g.classEntity.filePath))
+
+      if (regularClassGroups.length > 0) {
+        await this.processClassGroupBatches(regularClassGroups, inputs, resultMap, false)
+      }
+      if (testClassGroups.length > 0) {
+        await this.processClassGroupBatches(testClassGroups, inputs, resultMap, true)
       }
 
-      // Process standalone functions with batch LLM
-      if (functionEntities.length > 0) {
-        await this.processFunctionBatches(functionEntities, inputs, resultMap)
+      // Split standalone functions into regular and test (Gap 3)
+      const testFunctionEntities = functionEntities.filter(e => isTestFile(e.filePath))
+      const regularFunctionEntities = functionEntities.filter(e => !isTestFile(e.filePath))
+
+      if (regularFunctionEntities.length > 0) {
+        await this.processFunctionBatches(regularFunctionEntities, inputs, resultMap, false)
+      }
+      if (testFunctionEntities.length > 0) {
+        await this.processFunctionBatches(testFunctionEntities, inputs, resultMap, true)
       }
     }
 
@@ -222,27 +268,35 @@ export class SemanticExtractor {
   }
 
   /**
-   * Process class groups using token-aware batching and parallel LLM calls
+   * Process class groups using token-aware batching and parallel LLM calls.
+   * Uses conversational follow-up (Gap 2) on retry iterations instead of full re-prompting.
+   * Routes test classes to test-specific prompts (Gap 3) when isTest=true.
    */
   private async processClassGroupBatches(
     classGroups: ClassGroup[],
     allInputs: EntityInput[],
     resultMap: Map<number, SemanticFeature>,
+    isTest = false,
   ): Promise<void> {
     const batches = this.createClassGroupBatches(classGroups)
     const maxConcurrent = this.options.maxConcurrentBatches ?? 4
     const maxIterations = this.options.maxParseIterations ?? 3
 
-    log.debug(`Processing ${classGroups.length} class groups in ${batches.length} batches (concurrency: ${maxConcurrent})`)
+    log.debug(`Processing ${classGroups.length} class groups in ${batches.length} batches (concurrency: ${maxConcurrent}, isTest: ${isTest})`)
 
     const tasks = batches.map(batch => async () => {
       let pendingGroups = batch
       let iteration = 0
+      let conversationMemory: Memory | undefined
 
       while (pendingGroups.length > 0 && iteration < maxIterations) {
         iteration++
         try {
-          const batchResult = await this.extractClassBatch(pendingGroups)
+          const { result: batchResult, memory: newMemory } = await this.extractClassBatch(
+            pendingGroups,
+            { memory: conversationMemory, isTest },
+          )
+          conversationMemory = newMemory
           const stillMissing: ClassGroup[] = []
 
           for (const group of pendingGroups) {
@@ -311,42 +365,63 @@ export class SemanticExtractor {
   /**
    * Extract features for a batch of class groups using LLM.
    * Returns a map: className -> (Map<methodName | CLASS_FEATURE_KEY, SemanticFeature> | SemanticFeature)
+   * plus the Memory object for conversational follow-up on retry (Gap 2).
+   *
+   * On first call (options.memory undefined): builds a full prompt and creates new Memory.
+   * On retry call (options.memory provided): adds a targeted follow-up message instead of
+   * re-sending all the code — the LLM already has context from the prior turn.
    */
   private async extractClassBatch(
     classGroups: ClassGroup[],
-  ): Promise<Map<string, Map<string, SemanticFeature> | SemanticFeature>> {
+    options?: { memory?: Memory, isTest?: boolean },
+  ): Promise<{ result: Map<string, Map<string, SemanticFeature> | SemanticFeature>, memory: Memory }> {
     const result = new Map<string, Map<string, SemanticFeature> | SemanticFeature>()
+    let memory = options?.memory
 
-    // Build combined source code for all class groups
-    const codeBlocks: string[] = []
-    for (const { classEntity, methodEntities } of classGroups) {
-      if (classEntity.sourceCode) {
-        codeBlocks.push(classEntity.sourceCode)
-      }
-      else if (methodEntities.length > 0) {
-        const parts = [`class ${classEntity.name} {`]
-        for (const method of methodEntities) {
-          if (method.sourceCode) {
-            parts.push(`  ${method.sourceCode}`)
-          }
+    if (!memory) {
+      // First call: build combined source code and create fresh Memory
+      const codeBlocks: string[] = []
+      for (const { classEntity, methodEntities } of classGroups) {
+        if (classEntity.sourceCode) {
+          codeBlocks.push(classEntity.sourceCode)
         }
-        parts.push('}')
-        codeBlocks.push(parts.join('\n'))
+        else if (methodEntities.length > 0) {
+          const parts = [`class ${classEntity.name} {`]
+          for (const method of methodEntities) {
+            if (method.sourceCode) {
+              parts.push(`  ${method.sourceCode}`)
+            }
+          }
+          parts.push('}')
+          codeBlocks.push(parts.join('\n'))
+        }
       }
+
+      if (codeBlocks.length === 0) {
+        return { result, memory: new Memory({ contextWindow: 0 }) }
+      }
+
+      const repoName = this.options.repoName ?? 'unknown'
+      const repoInfo = this.options.repoInfo ?? ''
+      const classesCode = codeBlocks.join('\n\n')
+      const skeleton = this.options.skeleton
+
+      const buildFn = options?.isTest ? buildBatchTestClassPrompt : buildBatchClassPrompt
+      const { system, user } = buildFn(repoName, repoInfo, classesCode, skeleton)
+
+      memory = new Memory({ contextWindow: 0 })
+      memory.addSystem(system)
+      memory.addUser(user)
     }
-
-    if (codeBlocks.length === 0) {
-      return result
+    else {
+      // Retry call: add targeted follow-up listing only the missing entities (Gap 2)
+      const followUpMsg = this.buildClassFollowUpMessage(classGroups)
+      memory.addUser(followUpMsg)
     }
-
-    const repoName = this.options.repoName ?? 'unknown'
-    const repoInfo = this.options.repoInfo ?? ''
-    const classesCode = codeBlocks.join('\n\n')
-
-    const { system, user } = buildBatchClassPrompt(repoName, repoInfo, classesCode)
 
     try {
-      const llmResponse = await this.llmClient!.complete(user, system)
+      const llmResponse = await this.llmClient!.generate(memory)
+      memory.addAssistant(llmResponse.content)
       const parsed = this.parseBatchResponse(llmResponse.content)
 
       for (const { classEntity, methodEntities } of classGroups) {
@@ -402,31 +477,66 @@ export class SemanticExtractor {
       log.warn(`Class batch LLM call failed: ${msg}`)
     }
 
-    return result
+    return { result, memory }
   }
 
   /**
-   * Process standalone functions using token-aware batching and parallel LLM calls
+   * Build a targeted follow-up message listing only the missing class/method entries.
+   * Used on retry iterations (Gap 2) to avoid re-sending all the code.
+   */
+  private buildClassFollowUpMessage(pendingGroups: ClassGroup[]): string {
+    const lines: string[] = [
+      'The following entries were missing from your previous response.',
+      'Please provide features for ONLY these missing entries:',
+    ]
+
+    for (const { classEntity, methodEntities } of pendingGroups) {
+      if (methodEntities.length === 0) {
+        lines.push(`- Class "${classEntity.name}" is missing entirely`)
+      }
+      else {
+        const methodNames = methodEntities.map(m => m.name).join(', ')
+        lines.push(`- Class "${classEntity.name}" is missing methods: ${methodNames}`)
+      }
+    }
+
+    lines.push('\nReturn a JSON object containing only these missing entries.')
+    return lines.join('\n')
+  }
+
+  /**
+   * Process standalone functions using token-aware batching and parallel LLM calls.
+   * Uses conversational follow-up (Gap 2) on retry iterations instead of full re-prompting.
+   * Routes test functions to test-specific prompts (Gap 3) when isTest=true.
    */
   private async processFunctionBatches(
     functionEntities: EntityInput[],
     allInputs: EntityInput[],
     resultMap: Map<number, SemanticFeature>,
+    isTest = false,
   ): Promise<void> {
     const batches = this.createTokenAwareBatches(functionEntities)
     const maxConcurrent = this.options.maxConcurrentBatches ?? 4
     const maxIterations = this.options.maxParseIterations ?? 3
 
-    log.debug(`Processing ${functionEntities.length} functions in ${batches.length} batches (concurrency: ${maxConcurrent})`)
+    log.debug(`Processing ${functionEntities.length} functions in ${batches.length} batches (concurrency: ${maxConcurrent}, isTest: ${isTest})`)
 
     const tasks = batches.map(batch => async () => {
       let pendingFunctions = batch
       let iteration = 0
+      let conversationMemory: Memory | undefined
+      const alreadyParsedNames: string[] = []
+      let prevInvalidKeys: string[] = []
 
       while (pendingFunctions.length > 0 && iteration < maxIterations) {
         iteration++
         try {
-          const batchResult = await this.extractFunctionBatch(pendingFunctions)
+          const { result: batchResult, memory: newMemory, invalidKeys } = await this.extractFunctionBatch(
+            pendingFunctions,
+            { memory: conversationMemory, isTest, alreadyParsedNames, prevInvalidKeys },
+          )
+          conversationMemory = newMemory
+          prevInvalidKeys = invalidKeys
           const stillMissing: EntityInput[] = []
 
           for (const funcEntity of pendingFunctions) {
@@ -436,6 +546,7 @@ export class SemanticExtractor {
               if (idx !== -1) {
                 resultMap.set(idx, feature)
               }
+              alreadyParsedNames.push(funcEntity.name)
             }
             else if (iteration < maxIterations) {
               stillMissing.push(funcEntity)
@@ -459,29 +570,66 @@ export class SemanticExtractor {
   /**
    * Extract features for a batch of standalone functions using LLM.
    * Returns a map: EntityInput -> SemanticFeature (keyed by entity reference to avoid name collisions)
+   * plus the Memory object for conversational follow-up on retry (Gap 2).
+   *
+   * On first call (options.memory undefined): builds a full prompt and creates new Memory.
+   * On retry call (options.memory provided): adds a targeted follow-up message listing missing functions.
    */
   private async extractFunctionBatch(
     functionEntities: EntityInput[],
-  ): Promise<Map<EntityInput, SemanticFeature>> {
+    options?: {
+      memory?: Memory
+      isTest?: boolean
+      /** Names already successfully parsed in previous iterations (Gap 2-A) */
+      alreadyParsedNames?: string[]
+      /** Invalid keys returned by the model in the previous iteration (Gap 2-B) */
+      prevInvalidKeys?: string[]
+    },
+  ): Promise<{ result: Map<EntityInput, SemanticFeature>, memory: Memory, invalidKeys: string[] }> {
     const result = new Map<EntityInput, SemanticFeature>()
+    let memory = options?.memory
 
-    const codeBlocks = functionEntities
-      .filter(e => e.sourceCode)
-      .map(e => e.sourceCode!)
+    if (!memory) {
+      // First call: build fresh prompt with source code
+      const codeBlocks = functionEntities
+        .filter(e => e.sourceCode)
+        .map(e => e.sourceCode!)
 
-    if (codeBlocks.length === 0) {
-      return result
+      if (codeBlocks.length === 0) {
+        return { result, memory: new Memory({ contextWindow: 0 }), invalidKeys: [] }
+      }
+
+      const repoName = this.options.repoName ?? 'unknown'
+      const repoInfo = this.options.repoInfo ?? ''
+      const functionsCode = codeBlocks.join('\n\n')
+      const skeleton = this.options.skeleton
+
+      const buildFn = options?.isTest ? buildBatchTestFunctionPrompt : buildBatchFunctionPrompt
+      const { system, user } = buildFn(repoName, repoInfo, functionsCode, skeleton)
+
+      memory = new Memory({ contextWindow: 0 })
+      memory.addSystem(system)
+      memory.addUser(user)
+    }
+    else {
+      // Retry call: add targeted follow-up with already-parsed context and invalid keys (Gap 2-A, 2-B)
+      const followUpMsg = this.buildFunctionFollowUpMessage(
+        functionEntities,
+        options?.alreadyParsedNames ?? [],
+        options?.prevInvalidKeys ?? [],
+      )
+      memory.addUser(followUpMsg)
     }
 
-    const repoName = this.options.repoName ?? 'unknown'
-    const repoInfo = this.options.repoInfo ?? ''
-    const functionsCode = codeBlocks.join('\n\n')
-
-    const { system, user } = buildBatchFunctionPrompt(repoName, repoInfo, functionsCode)
-
+    let invalidKeys: string[] = []
     try {
-      const llmResponse = await this.llmClient!.complete(user, system)
+      const llmResponse = await this.llmClient!.generate(memory)
+      memory.addAssistant(llmResponse.content)
       const parsed = this.parseBatchResponse(llmResponse.content)
+
+      // Detect keys in the response that are not valid function names (Gap 2-B)
+      const validNames = new Set(functionEntities.map(e => e.name))
+      invalidKeys = Object.keys(parsed).filter(k => !validNames.has(k))
 
       for (const funcEntity of functionEntities) {
         const funcData = parsed[funcEntity.name]
@@ -497,7 +645,34 @@ export class SemanticExtractor {
       log.warn(`Function batch LLM call failed: ${msg}`)
     }
 
-    return result
+    return { result, memory: memory!, invalidKeys }
+  }
+
+  /**
+   * Build a targeted follow-up message listing only the missing function entries.
+   * Mirrors Python semantic_parsing.py:803-811 (Gap 2-A, 2-B):
+   * - includes already-parsed function names for context
+   * - includes invalid key names from the previous response to correct the model
+   */
+  private buildFunctionFollowUpMessage(
+    pendingFunctions: EntityInput[],
+    alreadyParsedNames: string[],
+    prevInvalidKeys: string[],
+  ): string {
+    const pendingNames = pendingFunctions.map(f => f.name).join(', ')
+    const lines: string[] = []
+
+    if (alreadyParsedNames.length > 0) {
+      lines.push(`So far, you've extracted features for: ${alreadyParsedNames.join(', ')}.`)
+    }
+    lines.push(`Functions not yet parsed: ${pendingNames}.`)
+    lines.push('Please provide feature lists exclusively for the functions that are still not parsed.')
+
+    if (prevInvalidKeys.length > 0) {
+      lines.push(`\nYou also included invalid function names: ${prevInvalidKeys.join(', ')}. Ignore any invalid names and only use the function names listed above.`)
+    }
+
+    return lines.join('\n')
   }
 
   /**
@@ -545,8 +720,8 @@ export class SemanticExtractor {
       return this.extractWithHeuristic({ type: entityType, name: entityName, filePath })
     }
 
-    const primaryDescription = features[0]!
-    const subFeatures = features.slice(1).filter(f => f.length > 0)
+    const primaryDescription = features[0]!.replace(/\//g, ' or ')
+    const subFeatures = features.slice(1).filter(f => f.length > 0).map(f => f.replace(/\//g, ' or '))
 
     const validated = this.validateFeatureName(primaryDescription)
     const validatedSubFeatures = [
@@ -707,11 +882,15 @@ export class SemanticExtractor {
    *
    * Synthesizes function/class-level features into a coherent file-level description.
    * Only considers direct children (functions/classes at file level), not nested methods.
+   *
+   * When skipLLM is true (Gap 4 deferred mode), always uses the heuristic so the caller
+   * can replace the result with a batch LLM summary later.
    */
   async aggregateFileFeatures(
     childFeatures: SemanticFeature[],
     fileName: string,
     filePath: string,
+    skipLLM = false,
   ): Promise<SemanticFeature> {
     if (childFeatures.length === 0) {
       const humanName = this.humanizeName(fileName)
@@ -721,7 +900,7 @@ export class SemanticExtractor {
       }
     }
 
-    if (this.llmClient) {
+    if (this.llmClient && !skipLLM) {
       try {
         return await this.aggregateWithLLM(childFeatures, fileName, filePath)
       }
@@ -734,6 +913,220 @@ export class SemanticExtractor {
     }
 
     return this.aggregateWithHeuristic(childFeatures, fileName)
+  }
+
+  /**
+   * Aggregate multiple files' child features into file-level summaries using batched LLM calls (Gap 4).
+   *
+   * Improvements over the initial implementation:
+   * - 4-A: includes entity names/types in the LLM prompt for richer context (mirrors Python feature_map format)
+   * - 4-B: splits files into token-aware batches and processes them in parallel
+   * - 4-C: uses Memory-based conversational retry for missing files within each batch
+   *
+   * Returns a map of filePath -> SemanticFeature. Falls back to heuristic for any file
+   * that does not get an LLM result.
+   */
+  async aggregateFileFeaturesInBatch(
+    files: Array<{
+      fileName: string
+      filePath: string
+      childFeatures: SemanticFeature[]
+      /** Enriched entity view with name/type for more informative LLM prompts (Gap 4-A) */
+      childEntities?: Array<{ name: string, type: string, feature: SemanticFeature }>
+    }>,
+  ): Promise<Map<string, SemanticFeature>> {
+    const resultMap = new Map<string, SemanticFeature>()
+
+    const filesToProcess = files.filter(f => f.childFeatures.length > 0)
+    const emptyFiles = files.filter(f => f.childFeatures.length === 0)
+
+    // Use heuristic for files with no child features
+    for (const f of emptyFiles) {
+      const humanName = this.humanizeName(f.fileName)
+      resultMap.set(f.filePath, {
+        description: `define ${humanName} module`,
+        keywords: [f.fileName.toLowerCase()],
+      })
+    }
+
+    if (!this.llmClient || filesToProcess.length === 0) {
+      for (const f of filesToProcess) {
+        resultMap.set(f.filePath, this.aggregateWithHeuristic(f.childFeatures, f.fileName))
+      }
+      return resultMap
+    }
+
+    // Gap 4-B: split files into token-aware batches for parallel processing
+    const batches = this.createFileSummaryBatches(filesToProcess)
+    log.debug(`File summary batch: ${filesToProcess.length} files split into ${batches.length} batches`)
+
+    const maxConcurrent = this.options.maxConcurrentBatches ?? 4
+    const batchTasks = batches.map(batch => () => this.runFileSummaryBatch(batch, resultMap))
+    await runConcurrent(batchTasks, maxConcurrent)
+
+    // Fallback to heuristic for any file that didn't get an LLM result
+    for (const f of filesToProcess) {
+      if (!resultMap.has(f.filePath)) {
+        resultMap.set(f.filePath, this.aggregateWithHeuristic(f.childFeatures, f.fileName))
+      }
+    }
+
+    return resultMap
+  }
+
+  /**
+   * Estimate the token cost of a single file's feature data for batching.
+   * Counts characters across all feature strings and divides by 4 (chars-per-token estimate).
+   */
+  private estimateFileSummaryTokens(f: {
+    childFeatures: SemanticFeature[]
+    childEntities?: Array<{ name: string, type: string, feature: SemanticFeature }>
+  }): number {
+    const texts: string[] = []
+    if (f.childEntities && f.childEntities.length > 0) {
+      for (const e of f.childEntities) {
+        texts.push(e.name, e.type, e.feature.description, ...(e.feature.subFeatures ?? []))
+      }
+    }
+    else {
+      for (const feat of f.childFeatures) {
+        texts.push(feat.description, ...(feat.subFeatures ?? []))
+      }
+    }
+    const totalChars = texts.reduce((sum, t) => sum + t.length, 0)
+    return Math.ceil(totalChars / 4) + 50 // 50 tokens overhead per file entry
+  }
+
+  /**
+   * Split files into token-aware batches for file summary generation (Gap 4-B).
+   * Mirrors Python _make_file_summary_batches() with min=1000/max=8000 token defaults.
+   */
+  private createFileSummaryBatches<T extends { childFeatures: SemanticFeature[], childEntities?: Array<{ name: string, type: string, feature: SemanticFeature }> }>(
+    files: T[],
+  ): T[][] {
+    const SUMMARY_MIN_BATCH_TOKENS = 1000
+    const SUMMARY_MAX_BATCH_TOKENS = 8000
+
+    const batches: T[][] = []
+    let currentBatch: T[] = []
+    let currentTokens = 0
+
+    for (const f of files) {
+      const tokens = this.estimateFileSummaryTokens(f)
+
+      if (currentBatch.length > 0 && currentTokens + tokens > SUMMARY_MAX_BATCH_TOKENS) {
+        batches.push(currentBatch)
+        currentBatch = [f]
+        currentTokens = tokens
+      }
+      else {
+        currentBatch.push(f)
+        currentTokens += tokens
+      }
+    }
+
+    if (currentBatch.length > 0) {
+      batches.push(currentBatch)
+    }
+
+    // Merge last batch into previous if it is too small (mirrors min-batch logic)
+    if (batches.length > 1) {
+      const last = batches[batches.length - 1]!
+      const lastTokens = last.reduce((s, f) => s + this.estimateFileSummaryTokens(f), 0)
+      const prev = batches[batches.length - 2]!
+      const prevTokens = prev.reduce((s, f) => s + this.estimateFileSummaryTokens(f), 0)
+      if (lastTokens < SUMMARY_MIN_BATCH_TOKENS && prevTokens + lastTokens <= SUMMARY_MAX_BATCH_TOKENS) {
+        prev.push(...last)
+        batches.pop()
+      }
+    }
+
+    return batches
+  }
+
+  /**
+   * Run a single file-summary batch with Memory-based retry for missing files (Gap 4-C).
+   * Mirrors Python summarize_file_batch() conversational retry logic.
+   */
+  private async runFileSummaryBatch(
+    batch: Array<{
+      fileName: string
+      filePath: string
+      childFeatures: SemanticFeature[]
+      childEntities?: Array<{ name: string, type: string, feature: SemanticFeature }>
+    }>,
+    resultMap: Map<string, SemanticFeature>,
+  ): Promise<void> {
+    const MAX_SUMMARY_ITERATIONS = 3
+
+    // Build prompt entries using enriched entity names when available (Gap 4-A)
+    const summaryFiles = batch.map(f => ({
+      fileName: f.fileName,
+      filePath: f.filePath,
+      features: f.childFeatures.map((feat) => {
+        const sub = feat.subFeatures?.length ? ` (also: ${feat.subFeatures.join(', ')})` : ''
+        return `${feat.description}${sub}`
+      }),
+      childEntities: f.childEntities,
+    }))
+
+    const { system, user } = buildBatchFileSummaryPrompt(
+      summaryFiles,
+      this.options.repoName,
+      this.options.repoInfo,
+      this.options.skeleton,
+    )
+
+    const memory = new Memory({ contextWindow: 0 })
+    memory.addSystem(system)
+    memory.addUser(user)
+
+    for (let iteration = 1; iteration <= MAX_SUMMARY_ITERATIONS; iteration++) {
+      try {
+        const llmResponse = await this.llmClient!.generate(memory)
+        memory.addAssistant(llmResponse.content)
+        const parsed = this.parseBatchResponse(llmResponse.content)
+
+        for (const f of batch) {
+          if (resultMap.has(f.filePath))
+            continue
+          const fileData = parsed[f.filePath] as unknown
+          if (fileData && typeof fileData === 'object' && 'description' in fileData && typeof (fileData as Record<string, unknown>).description === 'string') {
+            const raw = fileData as Record<string, unknown>
+            const description = raw.description as string
+            const keywords = Array.isArray(raw.keywords)
+              ? (raw.keywords as unknown[]).filter((k): k is string => typeof k === 'string')
+              : undefined
+            const validated = this.validateFeatureName(description)
+            resultMap.set(f.filePath, {
+              description: validated.description,
+              subFeatures: validated.subFeatures,
+              keywords: keywords?.map(k => k.toLowerCase().trim()).filter(k => k.length > 0)
+                ?? this.mergeKeywords(f.childFeatures, f.fileName),
+            })
+          }
+        }
+      }
+      catch (error) {
+        const msg = error instanceof Error ? error.message : String(error)
+        const warning = `Batch file summary LLM call (iteration ${iteration}/${MAX_SUMMARY_ITERATIONS}) failed: ${msg}. Falling back to heuristic.`
+        this.warnings.push(`[SemanticExtractor] ${warning}`)
+        log.warn(warning)
+        break
+      }
+
+      // Gap 4-C: identify missing files and send follow-up if needed
+      const missingPaths = batch.filter(f => !resultMap.has(f.filePath)).map(f => f.filePath)
+      if (missingPaths.length === 0 || iteration === MAX_SUMMARY_ITERATIONS)
+        break
+
+      const followUp = [
+        `You missed the following files: ${JSON.stringify(missingPaths)}`,
+        'Please provide summaries for these files only.',
+        'Return a JSON object mapping each missed file path to its summary.',
+      ].join('\n')
+      memory.addUser(followUp)
+    }
   }
 
   /**
