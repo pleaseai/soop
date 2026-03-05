@@ -1091,8 +1091,12 @@ export class SemanticExtractor {
           if (resultMap.has(f.filePath))
             continue
           const fileData = parsed[f.filePath] as unknown
-          if (fileData && typeof fileData === 'object' && 'description' in fileData) {
-            const { description, keywords } = fileData as { description: string, keywords?: string[] }
+          if (fileData && typeof fileData === 'object' && 'description' in fileData && typeof (fileData as Record<string, unknown>).description === 'string') {
+            const raw = fileData as Record<string, unknown>
+            const description = raw.description as string
+            const keywords = Array.isArray(raw.keywords)
+              ? (raw.keywords as unknown[]).filter((k): k is string => typeof k === 'string')
+              : undefined
             const validated = this.validateFeatureName(description)
             resultMap.set(f.filePath, {
               description: validated.description,
