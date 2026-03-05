@@ -55,8 +55,11 @@ describe('composite key collision prevention', () => {
 
       await (extractor as any).extractFunctionBatch([funcA], {})
 
-      // Verify LLM was called - the prompt would contain the file path comment
+      // Verify LLM was called with a prompt containing the file path comment
       expect(mockGenerate).toHaveBeenCalledOnce()
+      const memoryArg = mockGenerate.mock.calls[0][0]
+      const userPrompt = memoryArg.toMessages().find((m: any) => m.role === 'user')?.content
+      expect(userPrompt).toContain('// file: src/foo.ts')
     })
 
     it('uses composite keys in follow-up message for pending functions', () => {
@@ -218,8 +221,11 @@ describe('composite key collision prevention', () => {
         { memory: undefined, isTest: false },
       )
 
-      // Verify LLM was called - the prompt would contain the file path comment
+      // Verify LLM was called with a prompt containing the file path comment
       expect(mockGenerate).toHaveBeenCalledOnce()
+      const memoryArg = mockGenerate.mock.calls[0][0]
+      const userPrompt = memoryArg.toMessages().find((m: any) => m.role === 'user')?.content
+      expect(userPrompt).toContain('// file: src/core/builder.ts')
     })
   })
 

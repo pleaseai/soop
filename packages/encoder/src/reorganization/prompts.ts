@@ -362,7 +362,7 @@ ${repoContext}## Source Code
 ${classesCode}
 \`\`\`
 
-Analyze every class and every method. Return a single JSON object mapping class names to their feature descriptions.`
+Analyze every class and every method. Return a single JSON object mapping composite keys (filePath::className) to their feature descriptions.`
 
   return { system, user }
 }
@@ -417,7 +417,7 @@ ${repoContext}## Source Code
 ${functionsCode}
 \`\`\`
 
-Analyze every standalone function (not class methods). Return a single JSON object mapping function names to arrays of feature strings.`
+Analyze every standalone function (not class methods). Return a single JSON object mapping composite keys (filePath::functionName) to arrays of feature strings.`
 
   return { system, user }
 }
@@ -476,7 +476,7 @@ ${repoContext}## Source Code
 ${classesCode}
 \`\`\`
 
-Analyze every test class, describing what functionality each test exercises. Return a single JSON object mapping class names to their feature descriptions.`
+Analyze every test class, describing what functionality each test exercises. Return a single JSON object mapping composite keys (filePath::className) to their feature descriptions.`
 
   return { system, user }
 }
@@ -527,7 +527,7 @@ ${repoContext}## Source Code
 ${functionsCode}
 \`\`\`
 
-Analyze every test function, describing what behavior each one exercises. Return a single JSON object mapping function names to arrays of feature strings.`
+Analyze every test function, describing what behavior each one exercises. Return a single JSON object mapping composite keys (filePath::functionName) to arrays of feature strings.`
 
   return { system, user }
 }

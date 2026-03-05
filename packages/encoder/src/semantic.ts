@@ -391,7 +391,7 @@ export class SemanticExtractor {
       const codeBlocks: string[] = []
       for (const { classEntity, methodEntities } of classGroups) {
         if (classEntity.sourceCode) {
-          codeBlocks.push(`// file: ${classEntity.filePath}\n${classEntity.sourceCode}`)
+          codeBlocks.push(`// file: ${classEntity.filePath}\n${classEntity.sourceCode.replaceAll('```', '\'\'\'')}`)
         }
         else if (methodEntities.length > 0) {
           const parts = [`// file: ${classEntity.filePath}`, `class ${classEntity.name} {`]
@@ -603,7 +603,7 @@ export class SemanticExtractor {
       // First call: build fresh prompt with source code
       const codeBlocks = functionEntities
         .filter(e => e.sourceCode)
-        .map(e => `// file: ${e.filePath}\n${e.sourceCode!}`)
+        .map(e => `// file: ${e.filePath}\n${e.sourceCode!.replaceAll('```', '\'\'\'')}`)
 
       if (codeBlocks.length === 0) {
         return { result, memory: new Memory({ contextWindow: 0 }), invalidKeys: [] }
