@@ -338,19 +338,19 @@ Analyze every class in the provided source code and produce a structured feature
 
 ## Output Format
 Return a single JSON object where:
-- Each key is the exact class name as it appears in the source.
+- Each key is "relativeFilePath::className" (e.g., "src/encoder/semantic.ts::GraphEncoder").
 - Each value is either:
   - An object mapping method names (as they appear in source) to arrays of feature strings — use this when the class has methods.
   - An array of feature strings — use this for classes with no methods (data-only / type definitions).
 
 Example:
 {
-  "GraphEncoder": {
+  "src/encoder/semantic.ts::GraphEncoder": {
     "constructor": ["initialize graph store with configuration"],
     "encode": ["traverse repository files recursively", "extract semantic features per node"],
     "getNode": ["retrieve node by identifier from store"]
   },
-  "EdgeSchema": ["define directed edge structure between graph nodes"]
+  "src/graph/edge.ts::EdgeSchema": ["define directed edge structure between graph nodes"]
 }`
 
   const repoContext = buildRepoContext(repoName, repoInfo, skeleton)
@@ -395,17 +395,17 @@ Analyze every standalone function in the provided source code and produce a list
 
 ## Output Format
 Return a single JSON object where:
-- Each key is the exact function name as it appears in the source.
+- Each key is "relativeFilePath::functionName" (e.g., "src/encoder/prompts.ts::buildDomainDiscoveryPrompt").
 - Each value is an array of 1-3 feature strings.
 
 Example:
 {
-  "buildDomainDiscoveryPrompt": [
+  "src/encoder/prompts.ts::buildDomainDiscoveryPrompt": [
     "construct LLM prompt for functional area discovery",
     "format file feature groups into structured text"
   ],
-  "formatFileGroups": ["format file feature groups into readable text"],
-  "computeCosineSimilarity": ["compute cosine similarity between two embedding vectors"]
+  "src/encoder/prompts.ts::formatFileGroups": ["format file feature groups into readable text"],
+  "src/utils/math.ts::computeCosineSimilarity": ["compute cosine similarity between two embedding vectors"]
 }`
 
   const repoContext = buildRepoContext(repoName, repoInfo, skeleton)
@@ -454,14 +454,14 @@ Focus on the SUBJECT UNDER TEST, not the testing infrastructure.
 
 ## Output Format
 Return a single JSON object where:
-- Each key is the exact class name as it appears in the source.
+- Each key is "relativeFilePath::className" (e.g., "tests/encoder/encoder.test.ts::GraphEncoderTest").
 - Each value is either:
   - An object mapping method names to arrays of feature strings — grouped by the target functionality.
   - An array of feature strings — for data-only test fixtures.
 
 Example:
 {
-  "GraphEncoderTest": {
+  "tests/encoder/encoder.test.ts::GraphEncoderTest": {
     "testEncodeEmptyRepo": ["encode repository with no source files"],
     "testEncodeWithClasses": ["extract class semantic features from source"]
   }
@@ -509,13 +509,13 @@ Focus on the SUBJECT UNDER TEST, not the testing infrastructure.
 
 ## Output Format
 Return a single JSON object where:
-- Each key is the exact function name as it appears in the source.
+- Each key is "relativeFilePath::functionName" (e.g., "tests/encoder/encoder.test.ts::testEncodeEmptyRepo").
 - Each value is an array of 1-2 feature strings describing what is being tested.
 
 Example:
 {
-  "testEncodeEmptyRepo": ["encode repository with no source files"],
-  "testBatchRetryOnMissing": ["retry extraction for missing entities in batch", "recover partial batch results gracefully"]
+  "tests/encoder/encoder.test.ts::testEncodeEmptyRepo": ["encode repository with no source files"],
+  "tests/encoder/retry.test.ts::testBatchRetryOnMissing": ["retry extraction for missing entities in batch", "recover partial batch results gracefully"]
 }`
 
   const repoContext = buildRepoContext(repoName, repoInfo, skeleton)

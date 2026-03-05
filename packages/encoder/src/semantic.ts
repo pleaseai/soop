@@ -16,6 +16,14 @@ import { estimateEntityTokens } from './token-counter'
 const log = createLogger('SemanticExtractor')
 
 /**
+ * Build a composite key from a file path and entity name to prevent name collisions
+ * across files when multiple files are batched into a single LLM prompt.
+ */
+function compositeKey(filePath: string, name: string): string {
+  return `${filePath}::${name}`
+}
+
+/**
  * Options for semantic extraction
  */
 export interface SemanticOptions {
@@ -301,7 +309,7 @@ export class SemanticExtractor {
 
           for (const group of pendingGroups) {
             const { classEntity, methodEntities } = group
-            const classResult = batchResult.get(classEntity.name)
+            const classResult = batchResult.get(compositeKey(classEntity.filePath, classEntity.name))
 
             if (classResult instanceof Map) {
               // Class with methods: methodMap has CLASS_FEATURE_KEY entry for the class itself
@@ -383,10 +391,10 @@ export class SemanticExtractor {
       const codeBlocks: string[] = []
       for (const { classEntity, methodEntities } of classGroups) {
         if (classEntity.sourceCode) {
-          codeBlocks.push(classEntity.sourceCode)
+          codeBlocks.push(`// file: ${classEntity.filePath}\n${classEntity.sourceCode}`)
         }
         else if (methodEntities.length > 0) {
-          const parts = [`class ${classEntity.name} {`]
+          const parts = [`// file: ${classEntity.filePath}`, `class ${classEntity.name} {`]
           for (const method of methodEntities) {
             if (method.sourceCode) {
               parts.push(`  ${method.sourceCode}`)
@@ -425,7 +433,8 @@ export class SemanticExtractor {
       const parsed = this.parseBatchResponse(llmResponse.content)
 
       for (const { classEntity, methodEntities } of classGroups) {
-        const classData = parsed[classEntity.name]
+        const ck = compositeKey(classEntity.filePath, classEntity.name)
+        const classData = parsed[ck]
         if (classData === undefined || classData === null) {
           continue
         }
@@ -434,7 +443,7 @@ export class SemanticExtractor {
           // Data-only class: array of feature strings
           const stringFeatures = classData.filter((f): f is string => typeof f === 'string')
           const feature = this.featureListToSemanticFeature(stringFeatures, classEntity.name, classEntity.filePath, 'class')
-          result.set(classEntity.name, feature)
+          result.set(ck, feature)
         }
         else if (typeof classData === 'object') {
           // Class with methods: object mapping methodName -> feature strings
@@ -468,7 +477,7 @@ export class SemanticExtractor {
           )
           methodMap.set(CLASS_FEATURE_KEY, classFeature)
 
-          result.set(classEntity.name, methodMap)
+          result.set(ck, methodMap)
         }
       }
     }
@@ -491,12 +500,13 @@ export class SemanticExtractor {
     ]
 
     for (const { classEntity, methodEntities } of pendingGroups) {
+      const ck = compositeKey(classEntity.filePath, classEntity.name)
       if (methodEntities.length === 0) {
-        lines.push(`- Class "${classEntity.name}" is missing entirely`)
+        lines.push(`- Class "${ck}" is missing entirely`)
       }
       else {
         const methodNames = methodEntities.map(m => m.name).join(', ')
-        lines.push(`- Class "${classEntity.name}" is missing methods: ${methodNames}`)
+        lines.push(`- Class "${ck}" is missing methods: ${methodNames}`)
       }
     }
 
@@ -546,7 +556,7 @@ export class SemanticExtractor {
               if (idx !== -1) {
                 resultMap.set(idx, feature)
               }
-              alreadyParsedNames.push(funcEntity.name)
+              alreadyParsedNames.push(compositeKey(funcEntity.filePath, funcEntity.name))
             }
             else if (iteration < maxIterations) {
               stillMissing.push(funcEntity)
@@ -593,7 +603,7 @@ export class SemanticExtractor {
       // First call: build fresh prompt with source code
       const codeBlocks = functionEntities
         .filter(e => e.sourceCode)
-        .map(e => e.sourceCode!)
+        .map(e => `// file: ${e.filePath}\n${e.sourceCode!}`)
 
       if (codeBlocks.length === 0) {
         return { result, memory: new Memory({ contextWindow: 0 }), invalidKeys: [] }
@@ -627,12 +637,12 @@ export class SemanticExtractor {
       memory.addAssistant(llmResponse.content)
       const parsed = this.parseBatchResponse(llmResponse.content)
 
-      // Detect keys in the response that are not valid function names (Gap 2-B)
-      const validNames = new Set(functionEntities.map(e => e.name))
-      invalidKeys = Object.keys(parsed).filter(k => !validNames.has(k))
+      // Detect keys in the response that are not valid composite keys (Gap 2-B)
+      const validKeys = new Set(functionEntities.map(e => compositeKey(e.filePath, e.name)))
+      invalidKeys = Object.keys(parsed).filter(k => !validKeys.has(k))
 
       for (const funcEntity of functionEntities) {
-        const funcData = parsed[funcEntity.name]
+        const funcData = parsed[compositeKey(funcEntity.filePath, funcEntity.name)]
         if (Array.isArray(funcData)) {
           const stringFeatures = funcData.filter((f): f is string => typeof f === 'string')
           const feature = this.featureListToSemanticFeature(stringFeatures, funcEntity.name, funcEntity.filePath, 'function')
@@ -659,7 +669,7 @@ export class SemanticExtractor {
     alreadyParsedNames: string[],
     prevInvalidKeys: string[],
   ): string {
-    const pendingNames = pendingFunctions.map(f => f.name).join(', ')
+    const pendingNames = pendingFunctions.map(f => compositeKey(f.filePath, f.name)).join(', ')
     const lines: string[] = []
 
     if (alreadyParsedNames.length > 0) {
