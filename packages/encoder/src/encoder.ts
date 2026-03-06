@@ -579,7 +579,7 @@ export class RPGEncoder {
       return null
 
     let detectedProvider: LLMProvider | null = null
-    if (process.env.GOOGLE_API_KEY)
+    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY)
       detectedProvider = 'google'
     else if (process.env.ANTHROPIC_API_KEY)
       detectedProvider = 'anthropic'
@@ -597,6 +597,7 @@ export class RPGEncoder {
       maxTokens: semantic?.maxTokens,
       claudeCodeSettings: semantic?.claudeCodeSettings,
       codexSettings: semantic?.codexSettings,
+      googleSettings: semantic?.googleSettings,
     })
   }
 
@@ -872,7 +873,12 @@ export class RPGEncoder {
     )
 
     try {
-      const response = await this.llmClient.complete(user, system)
+      const response = await this.llmClient.complete(user, system, {
+        maxTokens: 8192,
+        providerOptions: {
+          google: { thinkingConfig: { thinkingLevel: 'minimal' } },
+        },
+      })
       const edges = this.parseDataFlowEdges(response.content, treesNames)
 
       for (const edge of edges) {
@@ -1488,7 +1494,7 @@ export class RPGEncoder {
       if (this.options.semantic?.useLLM === true || this.options.semantic?.provider) {
         throw new Error(
           'Semantic reorganization requires an LLM provider. '
-          + 'Set GOOGLE_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY.',
+          + 'Set GOOGLE_GENERATIVE_AI_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY.',
         )
       }
       return
@@ -1499,7 +1505,15 @@ export class RPGEncoder {
     const domainDiscovery = new DomainDiscovery(this.llmClient)
     let functionalAreas: string[]
     try {
-      const result = await domainDiscovery.discover(fileGroups, { repoInfo })
+      const result = await domainDiscovery.discover(fileGroups, {
+        repoInfo,
+        callOptions: {
+          maxTokens: 4096,
+          providerOptions: {
+            google: { thinkingConfig: { thinkingLevel: 'minimal' } },
+          },
+        },
+      })
       functionalAreas = result.functionalAreas
     }
     catch (error) {
@@ -1514,7 +1528,16 @@ export class RPGEncoder {
     log.info('Phase 2.2: Hierarchical Construction...')
     const hierarchyBuilder = new HierarchyBuilder(rpg, this.llmClient)
     try {
-      await hierarchyBuilder.build(functionalAreas, fileGroups, { repoInfo })
+      await hierarchyBuilder.build(functionalAreas, fileGroups, {
+        repoInfo,
+        callOptions: {
+          maxTokens: 32768,
+          providerOptions: {
+            google: { thinkingConfig: { thinkingLevel: 'minimal' } },
+          },
+          timeout: 300_000,
+        },
+      })
     }
     catch (error) {
       const msg = `Phase 2.2 (Hierarchical Construction) failed: ${error instanceof Error ? error.message : String(error)}`
@@ -1576,8 +1599,22 @@ export class RPGEncoder {
     const detector = new DataFlowDetector({ repoPath: this.repoPath })
     const dataFlowEdges = detector.detectAll(fileParseInfos)
 
+    // Deduplicate truly identical flows (same source, target, dataId) from the detector output.
+    // Distinct flows between the same pair with different dataId values are now preserved,
+    // since the store's UNIQUE constraint is (source, target, type, data_id).
+    const seenFlows = new Set<string>()
+    let dedupedCount = 0
     for (const edge of dataFlowEdges) {
+      const flowKey = `${edge.source}|${edge.target}|${edge.dataId}`
+      if (seenFlows.has(flowKey)) {
+        dedupedCount++
+        continue
+      }
+      seenFlows.add(flowKey)
       await rpg.addDataFlowEdge(edge)
+    }
+    if (dedupedCount > 0) {
+      log.debug(`injectDataFlows: deduplicated ${dedupedCount} duplicate (source, target, dataId) data flow edge(s)`)
     }
   }
 

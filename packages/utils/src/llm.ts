@@ -1,3 +1,4 @@
+import type { GoogleLanguageModelOptions } from '@ai-sdk/google'
 import type { ModelMessage } from 'ai'
 import type { ClaudeCodeSettings } from 'ai-sdk-provider-claude-code'
 import type { CodexCliSettings } from 'ai-sdk-provider-codex-cli'
@@ -7,7 +8,7 @@ import { spawn } from 'node:child_process'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
-import { generateText, Output } from 'ai'
+import { generateText, NoObjectGeneratedError, Output } from 'ai'
 import { createClaudeCode } from 'ai-sdk-provider-claude-code'
 import { createCodexCli } from 'ai-sdk-provider-codex-cli'
 import { createLogger } from './logger'
@@ -41,16 +42,60 @@ export interface LLMOptions {
   claudeCodeSettings?: ClaudeCodeSettings
   /** Codex CLI provider settings (only used when provider is 'codex') */
   codexSettings?: CodexCliSettings
+  /** Google provider settings (only used when provider is 'google') */
+  googleSettings?: GoogleLanguageModelOptions
 }
+
+export type { GoogleLanguageModelOptions }
 
 export type { ClaudeCodeSettings }
 export type { CodexCliSettings }
 
 /**
+ * Per-call options that override the LLMClient instance-level settings.
+ */
+export interface CallOptions {
+  /**
+   * Provider-specific options passed directly to the AI SDK's `generateText` call.
+   * Supports any provider (google, anthropic, openai, etc.).
+   * Passing options for a non-active provider is safe — the AI SDK ignores unknown keys.
+   *
+   * @example
+   * // Google: control thinking level per phase
+   * { google: { thinkingConfig: { thinkingLevel: 'minimal' } } satisfies GoogleLanguageModelOptions }
+   *
+   * // Anthropic: enable extended thinking
+   * { anthropic: { thinking: { type: 'enabled', budgetTokens: 5000 } } }
+   *
+   * // OpenAI: disable parallel tool calls
+   * { openai: { parallelToolCalls: false } }
+   */
+  providerOptions?: Parameters<typeof generateText>[0]['providerOptions']
+  /** Additional HTTP headers sent with the request. Only applicable for HTTP-based providers. */
+  headers?: Parameters<typeof generateText>[0]['headers']
+  /** Override timeout in milliseconds for this call. */
+  timeout?: number
+  /** Override max output tokens for this call. */
+  maxTokens?: number
+  /** Maximum number of AI SDK-level retries on API failure. Default: 2. */
+  maxApiRetries?: number
+  /**
+   * Schema name hint passed to Output.object() — helps some providers generate better structured output.
+   * Only used when a schema is passed to completeJSON() / generateJSON().
+   */
+  schemaName?: string
+  /**
+   * Schema description hint passed to Output.object() — additional LLM guidance for structured output.
+   * Only used when a schema is passed to completeJSON() / generateJSON().
+   */
+  schemaDescription?: string
+}
+
+/**
  * Options for multi-turn `generate()` calls.
  */
-export interface GenerateOptions {
-  /** Maximum number of attempts (including the first). Default: 3. */
+export interface GenerateOptions extends CallOptions {
+  /** Maximum number of attempts on transient errors with context truncation. Default: 3. */
   maxRetries?: number
 }
 
@@ -76,7 +121,7 @@ export interface LLMResponse {
 const DEFAULT_MODELS: Record<LLMProvider, string> = {
   'openai': 'gpt-4o',
   'anthropic': 'claude-sonnet-4.5',
-  'google': 'gemini-3-flash-preview',
+  'google': 'gemini-3.1-flash-lite-preview',
   'claude-code': 'sonnet',
   'codex': 'gpt-5.3-codex',
 }
@@ -95,6 +140,7 @@ const MODEL_PRICING: Record<string, { input: number, output: number }> = {
   'gpt-5-mini': { input: 0.25, output: 2.00 },
   'claude-sonnet-4.5': CLAUDE_SONNET_PRICING,
   'claude-haiku-4.5': CLAUDE_HAIKU_PRICING,
+  'gemini-3.1-flash-lite-preview': { input: 0.25, output: 1.50 },
   'gemini-3-flash-preview': { input: 0.50, output: 3.00 },
   'gemini-3-pro-preview': { input: 2.00, output: 12.00 },
   'gemini-2.0-flash': { input: 0.30, output: 2.50 },
@@ -127,7 +173,7 @@ function createProvider(provider: LLMProvider, apiKey?: string, claudeCodeSettin
       })
     case 'google':
       return createGoogleGenerativeAI({
-        apiKey: apiKey ?? process.env.GOOGLE_API_KEY,
+        apiKey: apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       })
     case 'claude-code': {
       const settings: ClaudeCodeSettings = {
@@ -229,11 +275,11 @@ function isContextLengthError(error: unknown): boolean {
  *
  * @example
  * ```typescript
- * // Use Gemini 3 Flash (recommended - free tier, best performance)
- * const client = new LLMClient({ provider: 'google', model: 'gemini-2.0-flash' })
+ * // Use Gemini 3.1 Flash-Lite (recommended - best performance/cost)
+ * const client = new LLMClient({ provider: 'google', model: 'gemini-3.1-flash-lite-preview' })
  *
  * // Use Claude Haiku (fast, cost-effective)
- * const client = new LLMClient({ provider: 'anthropic', model: 'claude-3-5-haiku-latest' })
+ * const client = new LLMClient({ provider: 'anthropic', model: 'claude-haiku-4.5' })
  *
  * // Use GPT-4o (paper baseline)
  * const client = new LLMClient({ provider: 'openai', model: 'gpt-4o' })
@@ -253,11 +299,27 @@ export class LLMClient {
   constructor(options: LLMOptions) {
     this.options = {
       model: DEFAULT_MODELS[options.provider],
-      maxTokens: 4096,
+      maxTokens: 32768,
       temperature: 0,
       ...options,
     }
+    if (options.googleSettings && options.provider !== 'google') {
+      log.warn(
+        `'googleSettings' was provided for a non-Google provider ('${options.provider}'). These settings will be ignored.`,
+      )
+    }
     this.providerInstance = createProvider(options.provider, options.apiKey, options.claudeCodeSettings, options.codexSettings)
+  }
+
+  private buildProviderOptions(callOptions?: CallOptions): Parameters<typeof generateText>[0]['providerOptions'] {
+    // Per-call providerOptions take precedence over instance-level googleSettings.
+    if (callOptions?.providerOptions !== undefined) {
+      return callOptions.providerOptions
+    }
+    if (this.options.provider === 'google' && this.options.googleSettings && Object.keys(this.options.googleSettings).length > 0) {
+      return { google: this.options.googleSettings } as unknown as Parameters<typeof generateText>[0]['providerOptions']
+    }
+    return undefined
   }
 
   /**
@@ -267,10 +329,12 @@ export class LLMClient {
     prompt: string,
     systemPrompt?: string,
     output?: Parameters<typeof generateText>[0]['output'],
+    callOptions?: CallOptions,
   ): Promise<Awaited<ReturnType<typeof generateText>>> {
     const modelId = this.options.model ?? DEFAULT_MODELS[this.options.provider]
     const model = this.providerInstance(modelId)
-    const timeout = this.options.timeout ?? 120_000
+    const timeout = callOptions?.timeout ?? this.options.timeout ?? 120_000
+    const maxOutputTokens = callOptions?.maxTokens ?? this.options.maxTokens
 
     let result: Awaited<ReturnType<typeof generateText>>
     try {
@@ -279,9 +343,12 @@ export class LLMClient {
         output,
         system: systemPrompt,
         prompt,
-        maxOutputTokens: this.options.maxTokens,
+        maxOutputTokens,
         temperature: this.options.temperature,
         abortSignal: AbortSignal.timeout(timeout),
+        providerOptions: this.buildProviderOptions(callOptions),
+        headers: callOptions?.headers,
+        maxRetries: callOptions?.maxApiRetries,
       })
     }
     catch (error) {
@@ -304,8 +371,8 @@ export class LLMClient {
   /**
    * Generate a completion using Vercel AI SDK
    */
-  async complete(prompt: string, systemPrompt?: string): Promise<LLMResponse> {
-    const result = await this.callGenerateText(prompt, systemPrompt)
+  async complete(prompt: string, systemPrompt?: string, callOptions?: CallOptions): Promise<LLMResponse> {
+    const result = await this.callGenerateText(prompt, systemPrompt, undefined, callOptions)
     const modelId = this.options.model ?? DEFAULT_MODELS[this.options.provider]
 
     return {
@@ -324,33 +391,57 @@ export class LLMClient {
    * When a Zod schema is provided, uses AI SDK's Output.object() for validated structured output.
    * Falls back to regex-based JSON extraction when no schema is given.
    */
-  async completeJSON<T>(prompt: string, systemPrompt?: string, schema?: ZodType<T>): Promise<T> {
+  async completeJSON<T>(prompt: string, systemPrompt?: string, schema?: ZodType<T>, callOptions?: CallOptions): Promise<T> {
     if (schema) {
-      const result = await this.callGenerateText(prompt, systemPrompt, Output.object({ schema }))
+      let rawText: string | undefined
+      try {
+        const result = await this.callGenerateText(
+          prompt,
+          systemPrompt,
+          Output.object({ schema, name: callOptions?.schemaName, description: callOptions?.schemaDescription }),
+          callOptions,
+        )
 
-      if (result.output != null) {
-        return result.output as T
+        if (result.output != null) {
+          return result.output as T
+        }
+
+        // Structured output failed (non-'stop' finishReason from provider).
+        const lastStep = result.steps?.[result.steps.length - 1]
+        const finishReason = lastStep?.finishReason ?? 'unknown'
+        log.debug(`Structured output unavailable (finishReason: ${finishReason}), trying text fallback`)
+        rawText = result.text
       }
-
-      // Structured output failed (non-'stop' finishReason from provider).
-      // Try regex-based JSON extraction from result.text as fallback.
-      const lastStep = result.steps?.[result.steps.length - 1]
-      const finishReason = lastStep?.finishReason ?? 'unknown'
-      log.debug(`Structured output unavailable (finishReason: ${finishReason}), trying text fallback`)
-
-      if (result.text) {
-        const jsonMatch
-          = result.text.match(/```(?:json)?\n?([\s\S]*?)```/) || result.text.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0])
-          return schema.parse(parsed) as T
+      catch (error) {
+        // NoObjectGeneratedError carries the raw text the model produced — use it for fallback.
+        if (NoObjectGeneratedError.isInstance(error)) {
+          log.warn(`Structured output not generated (NoObjectGeneratedError): ${error.message} — attempting text fallback`)
+          rawText = error.text
+        }
+        else {
+          throw error
         }
       }
-      throw new Error(`No structured output from model (finishReason: ${finishReason})`)
+
+      if (rawText) {
+        const jsonMatch
+          = rawText.match(/```(?:json)?\n?([\s\S]*?)```/) || rawText.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0])
+            return schema.parse(parsed) as T
+          }
+          catch (parseError) {
+            const msg = parseError instanceof Error ? parseError.message : String(parseError)
+            throw new Error(`Structured output fallback parse failed (NoObjectGeneratedError → text → parse): ${msg}`, { cause: parseError })
+          }
+        }
+      }
+      throw new Error('No structured output returned from model')
     }
 
     // Fallback: regex-based JSON extraction for callers without schema
-    const response = await this.complete(prompt, systemPrompt)
+    const response = await this.complete(prompt, systemPrompt, callOptions)
     const jsonMatch
       = response.content.match(/```(?:json)?\n?([\s\S]*?)```/)
         || response.content.match(/\{[\s\S]*\}/)
@@ -412,10 +503,12 @@ export class LLMClient {
   private async callGenerateTextWithMessages(
     messages: ModelMessage[],
     output?: Parameters<typeof generateText>[0]['output'],
+    callOptions?: CallOptions,
   ): Promise<Awaited<ReturnType<typeof generateText>>> {
     const modelId = this.options.model ?? DEFAULT_MODELS[this.options.provider]
     const model = this.providerInstance(modelId)
-    const timeout = this.options.timeout ?? 120_000
+    const timeout = callOptions?.timeout ?? this.options.timeout ?? 120_000
+    const maxOutputTokens = callOptions?.maxTokens ?? this.options.maxTokens
 
     let result: Awaited<ReturnType<typeof generateText>>
     try {
@@ -423,9 +516,12 @@ export class LLMClient {
         model,
         output,
         messages,
-        maxOutputTokens: this.options.maxTokens,
+        maxOutputTokens,
         temperature: this.options.temperature,
         abortSignal: AbortSignal.timeout(timeout),
+        providerOptions: this.buildProviderOptions(callOptions),
+        headers: callOptions?.headers,
+        maxRetries: callOptions?.maxApiRetries,
       })
     }
     catch (error) {
@@ -463,7 +559,7 @@ export class LLMClient {
 
     while (true) {
       try {
-        const result = await this.callGenerateTextWithMessages(messages)
+        const result = await this.callGenerateTextWithMessages(messages, undefined, options)
         const modelId = this.options.model ?? DEFAULT_MODELS[this.options.provider]
         return {
           content: result.text,
@@ -487,6 +583,8 @@ export class LLMClient {
         if (retries >= maxRetries) {
           throw error
         }
+        const msg = error instanceof Error ? error.message : String(error)
+        log.warn(`generate() retry ${retries}/${maxRetries} after error: ${msg}`)
       }
     }
   }
@@ -496,19 +594,51 @@ export class LLMClient {
    * When a Zod schema is provided, uses AI SDK's `Output.object()` for validated output.
    * Falls back to regex-based JSON extraction when no schema is given.
    */
-  async generateJSON<T>(memory: Memory, schema?: ZodType<T>): Promise<T> {
+  async generateJSON<T>(memory: Memory, schema?: ZodType<T>, callOptions?: CallOptions): Promise<T> {
     if (schema) {
       const messages = memory.toMessages()
-      const result = await this.callGenerateTextWithMessages(messages, Output.object({ schema }))
+      let rawText: string | undefined
+      try {
+        const result = await this.callGenerateTextWithMessages(
+          messages,
+          Output.object({ schema, name: callOptions?.schemaName, description: callOptions?.schemaDescription }),
+          callOptions,
+        )
 
-      if (result.output == null) {
-        throw new Error('No structured output returned from model')
+        if (result.output != null) {
+          return result.output as T
+        }
+
+        rawText = result.text
+      }
+      catch (error) {
+        if (NoObjectGeneratedError.isInstance(error)) {
+          log.warn(`Structured output not generated (NoObjectGeneratedError): ${error.message} — attempting text fallback`)
+          rawText = error.text
+        }
+        else {
+          throw error
+        }
       }
 
-      return result.output as T
+      if (rawText) {
+        const jsonMatch
+          = rawText.match(/```(?:json)?\n?([\s\S]*?)```/) || rawText.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0])
+            return (schema as ZodType<T>).parse(parsed) as T
+          }
+          catch (parseError) {
+            const msg = parseError instanceof Error ? parseError.message : String(parseError)
+            throw new Error(`Structured output fallback parse failed (NoObjectGeneratedError → text → parse): ${msg}`, { cause: parseError })
+          }
+        }
+      }
+      throw new Error('No structured output returned from model')
     }
 
-    const response = await this.generate(memory)
+    const response = await this.generate(memory, callOptions)
     const jsonMatch
       = response.content.match(/```(?:json)?\n?([\s\S]*?)```/)
         || response.content.match(/\{[\s\S]*\}/)

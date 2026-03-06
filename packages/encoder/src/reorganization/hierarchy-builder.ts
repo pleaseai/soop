@@ -1,5 +1,5 @@
 import type { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
-import type { LLMClient } from '@pleaseai/soop-utils/llm'
+import type { CallOptions, LLMClient } from '@pleaseai/soop-utils/llm'
 import type { FileFeatureGroup } from './types'
 import { createLogger } from '@pleaseai/soop-utils/logger'
 import { buildHierarchicalConstructionPrompt } from './prompts'
@@ -32,6 +32,7 @@ export class HierarchyBuilder {
       repoName?: string
       repoInfo?: string
       maxIterations?: number
+      callOptions?: CallOptions
     },
   ): Promise<void> {
     const assignments = await this.getAssignments(
@@ -40,6 +41,7 @@ export class HierarchyBuilder {
       options?.repoName,
       options?.repoInfo,
       options?.maxIterations ?? 10,
+      options?.callOptions,
     )
 
     // Build a map: groupLabel → file node IDs
@@ -117,6 +119,7 @@ export class HierarchyBuilder {
     repoName?: string,
     repoInfo?: string,
     maxIterations = 10,
+    callOptions?: CallOptions,
   ): Promise<Record<string, string[]>> {
     const allGroupLabels = new Set(fileGroups.map(g => g.groupLabel))
     const assignedLabels = new Map<string, string>() // groupLabel → path
@@ -133,7 +136,7 @@ export class HierarchyBuilder {
 
       let responseText: string
       try {
-        const response = await this.llmClient.complete(user, system)
+        const response = await this.llmClient.complete(user, system, callOptions)
         responseText = response.content
       }
       catch (error) {

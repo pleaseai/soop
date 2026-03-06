@@ -206,11 +206,12 @@ export class RPGEvolver {
       maxTokens: this.options.semantic?.maxTokens,
       claudeCodeSettings: this.options.semantic?.claudeCodeSettings,
       codexSettings: this.options.semantic?.codexSettings,
+      googleSettings: this.options.semantic?.googleSettings,
     })
   }
 
   private detectProvider(): LLMProvider | null {
-    if (process.env.GOOGLE_API_KEY)
+    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY)
       return 'google'
     if (process.env.ANTHROPIC_API_KEY)
       return 'anthropic'

@@ -400,7 +400,7 @@ RPG encoding uses LLM for semantic feature extraction. Options:
 
 | Mode | Performance | Cost | Use Case |
 |------|-------------|------|----------|
-| `useLLM: true` + Gemini 3 Flash | Best (78% SWE-bench) | Free tier | Recommended default |
+| `useLLM: true` + Gemini 3.1 Flash-Lite (`gemini-3.1-flash-lite-preview`) | Best | $0.25/$1.50 per 1M | **Recommended default** |
 | `useLLM: true` + Claude Haiku 4.5 | High (73% SWE-bench) | $1/$5 per 1M | Production fallback |
 | `useLLM: true` + GPT-4o | High (70% SWE-bench) | $3/$10 per 1M | Paper baseline |
 | `useLLM: true` + Claude Code (sonnet) | High | Pro/Max sub | No API key needed |

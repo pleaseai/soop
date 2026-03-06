@@ -3,6 +3,7 @@
  */
 import type { EdgeAttrs, NodeAttrs } from '@pleaseai/soop-store/types'
 import type {
+  DataFlowEdge,
   DependencyEdge,
   Edge,
   FunctionalEdge,
@@ -137,6 +138,13 @@ export function edgeToAttrs(edge: Edge): EdgeAttrs {
     if (de.targetSymbol != null)
       attrs.dep_target_symbol = de.targetSymbol
   }
+  else if (edge.type === 'data_flow') {
+    const df = edge as DataFlowEdge
+    attrs.df_data_id = df.dataId
+    attrs.df_data_type = df.dataType
+    if (df.transformation != null)
+      attrs.df_transformation = df.transformation
+  }
   return attrs
 }
 
@@ -151,6 +159,18 @@ export function attrsToEdge(source: string, target: string, attrs: EdgeAttrs): E
       siblingOrder: (attrs.sibling_order as number) ?? undefined,
       weight: (attrs.weight as number) ?? undefined,
     }
+  }
+
+  if (attrs.type === 'data_flow') {
+    return {
+      source,
+      target,
+      type: 'data_flow' as const,
+      dataId: attrs.df_data_id as string,
+      dataType: attrs.df_data_type as string,
+      transformation: (attrs.df_transformation as string) ?? undefined,
+      weight: (attrs.weight as number) ?? undefined,
+    } satisfies DataFlowEdge
   }
 
   if (attrs.type !== 'dependency') {

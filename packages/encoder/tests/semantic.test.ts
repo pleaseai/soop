@@ -1,6 +1,49 @@
 import type { EntityInput } from '@pleaseai/soop-encoder/semantic'
 import { SemanticExtractor } from '@pleaseai/soop-encoder/semantic'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+
+describe('SemanticExtractor — google provider API key handling', () => {
+  const envKey = 'GOOGLE_GENERATIVE_AI_API_KEY'
+  let originalValue: string | undefined
+
+  beforeEach(() => {
+    originalValue = process.env[envKey]
+    delete process.env[envKey]
+  })
+
+  afterEach(() => {
+    if (originalValue !== undefined) {
+      process.env[envKey] = originalValue
+    }
+    else {
+      delete process.env[envKey]
+    }
+  })
+
+  it('falls back to heuristic mode (useLLM=false) when default provider used and no API key set', () => {
+    // No provider passed → default is 'google'; no API key → should warn + disable LLM
+    const extractor = new SemanticExtractor()
+    expect(extractor.getLLMClient()).toBeUndefined()
+  })
+
+  it('throws when provider is explicitly set to "google" but no API key is set', () => {
+    expect(() => new SemanticExtractor({ provider: 'google' }))
+      .toThrow('SemanticExtractor: provider is "google" but GOOGLE_GENERATIVE_AI_API_KEY is not set.')
+  })
+
+  it('does not throw when provider is explicitly set to "google" and API key is provided via options', () => {
+    expect(() => new SemanticExtractor({ provider: 'google', apiKey: 'fake-key' }))
+      .not
+      .toThrow()
+  })
+
+  it('does not throw when provider is explicitly set to "google" and API key is in env', () => {
+    process.env[envKey] = 'fake-env-key'
+    expect(() => new SemanticExtractor({ provider: 'google' }))
+      .not
+      .toThrow()
+  })
+})
 
 describe('semanticExtractor', () => {
   const extractor = new SemanticExtractor({ useLLM: false })

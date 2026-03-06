@@ -19,13 +19,33 @@ CREATE TABLE IF NOT EXISTS nodes (
 );
 
 CREATE TABLE IF NOT EXISTS edges (
-    source TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-    target TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
-    type   TEXT NOT NULL,
-    attrs  TEXT NOT NULL,
-    UNIQUE(source, target, type)
+    source  TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    target  TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    type    TEXT NOT NULL,
+    attrs   TEXT NOT NULL,
+    data_id TEXT,
+    UNIQUE(source, target, type, data_id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source, type);
+CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target, type);
+`
+
+const MIGRATION_ADD_DATA_ID = `
+CREATE TABLE edges_new (
+    source  TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    target  TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
+    type    TEXT NOT NULL,
+    attrs   TEXT NOT NULL,
+    data_id TEXT,
+    UNIQUE(source, target, type, data_id)
+);
+INSERT INTO edges_new (source, target, type, attrs, data_id)
+    SELECT source, target, type, attrs,
+        CASE WHEN type = 'data_flow' THEN json_extract(attrs, '$.df_data_id') ELSE NULL END
+    FROM edges;
+DROP TABLE edges;
+ALTER TABLE edges_new RENAME TO edges;
 CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source, type);
 CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target, type);
 `
@@ -45,6 +65,11 @@ export class SQLiteGraphStore implements GraphStore {
     this.db.pragma('journal_mode = WAL')
     this.db.pragma('foreign_keys = ON')
     this.db.exec(SCHEMA)
+    // Migrate existing databases that were created without the data_id column.
+    const cols = this.db.prepare('PRAGMA table_info(edges)').all() as Array<{ name: string }>
+    if (!cols.some(c => c.name === 'data_id')) {
+      this.db.exec(MIGRATION_ADD_DATA_ID)
+    }
   }
 
   async close(): Promise<void> {
@@ -105,9 +130,10 @@ export class SQLiteGraphStore implements GraphStore {
   // ==================== Edge CRUD ====================
 
   async addEdge(source: string, target: string, attrs: EdgeAttrs): Promise<void> {
+    const dataId = attrs.type === 'data_flow' ? ((attrs.df_data_id as string) ?? null) : null
     this.db
-      .prepare('INSERT INTO edges (source, target, type, attrs) VALUES (?, ?, ?, ?)')
-      .run(source, target, attrs.type, JSON.stringify(attrs))
+      .prepare('INSERT INTO edges (source, target, type, attrs, data_id) VALUES (?, ?, ?, ?, ?)')
+      .run(source, target, attrs.type, JSON.stringify(attrs), dataId)
   }
 
   async removeEdge(source: string, target: string, type: string): Promise<void> {
@@ -326,7 +352,7 @@ export class SQLiteGraphStore implements GraphStore {
   async import(data: SerializedGraph): Promise<void> {
     const insertNode = this.db.prepare('INSERT OR REPLACE INTO nodes (id, attrs) VALUES (?, ?)')
     const insertEdge = this.db.prepare(
-      'INSERT OR REPLACE INTO edges (source, target, type, attrs) VALUES (?, ?, ?, ?)',
+      'INSERT OR REPLACE INTO edges (source, target, type, attrs, data_id) VALUES (?, ?, ?, ?, ?)',
     )
 
     const transaction = this.db.transaction(() => {
@@ -334,7 +360,8 @@ export class SQLiteGraphStore implements GraphStore {
         insertNode.run(node.id, JSON.stringify(node.attrs))
       }
       for (const edge of data.edges) {
-        insertEdge.run(edge.source, edge.target, edge.attrs.type, JSON.stringify(edge.attrs))
+        const dataId = edge.attrs.type === 'data_flow' ? ((edge.attrs.df_data_id as string) ?? null) : null
+        insertEdge.run(edge.source, edge.target, edge.attrs.type, JSON.stringify(edge.attrs), dataId)
       }
     })
 

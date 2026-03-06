@@ -1,4 +1,4 @@
-import type { ClaudeCodeSettings, CodexCliSettings, LLMProvider } from '@pleaseai/soop-utils/llm'
+import type { ClaudeCodeSettings, CodexCliSettings, GoogleLanguageModelOptions, LLMProvider } from '@pleaseai/soop-utils/llm'
 import { SemanticFeatureSchema as NodeSemanticFeatureSchema } from '@pleaseai/soop-graph/node'
 import { LLMClient } from '@pleaseai/soop-utils/llm'
 import { createLogger } from '@pleaseai/soop-utils/logger'
@@ -29,7 +29,7 @@ function compositeKey(filePath: string, name: string): string {
 export interface SemanticOptions {
   /** LLM provider to use */
   provider?: LLMProvider
-  /** Model name (e.g., 'gpt-5.2', 'haiku', 'gemini-3-flash-preview') */
+  /** Model name (e.g., 'gpt-5.2', 'haiku', 'gemini-3.1-flash-lite-preview') */
   model?: string
   /** API key (defaults to environment variable) */
   apiKey?: string
@@ -41,6 +41,8 @@ export interface SemanticOptions {
   claudeCodeSettings?: ClaudeCodeSettings
   /** Codex CLI provider settings (only used when provider is 'codex') */
   codexSettings?: CodexCliSettings
+  /** Google provider settings, e.g. thinkingConfig (only used when provider is 'google') */
+  googleSettings?: GoogleLanguageModelOptions
   /** Minimum tokens per batch - if last batch is below this, merge with previous (default: 10000) */
   minBatchTokens?: number
   /** Maximum tokens per batch - group entities until this limit (default: 50000) */
@@ -143,14 +145,37 @@ export class SemanticExtractor {
   private readonly warnings: string[] = []
 
   constructor(options: SemanticOptions = {}) {
+    const providerWasExplicit = options.provider !== undefined
     this.options = {
       useLLM: true,
-      maxTokens: 2048,
+      provider: 'google',
+      maxTokens: 8192,
       minBatchTokens: 10000,
       maxBatchTokens: 50000,
       maxParseIterations: 3,
       maxConcurrentBatches: 4,
       ...options,
+    }
+
+    if (this.options.useLLM && this.options.provider === 'google') {
+      // Default to minimal thinking for Phase 1 (structured JSON extraction — deep reasoning not needed)
+      if (!this.options.googleSettings) {
+        this.options.googleSettings = { thinkingConfig: { thinkingLevel: 'minimal' } }
+      }
+      const key = this.options.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY
+      if (!key) {
+        if (providerWasExplicit) {
+          throw new Error(
+            'SemanticExtractor: provider is "google" but GOOGLE_GENERATIVE_AI_API_KEY is not set. '
+            + 'Set GOOGLE_GENERATIVE_AI_API_KEY or pass apiKey explicitly.',
+          )
+        }
+        log.warn(
+          'GOOGLE_GENERATIVE_AI_API_KEY is not set — falling back to heuristic mode. '
+          + 'Set GOOGLE_GENERATIVE_AI_API_KEY or pass provider/apiKey explicitly.',
+        )
+        this.options = { ...this.options, useLLM: false }
+      }
     }
 
     // Initialize LLM client if enabled
@@ -164,6 +189,7 @@ export class SemanticExtractor {
           maxTokens: this.options.maxTokens,
           claudeCodeSettings: this.options.claudeCodeSettings,
           codexSettings: this.options.codexSettings,
+          googleSettings: this.options.googleSettings,
         })
       }
     }
@@ -483,6 +509,7 @@ export class SemanticExtractor {
     }
     catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
+      this.warnings.push(`Class batch LLM call failed: ${msg}. Affected entities will fall back to heuristic.`)
       log.warn(`Class batch LLM call failed: ${msg}`)
     }
 
@@ -652,6 +679,7 @@ export class SemanticExtractor {
     }
     catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
+      this.warnings.push(`Function batch LLM call failed: ${msg}. Affected entities will fall back to heuristic.`)
       log.warn(`Function batch LLM call failed: ${msg}`)
     }
 

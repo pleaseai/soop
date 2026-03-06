@@ -1,4 +1,4 @@
-import type { LLMClient } from '@pleaseai/soop-utils/llm'
+import type { CallOptions, LLMClient } from '@pleaseai/soop-utils/llm'
 import type { DomainDiscoveryResult, FileFeatureGroup } from './types'
 import { createLogger } from '@pleaseai/soop-utils/logger'
 import { buildDomainDiscoveryPrompt } from './prompts'
@@ -28,6 +28,7 @@ export class DomainDiscovery {
       repoName?: string
       repoInfo?: string
       skeleton?: string
+      callOptions?: CallOptions
     },
   ): Promise<DomainDiscoveryResult> {
     const maxIterations = options?.maxIterations ?? 3
@@ -41,7 +42,7 @@ export class DomainDiscovery {
           options?.repoInfo,
           options?.skeleton,
         )
-        const response = await this.llmClient.complete(user, system)
+        const response = await this.llmClient.complete(user, system, options?.callOptions)
         const areas = this.parseAreasFromResponse(response.content)
         if (areas.length > 0) {
           allCandidates.push(areas)
