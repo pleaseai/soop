@@ -29,7 +29,7 @@ function compositeKey(filePath: string, name: string): string {
 export interface SemanticOptions {
   /** LLM provider to use */
   provider?: LLMProvider
-  /** Model name (e.g., 'gpt-5.2', 'haiku', 'gemini-3-flash-preview') */
+  /** Model name (e.g., 'gpt-5.2', 'haiku', 'gemini-3.1-flash-lite-preview') */
   model?: string
   /** API key (defaults to environment variable) */
   apiKey?: string
@@ -154,6 +154,17 @@ export class SemanticExtractor {
       maxParseIterations: 3,
       maxConcurrentBatches: 4,
       ...options,
+    }
+
+    if (this.options.useLLM && this.options.provider === 'google') {
+      const key = this.options.apiKey ?? process.env.GOOGLE_API_KEY
+      if (!key) {
+        log.warn(
+          'provider is "google" but GOOGLE_API_KEY is not set — falling back to heuristic mode. '
+          + 'Set GOOGLE_API_KEY or pass provider/apiKey explicitly.',
+        )
+        this.options = { ...this.options, useLLM: false }
+      }
     }
 
     // Initialize LLM client if enabled

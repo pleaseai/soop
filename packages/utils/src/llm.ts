@@ -237,7 +237,7 @@ function isContextLengthError(error: unknown): boolean {
  *
  * @example
  * ```typescript
- * // Use Gemini 3.1 Flash-Lite (recommended - best performance/cost, free tier)
+ * // Use Gemini 3.1 Flash-Lite (recommended - best performance/cost)
  * const client = new LLMClient({ provider: 'google', model: 'gemini-3.1-flash-lite-preview' })
  *
  * // Use Claude Haiku (fast, cost-effective)
@@ -269,10 +269,14 @@ export class LLMClient {
   }
 
   private buildProviderOptions(): Parameters<typeof generateText>[0]['providerOptions'] {
-    if (this.options.provider === 'google' && this.options.googleSettings?.thinkingConfig) {
-      // Cast through unknown to satisfy the strict JSONValue constraint of SharedV3ProviderOptions.
-      // The thinkingConfig shape is always JSON-serializable; the cast is safe.
-      return { google: this.options.googleSettings } as unknown as Parameters<typeof generateText>[0]['providerOptions']
+    if (this.options.googleSettings?.thinkingConfig) {
+      if (this.options.provider !== 'google') {
+        log.warn(
+          `googleSettings.thinkingConfig is provided but provider is "${this.options.provider}" — googleSettings is only applied when provider is "google" and will be ignored`,
+        )
+        return undefined
+      }
+      return { google: this.options.googleSettings as Record<string, unknown> } as Parameters<typeof generateText>[0]['providerOptions']
     }
     return undefined
   }
