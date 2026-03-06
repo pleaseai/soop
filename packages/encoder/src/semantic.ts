@@ -1,4 +1,4 @@
-import type { ClaudeCodeSettings, CodexCliSettings, LLMProvider } from '@pleaseai/soop-utils/llm'
+import type { ClaudeCodeSettings, CodexCliSettings, GoogleSettings, LLMProvider } from '@pleaseai/soop-utils/llm'
 import { SemanticFeatureSchema as NodeSemanticFeatureSchema } from '@pleaseai/soop-graph/node'
 import { LLMClient } from '@pleaseai/soop-utils/llm'
 import { createLogger } from '@pleaseai/soop-utils/logger'
@@ -41,6 +41,8 @@ export interface SemanticOptions {
   claudeCodeSettings?: ClaudeCodeSettings
   /** Codex CLI provider settings (only used when provider is 'codex') */
   codexSettings?: CodexCliSettings
+  /** Google provider settings, e.g. thinkingConfig (only used when provider is 'google') */
+  googleSettings?: GoogleSettings
   /** Minimum tokens per batch - if last batch is below this, merge with previous (default: 10000) */
   minBatchTokens?: number
   /** Maximum tokens per batch - group entities until this limit (default: 50000) */
@@ -145,6 +147,7 @@ export class SemanticExtractor {
   constructor(options: SemanticOptions = {}) {
     this.options = {
       useLLM: true,
+      provider: 'google',
       maxTokens: 2048,
       minBatchTokens: 10000,
       maxBatchTokens: 50000,
@@ -164,6 +167,7 @@ export class SemanticExtractor {
           maxTokens: this.options.maxTokens,
           claudeCodeSettings: this.options.claudeCodeSettings,
           codexSettings: this.options.codexSettings,
+          googleSettings: this.options.googleSettings,
         })
       }
     }

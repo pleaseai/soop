@@ -83,7 +83,7 @@ describe('LLMClient', () => {
 
     it('should use default model for google provider', () => {
       const client = new LLMClient({ provider: 'google' })
-      expect(client.getModel()).toBe('gemini-3-flash-preview')
+      expect(client.getModel()).toBe('gemini-3.1-flash-lite-preview')
     })
 
     it('should use default model for claude-code provider', () => {
@@ -264,6 +264,45 @@ describe('LLMClient', () => {
 
       expect(client).toBeDefined()
       expect(mockCreateCodexCli).toHaveBeenCalledWith(undefined)
+    })
+
+    it('should pass googleSettings.thinkingConfig via providerOptions', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'google response',
+        usage: { inputTokens: 8, outputTokens: 4 },
+      } as any)
+
+      const client = new LLMClient({
+        provider: 'google',
+        googleSettings: { thinkingConfig: { thinkingLevel: 'low' } },
+      })
+      await client.complete('test prompt')
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          providerOptions: { google: { thinkingConfig: { thinkingLevel: 'low' } } },
+        }),
+      )
+    })
+
+    it('should not pass providerOptions when no googleSettings', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'google response',
+        usage: { inputTokens: 8, outputTokens: 4 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'google' })
+      await client.complete('test prompt')
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          providerOptions: undefined,
+        }),
+      )
     })
 
     it('should throw and call onError on failure', async () => {

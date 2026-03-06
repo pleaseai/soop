@@ -206,6 +206,7 @@ export class RPGEvolver {
       maxTokens: this.options.semantic?.maxTokens,
       claudeCodeSettings: this.options.semantic?.claudeCodeSettings,
       codexSettings: this.options.semantic?.codexSettings,
+      googleSettings: this.options.semantic?.googleSettings,
     })
   }
 

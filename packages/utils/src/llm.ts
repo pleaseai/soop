@@ -1,3 +1,4 @@
+import type { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google'
 import type { ModelMessage } from 'ai'
 import type { ClaudeCodeSettings } from 'ai-sdk-provider-claude-code'
 import type { CodexCliSettings } from 'ai-sdk-provider-codex-cli'
@@ -41,6 +42,12 @@ export interface LLMOptions {
   claudeCodeSettings?: ClaudeCodeSettings
   /** Codex CLI provider settings (only used when provider is 'codex') */
   codexSettings?: CodexCliSettings
+  /** Google provider settings, e.g. thinkingConfig (only used when provider is 'google') */
+  googleSettings?: GoogleSettings
+}
+
+export interface GoogleSettings {
+  thinkingConfig?: NonNullable<GoogleGenerativeAIProviderOptions['thinkingConfig']>
 }
 
 export type { ClaudeCodeSettings }
@@ -76,7 +83,7 @@ export interface LLMResponse {
 const DEFAULT_MODELS: Record<LLMProvider, string> = {
   'openai': 'gpt-4o',
   'anthropic': 'claude-sonnet-4.5',
-  'google': 'gemini-3-flash-preview',
+  'google': 'gemini-3.1-flash-lite-preview',
   'claude-code': 'sonnet',
   'codex': 'gpt-5.3-codex',
 }
@@ -95,6 +102,7 @@ const MODEL_PRICING: Record<string, { input: number, output: number }> = {
   'gpt-5-mini': { input: 0.25, output: 2.00 },
   'claude-sonnet-4.5': CLAUDE_SONNET_PRICING,
   'claude-haiku-4.5': CLAUDE_HAIKU_PRICING,
+  'gemini-3.1-flash-lite-preview': { input: 0.25, output: 1.50 },
   'gemini-3-flash-preview': { input: 0.50, output: 3.00 },
   'gemini-3-pro-preview': { input: 2.00, output: 12.00 },
   'gemini-2.0-flash': { input: 0.30, output: 2.50 },
@@ -229,8 +237,8 @@ function isContextLengthError(error: unknown): boolean {
  *
  * @example
  * ```typescript
- * // Use Gemini 3 Flash (recommended - free tier, best performance)
- * const client = new LLMClient({ provider: 'google', model: 'gemini-2.0-flash' })
+ * // Use Gemini 3.1 Flash-Lite (recommended - best performance/cost, free tier)
+ * const client = new LLMClient({ provider: 'google', model: 'gemini-3.1-flash-lite-preview' })
  *
  * // Use Claude Haiku (fast, cost-effective)
  * const client = new LLMClient({ provider: 'anthropic', model: 'claude-3-5-haiku-latest' })
@@ -260,6 +268,15 @@ export class LLMClient {
     this.providerInstance = createProvider(options.provider, options.apiKey, options.claudeCodeSettings, options.codexSettings)
   }
 
+  private buildProviderOptions(): Parameters<typeof generateText>[0]['providerOptions'] {
+    if (this.options.provider === 'google' && this.options.googleSettings?.thinkingConfig) {
+      // Cast through unknown to satisfy the strict JSONValue constraint of SharedV3ProviderOptions.
+      // The thinkingConfig shape is always JSON-serializable; the cast is safe.
+      return { google: this.options.googleSettings } as unknown as Parameters<typeof generateText>[0]['providerOptions']
+    }
+    return undefined
+  }
+
   /**
    * Shared helper for generateText calls with error handling and usage tracking.
    */
@@ -282,6 +299,7 @@ export class LLMClient {
         maxOutputTokens: this.options.maxTokens,
         temperature: this.options.temperature,
         abortSignal: AbortSignal.timeout(timeout),
+        providerOptions: this.buildProviderOptions(),
       })
     }
     catch (error) {
@@ -426,6 +444,7 @@ export class LLMClient {
         maxOutputTokens: this.options.maxTokens,
         temperature: this.options.temperature,
         abortSignal: AbortSignal.timeout(timeout),
+        providerOptions: this.buildProviderOptions(),
       })
     }
     catch (error) {
