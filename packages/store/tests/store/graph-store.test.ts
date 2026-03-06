@@ -18,6 +18,10 @@ function makeDepEdgeAttrs(depType = 'import'): EdgeAttrs {
   return { type: 'dependency', dep_type: depType }
 }
 
+function makeDataFlowEdgeAttrs(dataId: string, dataType = 'object'): EdgeAttrs {
+  return { type: 'data_flow', df_data_id: dataId, df_data_type: dataType }
+}
+
 // ==================== Shared Test Suite ====================
 
 function runGraphStoreTests(name: string, createStore: () => GraphStore) {
@@ -131,6 +135,15 @@ function runGraphStoreTests(name: string, createStore: () => GraphStore) {
         const edges = await store.getEdges({ target: 'c1', type: 'functional' })
         expect(edges).toHaveLength(1)
         expect(edges[0].source).toBe('p')
+      })
+
+      it('allows multiple data_flow edges between same pair with distinct dataId', async () => {
+        await store.addEdge('c1', 'c2', makeDataFlowEdgeAttrs('user_id'))
+        await store.addEdge('c1', 'c2', makeDataFlowEdgeAttrs('auth_token'))
+        const edges = await store.getEdges({ type: 'data_flow' })
+        expect(edges).toHaveLength(2)
+        const dataIds = edges.map(e => e.attrs.df_data_id).sort()
+        expect(dataIds).toEqual(['auth_token', 'user_id'])
       })
     })
 
@@ -252,3 +265,27 @@ function runGraphStoreTests(name: string, createStore: () => GraphStore) {
 
 runGraphStoreTests('SQLiteGraphStore', () => new SQLiteGraphStore())
 runGraphStoreTests('SurrealGraphStore', () => new SurrealGraphStore())
+
+// ==================== SQLite-specific: data_flow uniqueness ====================
+
+describe('SQLiteGraphStore: data_flow edge uniqueness constraint', () => {
+  let store: SQLiteGraphStore
+
+  beforeEach(async () => {
+    store = new SQLiteGraphStore()
+    await store.open('memory')
+    await store.addNode('a', { type: 'low_level', feature_desc: 'A' })
+    await store.addNode('b', { type: 'low_level', feature_desc: 'B' })
+  })
+
+  afterEach(async () => {
+    await store.close()
+  })
+
+  it('rejects duplicate data_flow edges with same dataId', async () => {
+    await store.addEdge('a', 'b', { type: 'data_flow', df_data_id: 'token', df_data_type: 'string' })
+    await expect(
+      store.addEdge('a', 'b', { type: 'data_flow', df_data_id: 'token', df_data_type: 'string' }),
+    ).rejects.toThrow()
+  })
+})

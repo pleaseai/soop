@@ -1599,21 +1599,22 @@ export class RPGEncoder {
     const detector = new DataFlowDetector({ repoPath: this.repoPath })
     const dataFlowEdges = detector.detectAll(fileParseInfos)
 
-    // Deduplicate by (source, target) to satisfy the store's UNIQUE(source, target, type) constraint.
-    // When multiple data flows exist between the same pair, keep only the first.
-    const seenPairs = new Set<string>()
+    // Deduplicate truly identical flows (same source, target, dataId) from the detector output.
+    // Distinct flows between the same pair with different dataId values are now preserved,
+    // since the store's UNIQUE constraint is (source, target, type, data_id).
+    const seenFlows = new Set<string>()
     let dedupedCount = 0
     for (const edge of dataFlowEdges) {
-      const pairKey = `${edge.source}|${edge.target}`
-      if (seenPairs.has(pairKey)) {
+      const flowKey = `${edge.source}|${edge.target}|${edge.dataId}`
+      if (seenFlows.has(flowKey)) {
         dedupedCount++
         continue
       }
-      seenPairs.add(pairKey)
+      seenFlows.add(flowKey)
       await rpg.addDataFlowEdge(edge)
     }
     if (dedupedCount > 0) {
-      log.debug(`injectDataFlows: deduplicated ${dedupedCount} duplicate (source, target) data flow edge(s)`)
+      log.debug(`injectDataFlows: deduplicated ${dedupedCount} duplicate (source, target, dataId) data flow edge(s)`)
     }
   }
 
