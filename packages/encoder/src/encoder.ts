@@ -873,7 +873,12 @@ export class RPGEncoder {
     )
 
     try {
-      const response = await this.llmClient.complete(user, system)
+      const response = await this.llmClient.complete(user, system, {
+        maxTokens: 8192,
+        providerOptions: {
+          google: { thinkingConfig: { thinkingLevel: 'minimal' } },
+        },
+      })
       const edges = this.parseDataFlowEdges(response.content, treesNames)
 
       for (const edge of edges) {
@@ -1503,6 +1508,7 @@ export class RPGEncoder {
       const result = await domainDiscovery.discover(fileGroups, {
         repoInfo,
         callOptions: {
+          maxTokens: 4096,
           providerOptions: {
             google: { thinkingConfig: { thinkingLevel: 'minimal' } },
           },
@@ -1525,6 +1531,7 @@ export class RPGEncoder {
       await hierarchyBuilder.build(functionalAreas, fileGroups, {
         repoInfo,
         callOptions: {
+          maxTokens: 32768,
           providerOptions: {
             google: { thinkingConfig: { thinkingLevel: 'minimal' } },
           },

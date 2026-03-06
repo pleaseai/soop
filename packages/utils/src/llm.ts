@@ -75,6 +75,8 @@ export interface CallOptions {
   headers?: Parameters<typeof generateText>[0]['headers']
   /** Override timeout in milliseconds for this call. */
   timeout?: number
+  /** Override max output tokens for this call. */
+  maxTokens?: number
   /** Maximum number of AI SDK-level retries on API failure. Default: 2. */
   maxApiRetries?: number
   /**
@@ -297,7 +299,7 @@ export class LLMClient {
   constructor(options: LLMOptions) {
     this.options = {
       model: DEFAULT_MODELS[options.provider],
-      maxTokens: 4096,
+      maxTokens: 32768,
       temperature: 0,
       ...options,
     }
@@ -328,6 +330,7 @@ export class LLMClient {
     const modelId = this.options.model ?? DEFAULT_MODELS[this.options.provider]
     const model = this.providerInstance(modelId)
     const timeout = callOptions?.timeout ?? this.options.timeout ?? 120_000
+    const maxOutputTokens = callOptions?.maxTokens ?? this.options.maxTokens
 
     let result: Awaited<ReturnType<typeof generateText>>
     try {
@@ -336,7 +339,7 @@ export class LLMClient {
         output,
         system: systemPrompt,
         prompt,
-        maxOutputTokens: this.options.maxTokens,
+        maxOutputTokens,
         temperature: this.options.temperature,
         abortSignal: AbortSignal.timeout(timeout),
         providerOptions: this.buildProviderOptions(callOptions),
@@ -495,6 +498,7 @@ export class LLMClient {
     const modelId = this.options.model ?? DEFAULT_MODELS[this.options.provider]
     const model = this.providerInstance(modelId)
     const timeout = callOptions?.timeout ?? this.options.timeout ?? 120_000
+    const maxOutputTokens = callOptions?.maxTokens ?? this.options.maxTokens
 
     let result: Awaited<ReturnType<typeof generateText>>
     try {
@@ -502,7 +506,7 @@ export class LLMClient {
         model,
         output,
         messages,
-        maxOutputTokens: this.options.maxTokens,
+        maxOutputTokens,
         temperature: this.options.temperature,
         abortSignal: AbortSignal.timeout(timeout),
         providerOptions: this.buildProviderOptions(callOptions),

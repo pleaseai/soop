@@ -148,7 +148,7 @@ export class SemanticExtractor {
     this.options = {
       useLLM: true,
       provider: 'google',
-      maxTokens: 2048,
+      maxTokens: 8192,
       minBatchTokens: 10000,
       maxBatchTokens: 50000,
       maxParseIterations: 3,
@@ -157,6 +157,10 @@ export class SemanticExtractor {
     }
 
     if (this.options.useLLM && this.options.provider === 'google') {
+      // Default to minimal thinking for Phase 1 (structured JSON extraction — deep reasoning not needed)
+      if (!this.options.googleSettings) {
+        this.options.googleSettings = { thinkingConfig: { thinkingLevel: 'minimal' } }
+      }
       const key = this.options.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY
       if (!key) {
         log.warn(
