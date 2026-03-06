@@ -269,14 +269,16 @@ export class LLMClient {
   }
 
   private buildProviderOptions(): Parameters<typeof generateText>[0]['providerOptions'] {
-    if (this.options.googleSettings?.thinkingConfig) {
+    if (this.options.googleSettings) {
       if (this.options.provider !== 'google') {
         log.warn(
-          `googleSettings.thinkingConfig is provided but provider is "${this.options.provider}" — googleSettings is only applied when provider is "google" and will be ignored`,
+          `googleSettings is provided but provider is "${this.options.provider}" — googleSettings is only applied when provider is "google" and will be ignored`,
         )
         return undefined
       }
-      return { google: this.options.googleSettings as Record<string, unknown> } as Parameters<typeof generateText>[0]['providerOptions']
+      if (this.options.googleSettings.thinkingConfig) {
+        return { google: this.options.googleSettings as Record<string, unknown> } as Parameters<typeof generateText>[0]['providerOptions']
+      }
     }
     return undefined
   }
