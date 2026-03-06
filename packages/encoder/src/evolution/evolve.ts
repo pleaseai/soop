@@ -211,7 +211,7 @@ export class RPGEvolver {
   }
 
   private detectProvider(): LLMProvider | null {
-    if (process.env.GOOGLE_API_KEY)
+    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY)
       return 'google'
     if (process.env.ANTHROPIC_API_KEY)
       return 'anthropic'

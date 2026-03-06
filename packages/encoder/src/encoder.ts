@@ -579,7 +579,7 @@ export class RPGEncoder {
       return null
 
     let detectedProvider: LLMProvider | null = null
-    if (process.env.GOOGLE_API_KEY)
+    if (process.env.GOOGLE_GENERATIVE_AI_API_KEY)
       detectedProvider = 'google'
     else if (process.env.ANTHROPIC_API_KEY)
       detectedProvider = 'anthropic'
@@ -1489,7 +1489,7 @@ export class RPGEncoder {
       if (this.options.semantic?.useLLM === true || this.options.semantic?.provider) {
         throw new Error(
           'Semantic reorganization requires an LLM provider. '
-          + 'Set GOOGLE_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY.',
+          + 'Set GOOGLE_GENERATIVE_AI_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY.',
         )
       }
       return

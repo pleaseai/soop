@@ -135,7 +135,7 @@ function createProvider(provider: LLMProvider, apiKey?: string, claudeCodeSettin
       })
     case 'google':
       return createGoogleGenerativeAI({
-        apiKey: apiKey ?? process.env.GOOGLE_API_KEY,
+        apiKey: apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY,
       })
     case 'claude-code': {
       const settings: ClaudeCodeSettings = {

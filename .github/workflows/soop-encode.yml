@@ -36,7 +36,7 @@ jobs:
 
       - name: Encode or evolve RPG
         env:
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
           VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
         run: |
           if [ -n "$VOYAGE_API_KEY" ]; then

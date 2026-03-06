@@ -5,7 +5,7 @@
  * Usage:
  *   bun run scripts/encode-nextjs.ts
  *
- * Requires one of: GOOGLE_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY
+ * Requires one of: GOOGLE_GENERATIVE_AI_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY
  */
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'

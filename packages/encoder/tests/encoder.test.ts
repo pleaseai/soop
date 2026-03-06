@@ -389,10 +389,10 @@ describe('RPGEncoder.buildFunctionalHierarchy', () => {
   })
 
   it('throws when useLLM is true but no provider is available', async () => {
-    const savedGoogle = process.env.GOOGLE_API_KEY
+    const savedGoogle = process.env.GOOGLE_GENERATIVE_AI_API_KEY
     const savedAnthropic = process.env.ANTHROPIC_API_KEY
     const savedOpenAI = process.env.OPENAI_API_KEY
-    process.env.GOOGLE_API_KEY = ''
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY = ''
     process.env.ANTHROPIC_API_KEY = ''
     process.env.OPENAI_API_KEY = ''
 
@@ -406,7 +406,7 @@ describe('RPGEncoder.buildFunctionalHierarchy', () => {
     }
     finally {
       if (savedGoogle !== undefined)
-        process.env.GOOGLE_API_KEY = savedGoogle
+        process.env.GOOGLE_GENERATIVE_AI_API_KEY = savedGoogle
       else Reflect.deleteProperty(process.env, 'GOOGLE_API_KEY')
       if (savedAnthropic !== undefined)
         process.env.ANTHROPIC_API_KEY = savedAnthropic

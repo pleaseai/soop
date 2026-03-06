@@ -157,11 +157,11 @@ export class SemanticExtractor {
     }
 
     if (this.options.useLLM && this.options.provider === 'google') {
-      const key = this.options.apiKey ?? process.env.GOOGLE_API_KEY
+      const key = this.options.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY
       if (!key) {
         log.warn(
-          'provider is "google" but GOOGLE_API_KEY is not set — falling back to heuristic mode. '
-          + 'Set GOOGLE_API_KEY or pass provider/apiKey explicitly.',
+          'provider is "google" but GOOGLE_GENERATIVE_AI_API_KEY is not set — falling back to heuristic mode. '
+          + 'Set GOOGLE_GENERATIVE_AI_API_KEY or pass provider/apiKey explicitly.',
         )
         this.options = { ...this.options, useLLM: false }
       }
