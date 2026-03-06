@@ -305,6 +305,54 @@ describe('LLMClient', () => {
       )
     })
 
+    it('should default to 32768 maxOutputTokens', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      await client.complete('prompt')
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({ maxOutputTokens: 32768 }),
+      )
+    })
+
+    it('should use callOptions.maxTokens over instance maxTokens', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai', maxTokens: 1024 })
+      await client.complete('prompt', undefined, { maxTokens: 8192 })
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({ maxOutputTokens: 8192 }),
+      )
+    })
+
+    it('should use instance maxTokens when callOptions.maxTokens not provided', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai', maxTokens: 1024 })
+      await client.complete('prompt')
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({ maxOutputTokens: 1024 }),
+      )
+    })
+
     it('should throw and call onError on failure', async () => {
       const { generateText } = await import('ai')
 
@@ -554,6 +602,25 @@ describe('LLMClient', () => {
       memory.addUser('single message')
 
       await expect(client.generate(memory, { maxRetries: 2 })).rejects.toThrow('context_length_exceeded')
+    })
+
+    it('should use callOptions.maxTokens over instance maxTokens in generate()', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'multi-turn response',
+        usage: { inputTokens: 10, outputTokens: 5 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai', maxTokens: 1024 })
+      const memory = new Memory()
+      memory.addUser('Hello')
+
+      await client.generate(memory, { maxTokens: 32768 })
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({ maxOutputTokens: 32768 }),
+      )
     })
 
     it('should accumulate usage stats across generate() calls', async () => {

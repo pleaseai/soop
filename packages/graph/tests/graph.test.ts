@@ -583,4 +583,60 @@ describe('edgeToAttrs / attrsToEdge', () => {
       expect(restored.siblingOrder).toBe(3)
     }
   })
+
+  it('edgeToAttrs converts data_flow edge to attrs', () => {
+    const edge = createDataFlowEdge({
+      source: 'a',
+      target: 'b',
+      dataId: 'user-data',
+      dataType: 'UserModel',
+      transformation: 'serialize',
+    })
+
+    const attrs = edgeToAttrs(edge)
+
+    expect(attrs.type).toBe('data_flow')
+    expect(attrs.df_data_id).toBe('user-data')
+    expect(attrs.df_data_type).toBe('UserModel')
+    expect(attrs.df_transformation).toBe('serialize')
+  })
+
+  it('attrsToEdge round-trips data_flow edge', () => {
+    const original = createDataFlowEdge({
+      source: 'src/auth.ts:file',
+      target: 'src/user.ts:file',
+      dataId: 'token',
+      dataType: 'string',
+    })
+
+    const attrs = edgeToAttrs(original)
+    const restored = attrsToEdge('src/auth.ts:file', 'src/user.ts:file', attrs)
+
+    expect(restored.type).toBe('data_flow')
+    if (restored.type === 'data_flow') {
+      expect(restored.dataId).toBe('token')
+      expect(restored.dataType).toBe('string')
+      expect(restored.transformation).toBeUndefined()
+    }
+  })
+
+  it('attrsToEdge round-trips data_flow edge with transformation', () => {
+    const original = createDataFlowEdge({
+      source: 'src/parser.ts:file',
+      target: 'src/formatter.ts:file',
+      dataId: 'ast',
+      dataType: 'ASTNode',
+      transformation: 'stringify',
+    })
+
+    const attrs = edgeToAttrs(original)
+    const restored = attrsToEdge('src/parser.ts:file', 'src/formatter.ts:file', attrs)
+
+    expect(restored.type).toBe('data_flow')
+    if (restored.type === 'data_flow') {
+      expect(restored.dataId).toBe('ast')
+      expect(restored.dataType).toBe('ASTNode')
+      expect(restored.transformation).toBe('stringify')
+    }
+  })
 })
