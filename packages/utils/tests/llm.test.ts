@@ -19,9 +19,22 @@ vi.mock('ai-sdk-provider-claude-code', () => ({
   createClaudeCode: vi.fn(() => vi.fn(() => 'mock-claude-code-model')),
 }))
 
-const { mockCreateCodexCli } = vi.hoisted(() => ({
-  mockCreateCodexCli: vi.fn(() => vi.fn(() => 'mock-codex-model')),
-}))
+const { mockCreateCodexCli, MockNoObjectGeneratedError } = vi.hoisted(() => {
+  class MockNoObjectGeneratedError extends Error {
+    readonly text: string
+    constructor(message: string, text: string) {
+      super(message)
+      this.text = text
+    }
+    static isInstance(err: unknown): err is MockNoObjectGeneratedError {
+      return err instanceof MockNoObjectGeneratedError
+    }
+  }
+  return {
+    mockCreateCodexCli: vi.fn(() => vi.fn(() => 'mock-codex-model')),
+    MockNoObjectGeneratedError,
+  }
+})
 
 vi.mock('ai-sdk-provider-codex-cli', () => ({
   createCodexCli: mockCreateCodexCli,
@@ -32,6 +45,7 @@ vi.mock('ai', () => ({
   Output: {
     object: vi.fn(({ schema }: any) => ({ type: 'object', schema })),
   },
+  NoObjectGeneratedError: MockNoObjectGeneratedError,
 }))
 
 describe('parseModelString', () => {
@@ -305,6 +319,60 @@ describe('LLMClient', () => {
       )
     })
 
+    it('should give callOptions.providerOptions priority over instance googleSettings', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({
+        provider: 'google',
+        googleSettings: { thinkingConfig: { thinkingLevel: 'high' } },
+      })
+      const callProviderOptions = { google: { thinkingConfig: { thinkingLevel: 'none' } } } as any
+      await client.complete('prompt', undefined, { providerOptions: callProviderOptions })
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          providerOptions: callProviderOptions,
+        }),
+      )
+    })
+
+    it('should forward headers from callOptions to generateText in complete()', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      await client.complete('prompt', undefined, { headers: { 'Authorization': 'Bearer token' } })
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({ headers: { 'Authorization': 'Bearer token' } }),
+      )
+    })
+
+    it('should forward maxApiRetries from callOptions to generateText in complete()', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      await client.complete('prompt', undefined, { maxApiRetries: 3 })
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({ maxRetries: 3 }),
+      )
+    })
+
     it('should default to 32768 maxOutputTokens', async () => {
       const { generateText } = await import('ai')
 
@@ -440,6 +508,44 @@ describe('LLMClient', () => {
       await expect(client.completeJSON('prompt'))
         .rejects
         .toThrow('No JSON found in response')
+    })
+
+    it('should fall back to text parsing when NoObjectGeneratedError is thrown with valid JSON', async () => {
+      const { generateText } = await import('ai')
+
+      const schema = z.object({ name: z.string() })
+      const fakeError = new MockNoObjectGeneratedError('No object generated', '{"name": "fallback"}')
+      vi.mocked(generateText).mockRejectedValueOnce(fakeError)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const result = await client.completeJSON('prompt', 'system', schema)
+
+      expect(result).toEqual({ name: 'fallback' })
+    })
+
+    it('should throw structured error when NoObjectGeneratedError text fallback parse fails', async () => {
+      const { generateText } = await import('ai')
+
+      const schema = z.object({ name: z.string() })
+      const fakeError = new MockNoObjectGeneratedError('No object generated', '{broken json}')
+      vi.mocked(generateText).mockRejectedValueOnce(fakeError)
+
+      const client = new LLMClient({ provider: 'openai' })
+      await expect(client.completeJSON('prompt', 'system', schema))
+        .rejects
+        .toThrow('Structured output fallback parse failed (NoObjectGeneratedError → text → parse)')
+    })
+
+    it('should re-throw non-NoObjectGeneratedError from generateText', async () => {
+      const { generateText } = await import('ai')
+
+      const schema = z.object({ name: z.string() })
+      vi.mocked(generateText).mockRejectedValueOnce(new Error('network error'))
+
+      const client = new LLMClient({ provider: 'openai' })
+      await expect(client.completeJSON('prompt', 'system', schema))
+        .rejects
+        .toThrow('network error')
     })
   })
 
@@ -604,6 +710,63 @@ describe('LLMClient', () => {
       await expect(client.generate(memory, { maxRetries: 2 })).rejects.toThrow('context_length_exceeded')
     })
 
+    it('should log retry count warning when retrying transient errors', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText)
+        .mockRejectedValueOnce(new Error('temporary failure'))
+        .mockResolvedValueOnce({
+          text: 'success',
+          usage: { inputTokens: 5, outputTokens: 3 },
+        } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('test')
+
+      const result = await client.generate(memory, { maxRetries: 2 })
+      expect(result.content).toBe('success')
+      expect(vi.mocked(generateText)).toHaveBeenCalledTimes(2)
+    })
+
+    it('should forward headers from callOptions to generateText', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('test')
+
+      await client.generate(memory, { headers: { 'X-Custom': 'value' } })
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({ headers: { 'X-Custom': 'value' } }),
+      )
+    })
+
+    it('should forward maxApiRetries from callOptions to generateText', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'response',
+        usage: { inputTokens: 5, outputTokens: 3 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('test')
+
+      await client.generate(memory, { maxApiRetries: 5 })
+
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
+        expect.objectContaining({ maxRetries: 5 }),
+      )
+    })
+
     it('should use callOptions.maxTokens over instance maxTokens in generate()', async () => {
       const { generateText } = await import('ai')
 
@@ -728,6 +891,37 @@ describe('LLMClient', () => {
 
       const result = await client.generateJSON<{ result: number }>(memory)
       expect(result).toEqual({ result: 42 })
+    })
+
+    it('should fall back to text parsing when NoObjectGeneratedError is thrown in generateJSON', async () => {
+      const { generateText } = await import('ai')
+
+      const schema = z.object({ count: z.number() })
+      const fakeError = new MockNoObjectGeneratedError('No object generated', '{"count": 7}')
+      vi.mocked(generateText).mockRejectedValueOnce(fakeError)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('count items')
+
+      const result = await client.generateJSON(memory, schema)
+      expect(result).toEqual({ count: 7 })
+    })
+
+    it('should throw structured error when NoObjectGeneratedError text fallback parse fails in generateJSON', async () => {
+      const { generateText } = await import('ai')
+
+      const schema = z.object({ count: z.number() })
+      const fakeError = new MockNoObjectGeneratedError('No object generated', '{broken json}')
+      vi.mocked(generateText).mockRejectedValueOnce(fakeError)
+
+      const client = new LLMClient({ provider: 'openai' })
+      const memory = new Memory()
+      memory.addUser('count items')
+
+      await expect(client.generateJSON(memory, schema))
+        .rejects
+        .toThrow('Structured output fallback parse failed (NoObjectGeneratedError → text → parse)')
     })
   })
 

@@ -407,7 +407,7 @@ describe('RPGEncoder.buildFunctionalHierarchy', () => {
     finally {
       if (savedGoogle !== undefined)
         process.env.GOOGLE_GENERATIVE_AI_API_KEY = savedGoogle
-      else Reflect.deleteProperty(process.env, 'GOOGLE_API_KEY')
+      else Reflect.deleteProperty(process.env, 'GOOGLE_GENERATIVE_AI_API_KEY')
       if (savedAnthropic !== undefined)
         process.env.ANTHROPIC_API_KEY = savedAnthropic
       else Reflect.deleteProperty(process.env, 'ANTHROPIC_API_KEY')
@@ -541,6 +541,16 @@ describe('RPGEncoder.injectDataFlows', () => {
   it('data flow edges appear in graph stats', async () => {
     const stats = await result.rpg.getStats()
     expect(stats.dataFlowEdgeCount).toBeGreaterThan(0)
+  })
+
+  it('deduplicates data flow edges — no two edges share the same (source, target) pair', async () => {
+    const dataFlowEdges = await result.rpg.getDataFlowEdges()
+    const seenPairs = new Set<string>()
+    for (const edge of dataFlowEdges) {
+      const key = `${edge.source}|${edge.target}`
+      expect(seenPairs.has(key), `Duplicate data flow edge found: ${key}`).toBe(false)
+      seenPairs.add(key)
+    }
   })
 })
 
