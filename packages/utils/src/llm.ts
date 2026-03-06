@@ -303,16 +303,20 @@ export class LLMClient {
       temperature: 0,
       ...options,
     }
+    if (options.googleSettings && options.provider !== 'google') {
+      log.warn(
+        `'googleSettings' was provided for a non-Google provider ('${options.provider}'). These settings will be ignored.`,
+      )
+    }
     this.providerInstance = createProvider(options.provider, options.apiKey, options.claudeCodeSettings, options.codexSettings)
   }
 
   private buildProviderOptions(callOptions?: CallOptions): Parameters<typeof generateText>[0]['providerOptions'] {
     // Per-call providerOptions take precedence over instance-level googleSettings.
-    // Passing options for a non-active provider is safe — the AI SDK ignores unknown keys.
     if (callOptions?.providerOptions !== undefined) {
       return callOptions.providerOptions
     }
-    if (this.options.googleSettings) {
+    if (this.options.provider === 'google' && this.options.googleSettings && Object.keys(this.options.googleSettings).length > 0) {
       return { google: this.options.googleSettings } as unknown as Parameters<typeof generateText>[0]['providerOptions']
     }
     return undefined

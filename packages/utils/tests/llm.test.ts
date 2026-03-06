@@ -26,6 +26,7 @@ const { mockCreateCodexCli, MockNoObjectGeneratedError } = vi.hoisted(() => {
       super(message)
       this.text = text
     }
+
     static isInstance(err: unknown): err is MockNoObjectGeneratedError {
       return err instanceof MockNoObjectGeneratedError
     }
@@ -350,10 +351,10 @@ describe('LLMClient', () => {
       } as any)
 
       const client = new LLMClient({ provider: 'openai' })
-      await client.complete('prompt', undefined, { headers: { 'Authorization': 'Bearer token' } })
+      await client.complete('prompt', undefined, { headers: { Authorization: 'Bearer token' } })
 
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(
-        expect.objectContaining({ headers: { 'Authorization': 'Bearer token' } }),
+        expect.objectContaining({ headers: { Authorization: 'Bearer token' } }),
       )
     })
 
@@ -710,7 +711,7 @@ describe('LLMClient', () => {
       await expect(client.generate(memory, { maxRetries: 2 })).rejects.toThrow('context_length_exceeded')
     })
 
-    it('should log retry count warning when retrying transient errors', async () => {
+    it('should retry once on transient error and then succeed', async () => {
       const { generateText } = await import('ai')
 
       vi.mocked(generateText)

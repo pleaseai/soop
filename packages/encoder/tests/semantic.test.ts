@@ -33,13 +33,15 @@ describe('SemanticExtractor — google provider API key handling', () => {
 
   it('does not throw when provider is explicitly set to "google" and API key is provided via options', () => {
     expect(() => new SemanticExtractor({ provider: 'google', apiKey: 'fake-key' }))
-      .not.toThrow()
+      .not
+      .toThrow()
   })
 
   it('does not throw when provider is explicitly set to "google" and API key is in env', () => {
     process.env[envKey] = 'fake-env-key'
     expect(() => new SemanticExtractor({ provider: 'google' }))
-      .not.toThrow()
+      .not
+      .toThrow()
   })
 })
 
