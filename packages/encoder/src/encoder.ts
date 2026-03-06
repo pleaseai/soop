@@ -1500,7 +1500,14 @@ export class RPGEncoder {
     const domainDiscovery = new DomainDiscovery(this.llmClient)
     let functionalAreas: string[]
     try {
-      const result = await domainDiscovery.discover(fileGroups, { repoInfo })
+      const result = await domainDiscovery.discover(fileGroups, {
+        repoInfo,
+        callOptions: {
+          providerOptions: {
+            google: { thinkingConfig: { thinkingLevel: 'minimal' } },
+          },
+        },
+      })
       functionalAreas = result.functionalAreas
     }
     catch (error) {
@@ -1515,7 +1522,15 @@ export class RPGEncoder {
     log.info('Phase 2.2: Hierarchical Construction...')
     const hierarchyBuilder = new HierarchyBuilder(rpg, this.llmClient)
     try {
-      await hierarchyBuilder.build(functionalAreas, fileGroups, { repoInfo })
+      await hierarchyBuilder.build(functionalAreas, fileGroups, {
+        repoInfo,
+        callOptions: {
+          providerOptions: {
+            google: { thinkingConfig: { thinkingLevel: 'minimal' } },
+          },
+          timeout: 300_000,
+        },
+      })
     }
     catch (error) {
       const msg = `Phase 2.2 (Hierarchical Construction) failed: ${error instanceof Error ? error.message : String(error)}`
