@@ -1602,12 +1602,18 @@ export class RPGEncoder {
     // Deduplicate by (source, target) to satisfy the store's UNIQUE(source, target, type) constraint.
     // When multiple data flows exist between the same pair, keep only the first.
     const seenPairs = new Set<string>()
+    let dedupedCount = 0
     for (const edge of dataFlowEdges) {
       const pairKey = `${edge.source}|${edge.target}`
-      if (seenPairs.has(pairKey))
+      if (seenPairs.has(pairKey)) {
+        dedupedCount++
         continue
+      }
       seenPairs.add(pairKey)
       await rpg.addDataFlowEdge(edge)
+    }
+    if (dedupedCount > 0) {
+      log.debug(`injectDataFlows: deduplicated ${dedupedCount} duplicate (source, target) data flow edge(s)`)
     }
   }
 

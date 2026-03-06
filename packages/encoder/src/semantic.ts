@@ -145,6 +145,7 @@ export class SemanticExtractor {
   private readonly warnings: string[] = []
 
   constructor(options: SemanticOptions = {}) {
+    const providerWasExplicit = options.provider !== undefined
     this.options = {
       useLLM: true,
       provider: 'google',
@@ -163,8 +164,14 @@ export class SemanticExtractor {
       }
       const key = this.options.apiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY
       if (!key) {
+        if (providerWasExplicit) {
+          throw new Error(
+            'SemanticExtractor: provider is "google" but GOOGLE_GENERATIVE_AI_API_KEY is not set. '
+            + 'Set GOOGLE_GENERATIVE_AI_API_KEY or pass apiKey explicitly.',
+          )
+        }
         log.warn(
-          'provider is "google" but GOOGLE_GENERATIVE_AI_API_KEY is not set — falling back to heuristic mode. '
+          'GOOGLE_GENERATIVE_AI_API_KEY is not set — falling back to heuristic mode. '
           + 'Set GOOGLE_GENERATIVE_AI_API_KEY or pass provider/apiKey explicitly.',
         )
         this.options = { ...this.options, useLLM: false }
@@ -502,6 +509,7 @@ export class SemanticExtractor {
     }
     catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
+      this.warnings.push(`Class batch LLM call failed: ${msg}. Affected entities will fall back to heuristic.`)
       log.warn(`Class batch LLM call failed: ${msg}`)
     }
 
@@ -671,6 +679,7 @@ export class SemanticExtractor {
     }
     catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
+      this.warnings.push(`Function batch LLM call failed: ${msg}. Affected entities will fall back to heuristic.`)
       log.warn(`Function batch LLM call failed: ${msg}`)
     }
 

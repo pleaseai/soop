@@ -279,7 +279,7 @@ function isContextLengthError(error: unknown): boolean {
  * const client = new LLMClient({ provider: 'google', model: 'gemini-3.1-flash-lite-preview' })
  *
  * // Use Claude Haiku (fast, cost-effective)
- * const client = new LLMClient({ provider: 'anthropic', model: 'claude-3-5-haiku-latest' })
+ * const client = new LLMClient({ provider: 'anthropic', model: 'claude-haiku-4.5' })
  *
  * // Use GPT-4o (paper baseline)
  * const client = new LLMClient({ provider: 'openai', model: 'gpt-4o' })
@@ -411,7 +411,7 @@ export class LLMClient {
       catch (error) {
         // NoObjectGeneratedError carries the raw text the model produced — use it for fallback.
         if (NoObjectGeneratedError.isInstance(error)) {
-          log.debug(`NoObjectGeneratedError: ${error.message}`, error.cause)
+          log.warn(`Structured output not generated (NoObjectGeneratedError): ${error.message} — attempting text fallback`)
           rawText = error.text
         }
         else {
@@ -423,11 +423,17 @@ export class LLMClient {
         const jsonMatch
           = rawText.match(/```(?:json)?\n?([\s\S]*?)```/) || rawText.match(/\{[\s\S]*\}/)
         if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0])
-          return schema.parse(parsed) as T
+          try {
+            const parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0])
+            return schema.parse(parsed) as T
+          }
+          catch (parseError) {
+            const msg = parseError instanceof Error ? parseError.message : String(parseError)
+            throw new Error(`Structured output fallback parse failed (NoObjectGeneratedError → text → parse): ${msg}`, { cause: parseError })
+          }
         }
       }
-      throw new Error('No structured output from model')
+      throw new Error('No structured output returned from model')
     }
 
     // Fallback: regex-based JSON extraction for callers without schema
@@ -573,6 +579,8 @@ export class LLMClient {
         if (retries >= maxRetries) {
           throw error
         }
+        const msg = error instanceof Error ? error.message : String(error)
+        log.warn(`generate() retry ${retries}/${maxRetries} after error: ${msg}`)
       }
     }
   }
@@ -601,7 +609,7 @@ export class LLMClient {
       }
       catch (error) {
         if (NoObjectGeneratedError.isInstance(error)) {
-          log.debug(`NoObjectGeneratedError: ${error.message}`, error.cause)
+          log.warn(`Structured output not generated (NoObjectGeneratedError): ${error.message} — attempting text fallback`)
           rawText = error.text
         }
         else {
@@ -613,8 +621,14 @@ export class LLMClient {
         const jsonMatch
           = rawText.match(/```(?:json)?\n?([\s\S]*?)```/) || rawText.match(/\{[\s\S]*\}/)
         if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0])
-          return (schema as ZodType<T>).parse(parsed) as T
+          try {
+            const parsed = JSON.parse(jsonMatch[1] ?? jsonMatch[0])
+            return (schema as ZodType<T>).parse(parsed) as T
+          }
+          catch (parseError) {
+            const msg = parseError instanceof Error ? parseError.message : String(parseError)
+            throw new Error(`Structured output fallback parse failed (NoObjectGeneratedError → text → parse): ${msg}`, { cause: parseError })
+          }
         }
       }
       throw new Error('No structured output returned from model')
