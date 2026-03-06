@@ -37,9 +37,9 @@
     "@pleaseai/soop-graph": "workspace:*",
     "@pleaseai/soop-store": "workspace:*",
     "@pleaseai/soop-utils": "workspace:*",
-    "@ai-sdk/openai": "^3.0.39",
+    "@ai-sdk/openai": "^3.0.41",
     "@huggingface/transformers": "^3.8.1",
-    "ai": "^6.0.70",
+    "ai": "^6.0.116",
     "better-sqlite3": "^12.6.2",
     "tree-sitter": "0.25.0"
   },
