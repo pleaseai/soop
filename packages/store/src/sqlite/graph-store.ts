@@ -132,7 +132,7 @@ export class SQLiteGraphStore implements GraphStore {
   // ==================== Edge CRUD ====================
 
   async addEdge(source: string, target: string, attrs: EdgeAttrs): Promise<void> {
-    const dataId = attrs.type === 'data_flow' ? ((attrs.df_data_id as string) ?? '') : ''
+    const dataId = attrs.type === 'data_flow' && attrs.df_data_id != null ? String(attrs.df_data_id) : ''
     this.db
       .prepare('INSERT INTO edges (source, target, type, attrs, data_id) VALUES (?, ?, ?, ?, ?)')
       .run(source, target, attrs.type, JSON.stringify(attrs), dataId)
@@ -362,7 +362,7 @@ export class SQLiteGraphStore implements GraphStore {
         insertNode.run(node.id, JSON.stringify(node.attrs))
       }
       for (const edge of data.edges) {
-        const dataId = edge.attrs.type === 'data_flow' ? ((edge.attrs.df_data_id as string) ?? '') : ''
+        const dataId = edge.attrs.type === 'data_flow' && edge.attrs.df_data_id != null ? String(edge.attrs.df_data_id) : ''
         insertEdge.run(edge.source, edge.target, edge.attrs.type, JSON.stringify(edge.attrs), dataId)
       }
     })
