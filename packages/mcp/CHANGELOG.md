@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.6...soop-mcp-v0.1.7) (2026-03-09)
+
+
+### Bug Fixes
+
+* **mcp:** replace top-level await with promise chain for cross-compilation ([#173](https://github.com/pleaseai/soop/issues/173)) ([a14303d](https://github.com/pleaseai/soop/commit/a14303d8cf8d3dd1f1887eda1432976440ed59b1))
+
 ## [0.1.6](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.5...soop-mcp-v0.1.6) (2026-03-09)
 
 

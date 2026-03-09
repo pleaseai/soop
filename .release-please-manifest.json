@@ -3,7 +3,7 @@
   "packages/cli": "0.1.6",
   "packages/encoder": "0.1.6",
   "packages/graph": "0.1.6",
-  "packages/mcp": "0.1.6",
+  "packages/mcp": "0.1.7",
   "packages/store": "0.1.6",
   "packages/tools": "0.1.6",
   "packages/utils": "0.1.6",
