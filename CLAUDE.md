@@ -391,6 +391,10 @@ If `better-sqlite3` native bindings are compiled for a different Node.js version
 - Guard git-history-dependent tests with `it.skipIf(!hasGitAncestor(repoPath, ref))` as a safety net
 - The `tests/fixtures/superjson` submodule is a real git repository used for evolution/diff-parser integration tests
 
+### packages/soop workspace dependencies
+- Always declare `@pleaseai/soop-*` workspace packages in `devDependencies` of `packages/soop/package.json`, **not** `dependencies` — they are `private: true` and not published to npm, so listing them in `dependencies` causes `npm install -g @pleaseai/soop` to fail with 404 errors
+- The `release-please` `node-workspace` plugin detects both `dependencies` **and** `devDependencies` for cascade version bumps, so `devDependencies` is sufficient
+
 ### Linter auto-formatting
 - Always run `bun run lint:fix` after editing test files — the local formatter and CI linter may disagree on arrow-parens, brace-style, and comma-dangle
 
