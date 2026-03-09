@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.5](https://github.com/pleaseai/soop/compare/soop-zerorepo-v0.1.4...soop-zerorepo-v0.1.5) (2026-03-09)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.5
+    * @pleaseai/soop-utils bumped to 0.1.5
+
 ## [0.1.4](https://github.com/pleaseai/soop/compare/soop-zerorepo-v0.1.3...soop-zerorepo-v0.1.4) (2026-02-25)
 
 

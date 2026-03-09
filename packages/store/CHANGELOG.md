@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.5](https://github.com/pleaseai/soop/compare/soop-store-v0.1.4...soop-store-v0.1.5) (2026-03-09)
+
+
+### Features
+
+* **encoder:** change default LLM provider to google/gemini-3.1-flash-lite-preview ([#169](https://github.com/pleaseai/soop/issues/169)) ([88e833c](https://github.com/pleaseai/soop/commit/88e833c684b7749a2915a09e5920ba3baf38c1ea))
+
+
+### Bug Fixes
+
+* **store:** use empty string sentinel for data_id and wrap migration in transaction ([#170](https://github.com/pleaseai/soop/issues/170)) ([b363018](https://github.com/pleaseai/soop/commit/b363018ac3728e72167b182b665ac9c5f2b9700c))
+
 ## [0.1.4](https://github.com/pleaseai/soop/compare/soop-store-v0.1.3...soop-store-v0.1.4) (2026-02-25)
 
 

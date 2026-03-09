@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.5](https://github.com/pleaseai/soop/compare/soop-tools-v0.1.4...soop-tools-v0.1.5) (2026-03-09)
+
+
+### Features
+
+* **encoder:** support flexible 2-5 level hierarchy and evolution area creation ([#155](https://github.com/pleaseai/soop/issues/155)) ([7e12b26](https://github.com/pleaseai/soop/commit/7e12b268f7cf5357435eddcc443425a08831ee13))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.5
+    * @pleaseai/soop-encoder bumped to 0.1.5
+
 ## [0.1.4](https://github.com/pleaseai/soop/compare/soop-tools-v0.1.3...soop-tools-v0.1.4) (2026-02-25)
 
 
