@@ -50,7 +50,7 @@
     },
     "packages/cli": {
       "name": "@pleaseai/soop-cli",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "dependencies": {
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
@@ -64,7 +64,7 @@
     },
     "packages/encoder": {
       "name": "@pleaseai/soop-encoder",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "dependencies": {
         "@ai-sdk/openai": "^3.0.41",
         "@huggingface/transformers": "^3.8.1",
@@ -81,7 +81,7 @@
     },
     "packages/graph": {
       "name": "@pleaseai/soop-graph",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "dependencies": {
         "@pleaseai/soop-store": "workspace:*",
         "@pleaseai/soop-utils": "workspace:*",
@@ -94,7 +94,7 @@
     },
     "packages/mcp": {
       "name": "@pleaseai/soop-mcp",
-      "version": "0.1.4",
+      "version": "0.1.7",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.26.0",
         "@pleaseai/soop-encoder": "workspace:*",
@@ -109,7 +109,7 @@
     },
     "packages/soop": {
       "name": "@pleaseai/soop",
-      "version": "0.1.14",
+      "version": "0.1.15",
       "bin": {
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
@@ -127,16 +127,26 @@
         "tree-sitter-rust": "0.24.0",
         "tree-sitter-typescript": "0.23.2",
       },
+      "devDependencies": {
+        "@pleaseai/soop-cli": "workspace:*",
+        "@pleaseai/soop-encoder": "workspace:*",
+        "@pleaseai/soop-graph": "workspace:*",
+        "@pleaseai/soop-mcp": "workspace:*",
+        "@pleaseai/soop-store": "workspace:*",
+        "@pleaseai/soop-tools": "workspace:*",
+        "@pleaseai/soop-utils": "workspace:*",
+        "@pleaseai/soop-zerorepo": "workspace:*",
+      },
       "optionalDependencies": {
         "@huggingface/transformers": "^3.8.1",
         "@lancedb/lancedb": "^0.13.0",
-        "@pleaseai/soop-darwin-arm64": "0.1.14",
-        "@pleaseai/soop-darwin-x64": "0.1.14",
-        "@pleaseai/soop-linux-arm64-glibc": "0.1.14",
-        "@pleaseai/soop-linux-arm64-musl": "0.1.14",
-        "@pleaseai/soop-linux-x64-glibc": "0.1.14",
-        "@pleaseai/soop-linux-x64-musl": "0.1.14",
-        "@pleaseai/soop-win32-x64": "0.1.14",
+        "@pleaseai/soop-darwin-arm64": "0.1.15",
+        "@pleaseai/soop-darwin-x64": "0.1.15",
+        "@pleaseai/soop-linux-arm64-glibc": "0.1.15",
+        "@pleaseai/soop-linux-arm64-musl": "0.1.15",
+        "@pleaseai/soop-linux-x64-glibc": "0.1.15",
+        "@pleaseai/soop-linux-x64-musl": "0.1.15",
+        "@pleaseai/soop-win32-x64": "0.1.15",
         "@surrealdb/node": "^2.6.0",
         "better-sqlite3": "^12.6.2",
       },
@@ -146,7 +156,7 @@
     },
     "packages/store": {
       "name": "@pleaseai/soop-store",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "dependencies": {
         "@surrealdb/node": "^2.6.0",
         "surrealdb": "^2.0.0",
@@ -158,7 +168,7 @@
     },
     "packages/tools": {
       "name": "@pleaseai/soop-tools",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "dependencies": {
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
@@ -166,7 +176,7 @@
     },
     "packages/utils": {
       "name": "@pleaseai/soop-utils",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.58",
         "@ai-sdk/google": "^3.0.43",
@@ -193,7 +203,7 @@
     },
     "packages/zerorepo": {
       "name": "@pleaseai/soop-zerorepo",
-      "version": "0.1.4",
+      "version": "0.1.6",
       "dependencies": {
         "@pleaseai/soop-graph": "workspace:*",
         "@pleaseai/soop-utils": "workspace:*",
@@ -433,21 +443,9 @@
 
     "@pleaseai/soop-cli": ["@pleaseai/soop-cli@workspace:packages/cli"],
 
-    "@pleaseai/soop-darwin-arm64": ["@pleaseai/soop-darwin-arm64@0.1.14", "", { "os": "darwin", "cpu": "arm64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-33mUscM2mtSA7ynfSWU/sxUCq/nbEy70ZrE0HOZdcC6E9Clk7Zkl371mT7+prGUB/Qnfc28/NlTXzyaUsukjYw=="],
-
-    "@pleaseai/soop-darwin-x64": ["@pleaseai/soop-darwin-x64@0.1.14", "", { "os": "darwin", "cpu": "x64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-FlmxBmPqO9FKCP494Wz0FPf/M7QjUhTesoZ+/m4bo3ZEftganjB7Y9Tc02DTDgK+bK7q2NiAhskt7EKz33uWSA=="],
-
     "@pleaseai/soop-encoder": ["@pleaseai/soop-encoder@workspace:packages/encoder"],
 
     "@pleaseai/soop-graph": ["@pleaseai/soop-graph@workspace:packages/graph"],
-
-    "@pleaseai/soop-linux-arm64-glibc": ["@pleaseai/soop-linux-arm64-glibc@0.1.14", "", { "os": "linux", "cpu": "arm64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-4xJYoUaklFxvIibFJpap67hRqGEjZe/I4VUIzEjSbg+J40QBoj/JQVHTvxOUuYlyhXMyZppDO4EU9SqmvUsyOw=="],
-
-    "@pleaseai/soop-linux-arm64-musl": ["@pleaseai/soop-linux-arm64-musl@0.1.14", "", { "os": "linux", "cpu": "arm64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-Suz6cPdUe366d57y4WSudxkBRBrLdBZkxZv0CLRSvsfDCnvHiPtKf5cxzWwXIgzkpZ5mmSggEpXxASC+XusBZg=="],
-
-    "@pleaseai/soop-linux-x64-glibc": ["@pleaseai/soop-linux-x64-glibc@0.1.14", "", { "os": "linux", "cpu": "x64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-by3/hpU7BBv/08KjWgWviXeW4urwW/8qlnnRaN4f2OyCEmGw3iZSN0pnI8tdx7mwYc35gSAFJwAyD7Qzyjflfw=="],
-
-    "@pleaseai/soop-linux-x64-musl": ["@pleaseai/soop-linux-x64-musl@0.1.14", "", { "os": "linux", "cpu": "x64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-2JfHFffekjPcOFsjlyHea+wObBgURPky0T3wIR6NeLR54fFfNWrFBHNjCbYS/iaeHeaMHweY5Wk0DynX9vBAyQ=="],
 
     "@pleaseai/soop-mcp": ["@pleaseai/soop-mcp@workspace:packages/mcp"],
 
@@ -456,8 +454,6 @@
     "@pleaseai/soop-tools": ["@pleaseai/soop-tools@workspace:packages/tools"],
 
     "@pleaseai/soop-utils": ["@pleaseai/soop-utils@workspace:packages/utils"],
-
-    "@pleaseai/soop-win32-x64": ["@pleaseai/soop-win32-x64@0.1.14", "", { "os": "win32", "cpu": "x64", "bin": { "soop": "soop.exe", "soop-mcp": "soop-mcp.exe" } }, "sha512-FMD0sRpV/vdrT21n6bgqp3v6ueg3iGmVB9WCBmoCjGZB/cO9VCFuIdZeshGED688+T037mAeiXcf0/kOSKJO+g=="],
 
     "@pleaseai/soop-zerorepo": ["@pleaseai/soop-zerorepo@workspace:packages/zerorepo"],
 
