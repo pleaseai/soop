@@ -13,7 +13,7 @@
   "packages": {
     "packages/soop": {
       "package-name": "@pleaseai/soop",
-      "include-component-in-tag": false,
+      "include-component-in-tag": true,
       "extra-files": [
         {
           "type": "json",
