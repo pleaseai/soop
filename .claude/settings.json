@@ -3,7 +3,7 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
   "enabledPlugins": {
-    "claude-md-management@claude-plugins-official": true,
+    "claude-md-management@pleaseai": true,
     "dev-tools@passionfactory": true,
     "context@passionfactory": true,
     "review@passionfactory": true,
