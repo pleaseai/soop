@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS edges (
     target  TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
     type    TEXT NOT NULL,
     attrs   TEXT NOT NULL,
-    data_id TEXT,
+    data_id TEXT NOT NULL DEFAULT '',
     UNIQUE(source, target, type, data_id)
 );
 
@@ -37,12 +37,14 @@ CREATE TABLE edges_new (
     target  TEXT NOT NULL REFERENCES nodes(id) ON DELETE CASCADE,
     type    TEXT NOT NULL,
     attrs   TEXT NOT NULL,
-    data_id TEXT,
+    data_id TEXT NOT NULL DEFAULT '',
     UNIQUE(source, target, type, data_id)
 );
 INSERT INTO edges_new (source, target, type, attrs, data_id)
     SELECT source, target, type, attrs,
-        CASE WHEN type = 'data_flow' THEN json_extract(attrs, '$.df_data_id') ELSE NULL END
+        CASE WHEN type = 'data_flow' THEN COALESCE(json_extract(attrs, '$.df_data_id'), '')
+             ELSE ''
+        END
     FROM edges;
 DROP TABLE edges;
 ALTER TABLE edges_new RENAME TO edges;
@@ -68,7 +70,7 @@ export class SQLiteGraphStore implements GraphStore {
     // Migrate existing databases that were created without the data_id column.
     const cols = this.db.prepare('PRAGMA table_info(edges)').all() as Array<{ name: string }>
     if (!cols.some(c => c.name === 'data_id')) {
-      this.db.exec(MIGRATION_ADD_DATA_ID)
+      this.db.transaction(() => { this.db.exec(MIGRATION_ADD_DATA_ID) })()
     }
   }
 
@@ -130,7 +132,7 @@ export class SQLiteGraphStore implements GraphStore {
   // ==================== Edge CRUD ====================
 
   async addEdge(source: string, target: string, attrs: EdgeAttrs): Promise<void> {
-    const dataId = attrs.type === 'data_flow' ? ((attrs.df_data_id as string) ?? null) : null
+    const dataId = attrs.type === 'data_flow' && attrs.df_data_id != null ? String(attrs.df_data_id) : ''
     this.db
       .prepare('INSERT INTO edges (source, target, type, attrs, data_id) VALUES (?, ?, ?, ?, ?)')
       .run(source, target, attrs.type, JSON.stringify(attrs), dataId)
@@ -360,7 +362,7 @@ export class SQLiteGraphStore implements GraphStore {
         insertNode.run(node.id, JSON.stringify(node.attrs))
       }
       for (const edge of data.edges) {
-        const dataId = edge.attrs.type === 'data_flow' ? ((edge.attrs.df_data_id as string) ?? null) : null
+        const dataId = edge.attrs.type === 'data_flow' && edge.attrs.df_data_id != null ? String(edge.attrs.df_data_id) : ''
         insertEdge.run(edge.source, edge.target, edge.attrs.type, JSON.stringify(edge.attrs), dataId)
       }
     })
