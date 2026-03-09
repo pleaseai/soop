@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.5](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.4...soop-graph-v0.1.5) (2026-03-09)
+
+
+### Features
+
+* **encoder:** change default LLM provider to google/gemini-3.1-flash-lite-preview ([#169](https://github.com/pleaseai/soop/issues/169)) ([88e833c](https://github.com/pleaseai/soop/commit/88e833c684b7749a2915a09e5920ba3baf38c1ea))
+* **encoder:** support flexible 2-5 level hierarchy and evolution area creation ([#155](https://github.com/pleaseai/soop/issues/155)) ([7e12b26](https://github.com/pleaseai/soop/commit/7e12b268f7cf5357435eddcc443425a08831ee13))
+* **graph,encoder:** persist DependencyEdge symbols and add cross-boundary excerpts ([#156](https://github.com/pleaseai/soop/issues/156)) ([0fadc4f](https://github.com/pleaseai/soop/commit/0fadc4fe972a1ad91c58f9c769a8054569fb0f6d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-store bumped to 0.1.5
+    * @pleaseai/soop-utils bumped to 0.1.5
+
 ## [0.1.4](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.3...soop-graph-v0.1.4) (2026-02-25)
 
 
