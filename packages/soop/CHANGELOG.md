@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.17](https://github.com/pleaseai/soop/compare/soop-v0.1.16...soop-v0.1.17) (2026-03-09)
+
+
+### Features
+
+* rebrand from rpg to repo please with monorepo restructure ([#117](https://github.com/pleaseai/soop/issues/117)) ([d4b805a](https://github.com/pleaseai/soop/commit/d4b805abc23f20e8ac3fe1b375c105ba7a6c9b33))
+
+
+### Bug Fixes
+
+* add workspace dependencies to trigger release-please cascade bumps ([#175](https://github.com/pleaseai/soop/issues/175)) ([ce5ff56](https://github.com/pleaseai/soop/commit/ce5ff56938a97bee00662ba63fc2c09729606960))
+* **build:** fix Bun.build compile API and add robustness to generate-packages script ([#131](https://github.com/pleaseai/soop/issues/131)) ([24e8609](https://github.com/pleaseai/soop/commit/24e86096ef0dac509d59417ad424e875eb31a4e9))
+* resolve bun install -g failure and correct CI command name ([#135](https://github.com/pleaseai/soop/issues/135)) ([6af1dc3](https://github.com/pleaseai/soop/commit/6af1dc379ea4342922c193a3519188fc927e2225))
+
 ## [0.1.16](https://github.com/pleaseai/soop/compare/v0.1.15...v0.1.16) (2026-03-09)
 
 
