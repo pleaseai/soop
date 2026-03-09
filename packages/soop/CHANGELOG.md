@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.15](https://github.com/pleaseai/soop/compare/v0.1.14...v0.1.15) (2026-03-09)
+
+
+### Bug Fixes
+
+* add workspace dependencies to trigger release-please cascade bumps ([#175](https://github.com/pleaseai/soop/issues/175)) ([ce5ff56](https://github.com/pleaseai/soop/commit/ce5ff56938a97bee00662ba63fc2c09729606960))
+
 ## [0.1.14](https://github.com/pleaseai/soop/compare/v0.1.13...v0.1.14) (2026-02-26)
 
 
