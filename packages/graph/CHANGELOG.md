@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.1.6](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.5...soop-graph-v0.1.6) (2026-03-09)
+
+
+### Features
+
+* **cli:** add two-tier RPG data management (CI + local) ([#71](https://github.com/pleaseai/soop/issues/71)) ([2b00bdf](https://github.com/pleaseai/soop/commit/2b00bdf2a6489d6f1224ab344f7cd8d649ce2d8a))
+* **encoder:** add git-managed vector embeddings with Float16 codec ([#74](https://github.com/pleaseai/soop/issues/74)) ([d3fdb4d](https://github.com/pleaseai/soop/commit/d3fdb4d0499b1e0aaa17cb94ad1ed6bcc9b4e4c5))
+* **encoder:** change default LLM provider to google/gemini-3.1-flash-lite-preview ([#169](https://github.com/pleaseai/soop/issues/169)) ([88e833c](https://github.com/pleaseai/soop/commit/88e833c684b7749a2915a09e5920ba3baf38c1ea))
+* **encoder:** implement DependencyGraph with invocation and inheritance tracking ([#83](https://github.com/pleaseai/soop/issues/83)) ([3e21441](https://github.com/pleaseai/soop/commit/3e21441e8f4301886886997381573030eae85603))
+* **encoder:** support flexible 2-5 level hierarchy and evolution area creation ([#155](https://github.com/pleaseai/soop/issues/155)) ([7e12b26](https://github.com/pleaseai/soop/commit/7e12b268f7cf5357435eddcc443425a08831ee13))
+* **graph,encoder:** persist DependencyEdge symbols and add cross-boundary excerpts ([#156](https://github.com/pleaseai/soop/issues/156)) ([0fadc4f](https://github.com/pleaseai/soop/commit/0fadc4fe972a1ad91c58f9c769a8054569fb0f6d))
+* rebrand from rpg to repo please with monorepo restructure ([#117](https://github.com/pleaseai/soop/issues/117)) ([d4b805a](https://github.com/pleaseai/soop/commit/d4b805abc23f20e8ac3fe1b375c105ba7a6c9b33))
+
+
+### Bug Fixes
+
+* **build:** resolve Bun compile errors for cross-platform binary distribution ([#114](https://github.com/pleaseai/soop/issues/114)) ([1f9ce01](https://github.com/pleaseai/soop/commit/1f9ce01e67825b2019733f6c28cdfe984a4379d6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-store bumped to 0.1.6
+    * @pleaseai/soop-utils bumped to 0.1.6
+
 ## [0.1.5](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.4...soop-graph-v0.1.5) (2026-03-09)
 
 

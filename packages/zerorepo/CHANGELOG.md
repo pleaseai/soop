@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.6](https://github.com/pleaseai/soop/compare/soop-zerorepo-v0.1.5...soop-zerorepo-v0.1.6) (2026-03-09)
+
+
+### Features
+
+* rebrand from rpg to repo please with monorepo restructure ([#117](https://github.com/pleaseai/soop/issues/117)) ([d4b805a](https://github.com/pleaseai/soop/commit/d4b805abc23f20e8ac3fe1b375c105ba7a6c9b33))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.6
+    * @pleaseai/soop-utils bumped to 0.1.6
+
 ## [0.1.5](https://github.com/pleaseai/soop/compare/soop-zerorepo-v0.1.4...soop-zerorepo-v0.1.5) (2026-03-09)
 
 
