@@ -1,8 +1,8 @@
 import type { EntityType } from '@pleaseai/soop-graph/node'
-import type { CodeEntity } from '@pleaseai/soop-utils/ast'
+import type { CodeEntity } from '@pleaseai/soop-ast'
 import type { ChangedEntity, DiffResult, FileChange, FileChangeStatus } from './types'
 import { execFileSync } from 'node:child_process'
-import { ASTParser } from '@pleaseai/soop-utils/ast'
+import { ASTParser } from '@pleaseai/soop-ast'
 import { resolveGitBinary } from '@pleaseai/soop-utils/git-path'
 
 /**

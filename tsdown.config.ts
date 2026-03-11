@@ -6,8 +6,9 @@ const external = [
   'better-sqlite3',
   '@lancedb/lancedb',
   '@surrealdb/node',
-  // Tree-sitter native parser
+  // Tree-sitter native parser + WASM-based alternative (web-tree-sitter)
   'tree-sitter',
+  'web-tree-sitter',
   'tree-sitter-typescript',
   'tree-sitter-python',
   'tree-sitter-rust',

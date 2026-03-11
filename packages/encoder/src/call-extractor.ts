@@ -1,7 +1,8 @@
-import type { SupportedLanguage } from '@pleaseai/soop-utils/ast'
-import type Parser from 'tree-sitter'
+import type { NamuNode, NamuParser } from '@pleaseai/soop-namu'
+import type { SupportedLanguage } from '@pleaseai/soop-ast'
 import type { CallSite, ReceiverKind } from './dependency-graph'
-import { LANGUAGE_CONFIGS } from '@pleaseai/soop-utils/ast'
+import { createParser, getLanguage } from '@pleaseai/soop-namu'
+import { LANGUAGE_CONFIGS } from '@pleaseai/soop-ast'
 
 interface CallInfo {
   symbol: string | null
@@ -10,40 +11,21 @@ interface CallInfo {
 }
 
 /**
- * Extracts function/method call sites from source code using tree-sitter AST parsing.
+ * Extracts function/method call sites from source code using WASM tree-sitter AST parsing.
  *
- * Supports TypeScript, JavaScript, Python, Java, Rust, and Go.
+ * Supports TypeScript, JavaScript, Python, Java, Rust, Go, C#, C/C++, Ruby, and Kotlin.
  */
 export class CallExtractor {
-  private readonly parser: Parser | undefined
-
-  constructor() {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const TreeSitter = require('tree-sitter')
-      this.parser = new TreeSitter()
-    }
-    catch (err) {
-      const code = (err as NodeJS.ErrnoException).code
-      if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
-        throw err
-      }
-      // tree-sitter not available in compiled binary
-    }
-  }
+  private parser: NamuParser | undefined
 
   private isSupportedLanguage(language: string): language is SupportedLanguage {
-    return language in LANGUAGE_CONFIGS && LANGUAGE_CONFIGS[language as SupportedLanguage] !== undefined
+    return language in LANGUAGE_CONFIGS
   }
 
-  extract(source: string, language: string, filePath: string): CallSite[] {
+  async extract(source: string, language: string, filePath: string): Promise<CallSite[]> {
     const calls: CallSite[] = []
 
     if (!source.trim()) {
-      return calls
-    }
-
-    if (!this.parser) {
       return calls
     }
 
@@ -51,12 +33,12 @@ export class CallExtractor {
       return calls
     }
 
-    const config = LANGUAGE_CONFIGS[language]!
-
     try {
-      this.parser.setLanguage(
-        config.parser as Parameters<typeof this.parser.setLanguage>[0],
-      )
+      if (!this.parser) {
+        this.parser = await createParser()
+      }
+      const lang = await getLanguage(language)
+      this.parser.setLanguage(lang)
 
       const tree = this.parser.parse(source)
 
@@ -74,7 +56,7 @@ export class CallExtractor {
   }
 
   private walkNode(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     language: string,
     calls: CallSite[],
@@ -93,7 +75,7 @@ export class CallExtractor {
    * Extract call site from a node if it matches a call pattern for the language
    */
   private extractFromNode(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     language: string,
     calls: CallSite[],
@@ -144,7 +126,7 @@ export class CallExtractor {
   /**
    * Classify a receiver node into self/super/variable
    */
-  private classifyReceiver(obj: Parser.SyntaxNode): { receiver: string, receiverKind: 'self' | 'super' | 'variable' } {
+  private classifyReceiver(obj: NamuNode): { receiver: string, receiverKind: 'self' | 'super' | 'variable' } {
     const type = obj.type
     const text = obj.text
 
@@ -163,7 +145,7 @@ export class CallExtractor {
 
   // ===================== TypeScript / JavaScript =====================
 
-  private extractTSMemberCall(fn: Parser.SyntaxNode): CallInfo {
+  private extractTSMemberCall(fn: NamuNode): CallInfo {
     const objNode = fn.childForFieldName('object')
     const propNode = fn.childForFieldName('property')
     if (!propNode)
@@ -174,7 +156,7 @@ export class CallExtractor {
     return { symbol, ...this.classifyReceiver(objNode) }
   }
 
-  private extractTSCall(node: Parser.SyntaxNode): CallInfo {
+  private extractTSCall(node: NamuNode): CallInfo {
     if (node.type === 'call_expression') {
       const fn = node.childForFieldName('function')
       if (!fn)
@@ -198,7 +180,7 @@ export class CallExtractor {
 
   // ===================== Python =====================
 
-  private extractPythonCall(node: Parser.SyntaxNode): CallInfo {
+  private extractPythonCall(node: NamuNode): CallInfo {
     if (node.type !== 'call')
       return { symbol: null }
     const fn = node.childForFieldName('function')
@@ -227,7 +209,7 @@ export class CallExtractor {
 
   // ===================== Java =====================
 
-  private extractJavaCall(node: Parser.SyntaxNode): CallInfo {
+  private extractJavaCall(node: NamuNode): CallInfo {
     if (node.type === 'method_invocation') {
       const name = node.childForFieldName('name')
       const symbol = name?.text ?? null
@@ -248,7 +230,7 @@ export class CallExtractor {
 
   // ===================== Rust =====================
 
-  private extractRustCall(node: Parser.SyntaxNode): CallInfo {
+  private extractRustCall(node: NamuNode): CallInfo {
     if (node.type !== 'call_expression')
       return { symbol: null }
     const fn = node.childForFieldName('function')
@@ -281,7 +263,7 @@ export class CallExtractor {
 
   // ===================== Go =====================
 
-  private extractGoCall(node: Parser.SyntaxNode): CallInfo {
+  private extractGoCall(node: NamuNode): CallInfo {
     if (node.type !== 'call_expression')
       return { symbol: null }
     const fn = node.childForFieldName('function')
@@ -308,7 +290,7 @@ export class CallExtractor {
 
   // ===================== C# =====================
 
-  private extractCSharpCall(node: Parser.SyntaxNode): CallInfo {
+  private extractCSharpCall(node: NamuNode): CallInfo {
     if (node.type === 'invocation_expression') {
       const fn = node.childForFieldName('function')
       if (!fn)
@@ -339,7 +321,7 @@ export class CallExtractor {
 
   // ===================== C / C++ =====================
 
-  private extractCCppCall(node: Parser.SyntaxNode): CallInfo {
+  private extractCCppCall(node: NamuNode): CallInfo {
     if (node.type !== 'call_expression')
       return { symbol: null }
     const fn = node.childForFieldName('function')
@@ -371,7 +353,7 @@ export class CallExtractor {
 
   // ===================== Ruby =====================
 
-  private extractRubyCall(node: Parser.SyntaxNode): CallInfo {
+  private extractRubyCall(node: NamuNode): CallInfo {
     if (node.type !== 'call')
       return { symbol: null }
     const methodNode = node.childForFieldName('method')
@@ -386,7 +368,7 @@ export class CallExtractor {
 
   // ===================== Kotlin =====================
 
-  private extractKotlinCall(node: Parser.SyntaxNode): CallInfo {
+  private extractKotlinCall(node: NamuNode): CallInfo {
     if (node.type !== 'call_expression')
       return { symbol: null }
     const fn = node.childForFieldName('calleeExpression')
@@ -415,7 +397,7 @@ export class CallExtractor {
   /**
    * Resolve a symbol name from a TS/JS AST node
    */
-  private resolveSymbol(node: Parser.SyntaxNode): string | null {
+  private resolveSymbol(node: NamuNode): string | null {
     if (node.type === 'identifier') {
       return node.text
     }
@@ -444,7 +426,7 @@ export class CallExtractor {
    * Update caller context when entering class/function definitions
    */
   private updateContext(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     _language: string,
     currentContext?: string,
   ): string | undefined {

@@ -9,7 +9,7 @@ import {
 } from '@pleaseai/soop-encoder/encoder'
 import { ArtifactGrounder } from '@pleaseai/soop-encoder/grounding'
 import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
-import { ASTParser } from '@pleaseai/soop-utils/ast'
+import { ASTParser } from '@pleaseai/soop-ast'
 import { createStderrLogger } from '@pleaseai/soop-utils/logger'
 import {
   DOMAIN_DISCOVERY_INSTRUCTIONS,
