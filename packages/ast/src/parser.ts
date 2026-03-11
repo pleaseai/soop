@@ -89,13 +89,11 @@ export class ASTParser {
           p.setLanguage(lang)
           return p
         })()
-        this.parserPromises.set(
-          language,
-          parserPromise.catch((error) => {
-            this.parserPromises.delete(language)
-            throw error
-          }),
-        )
+        parserPromise = parserPromise.catch((error) => {
+          this.parserPromises.delete(language)
+          throw error
+        })
+        this.parserPromises.set(language, parserPromise)
       }
       const parser = await parserPromise
 
