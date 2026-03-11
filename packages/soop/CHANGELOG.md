@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.18](https://github.com/pleaseai/soop/compare/soop-v0.1.17...soop-v0.1.18) (2026-03-11)
+
+
+### Bug Fixes
+
+* **soop:** strip workspace devDependencies on npm publish ([#181](https://github.com/pleaseai/soop/issues/181)) ([c310452](https://github.com/pleaseai/soop/commit/c310452dbfe8dafa8d47a960466a8a43464da30c))
+
 ## [0.1.17](https://github.com/pleaseai/soop/compare/soop-v0.1.16...soop-v0.1.17) (2026-03-09)
 
 
