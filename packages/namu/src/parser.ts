@@ -14,9 +14,14 @@ export async function initNamu(): Promise<void> {
   if (initialized)
     return
   if (!initPromise) {
-    initPromise = Parser.init().then(() => {
-      initialized = true
-    })
+    initPromise = Parser.init()
+      .then(() => {
+        initialized = true
+      })
+      .catch((error) => {
+        initPromise = undefined
+        throw error
+      })
   }
   await initPromise
 }
