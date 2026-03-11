@@ -120,7 +120,7 @@ export async function injectDependencies(
   // Phase 3: Extract inheritances (needed by both TypeInferrer and inheritance edge creation)
   const allInheritances: InheritanceRelation[] = []
   for (const file of fileData) {
-    const rels = inheritanceExtractor.extract(file.sourceCode, file.parseResult.language, file.filePath)
+    const rels = await inheritanceExtractor.extract(file.sourceCode, file.parseResult.language, file.filePath)
     allInheritances.push(...rels)
   }
 
@@ -166,7 +166,7 @@ function buildEntityNodes(
  * Resolve the target file and symbol for a single call site.
  * Returns null targetFile when no cross-file target is found.
  */
-function resolveCallTarget(
+async function resolveCallTarget(
   call: import('./dependency-graph').CallSite,
   filePath: string,
   sourceCode: string,
@@ -174,7 +174,7 @@ function resolveCallTarget(
   typeInferrer: TypeInferrer,
   symbolResolver: SymbolResolver,
   knownFiles: Set<string>,
-): { targetFile: string | null, targetSymbol: string } {
+): Promise<{ targetFile: string | null, targetSymbol: string }> {
   let targetFile: string | null = null
   let targetSymbol = call.calleeSymbol
   // When type-aware resolution succeeds (even for same-file calls), skip SymbolResolver
@@ -182,7 +182,7 @@ function resolveCallTarget(
   let skipFallback = false
 
   if (call.receiverKind && call.receiverKind !== 'none') {
-    const qualifiedName = typeInferrer.resolveQualifiedCall(call, sourceCode, language)
+    const qualifiedName = await typeInferrer.resolveQualifiedCall(call, sourceCode, language)
     if (qualifiedName) {
       skipFallback = true
       const className = qualifiedName.split('.')[0] ?? qualifiedName
@@ -217,9 +217,9 @@ async function addCallEdges(
 ): Promise<void> {
   const knownFiles = new Set(filePathToNodeId.keys())
   for (const file of fileData) {
-    const calls = callExtractor.extract(file.sourceCode, file.parseResult.language, file.filePath)
+    const calls = await callExtractor.extract(file.sourceCode, file.parseResult.language, file.filePath)
     for (const call of calls) {
-      const { targetFile, targetSymbol } = resolveCallTarget(
+      const { targetFile, targetSymbol } = await resolveCallTarget(
         call,
         file.filePath,
         file.sourceCode,

@@ -10,11 +10,11 @@ import { rustConfig } from './rust'
 import { javascriptConfig, typescriptConfig } from './typescript'
 
 /**
- * Language configurations for all supported languages
- * Maps language names to their AST parsing configurations.
- * Only includes languages whose tree-sitter grammar loaded successfully.
+ * Language configurations for all supported languages.
+ * Maps language names to their AST node type mappings.
+ * Grammar loading is handled by @pleaseai/soop-namu (WASM-based).
  */
-const RAW_LANGUAGE_CONFIGS: Record<SupportedLanguage, LanguageConfig | undefined> = {
+export const LANGUAGE_CONFIGS: Record<SupportedLanguage, LanguageConfig> = {
   typescript: typescriptConfig,
   javascript: javascriptConfig,
   python: pythonConfig,
@@ -27,10 +27,6 @@ const RAW_LANGUAGE_CONFIGS: Record<SupportedLanguage, LanguageConfig | undefined
   ruby: rubyConfig,
   kotlin: kotlinConfig,
 }
-
-export const LANGUAGE_CONFIGS: Partial<Record<SupportedLanguage, LanguageConfig>> = Object.fromEntries(
-  Object.entries(RAW_LANGUAGE_CONFIGS).filter(([_, v]) => v !== undefined),
-) as Partial<Record<SupportedLanguage, LanguageConfig>>
 
 export { cConfig, cppConfig } from './c-cpp'
 export { csharpConfig } from './csharp'

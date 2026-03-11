@@ -1,6 +1,7 @@
+import type { NamuNode, NamuParser } from '@pleaseai/soop-namu'
 import type { SupportedLanguage } from '@pleaseai/soop-utils/ast'
-import type Parser from 'tree-sitter'
 import type { InheritanceRelation } from './dependency-graph'
+import { createParser, getLanguage } from '@pleaseai/soop-namu'
 import { LANGUAGE_CONFIGS } from '@pleaseai/soop-utils/ast'
 import { createLogger } from '@pleaseai/soop-utils/logger'
 
@@ -8,40 +9,19 @@ const log = createLogger('InheritanceExtractor')
 
 /**
  * Extracts class inheritance and interface implementation relationships
- * from source code using tree-sitter AST parsing
+ * from source code using WASM tree-sitter AST parsing
  */
 export class InheritanceExtractor {
-  private parser: Parser | undefined
-
-  /**
-   * Get or create a Parser instance, lazy-loaded to avoid issues when tree-sitter isn't needed
-   */
-  private getParser(): Parser | undefined {
-    if (!this.parser) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TreeSitter = require('tree-sitter')
-        this.parser = new TreeSitter() as Parser
-      }
-      catch (err) {
-        const code = (err as NodeJS.ErrnoException).code
-        if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
-          throw err
-        }
-        return undefined
-      }
-    }
-    return this.parser
-  }
+  private parser: NamuParser | undefined
 
   /**
    * Extract inheritance and implementation relationships from source code
    */
-  extract(
+  async extract(
     source: string,
     language: string,
     filePath: string,
-  ): InheritanceRelation[] {
+  ): Promise<InheritanceRelation[]> {
     const normalizedLanguage = this.normalizeLanguage(language)
 
     if (!normalizedLanguage || !(normalizedLanguage in LANGUAGE_CONFIGS)) {
@@ -53,19 +33,13 @@ export class InheritanceExtractor {
     }
 
     try {
-      const parser = this.getParser()
-      if (!parser) {
-        return []
+      if (!this.parser) {
+        this.parser = await createParser()
       }
-      const config = LANGUAGE_CONFIGS[normalizedLanguage as SupportedLanguage]
-      if (!config) {
-        return []
-      }
-      parser.setLanguage(
-        config.parser as Parameters<typeof parser.setLanguage>[0],
-      )
+      const lang = await getLanguage(normalizedLanguage as SupportedLanguage)
+      this.parser.setLanguage(lang)
 
-      const tree = parser.parse(source)
+      const tree = this.parser.parse(source)
       if (!tree.rootNode) {
         return []
       }
@@ -101,7 +75,7 @@ export class InheritanceExtractor {
   }
 
   private extractFromNode(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     language: string,
     relations: InheritanceRelation[],
@@ -142,9 +116,12 @@ export class InheritanceExtractor {
 
   /**
    * TypeScript/JavaScript: class_declaration → class_heritage → extends_clause / implements_clause
+   *
+   * TypeScript grammar: class_heritage → extends_clause → identifier
+   * JavaScript grammar: class_heritage → identifier (no extends_clause wrapper)
    */
   private extractFromTypeScript(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     relations: InheritanceRelation[],
   ): void {
@@ -165,16 +142,26 @@ export class InheritanceExtractor {
 
     for (const clause of heritage.children) {
       if (clause.type === 'extends_clause') {
+        // TypeScript grammar wraps extends in an extends_clause node
         this.extractExtendsClause(clause, childClass, filePath, relations)
       }
       else if (clause.type === 'implements_clause') {
         this.extractImplementsClause(clause, childClass, filePath, relations)
       }
+      else if (clause.type === 'identifier' || clause.type === 'type_identifier') {
+        // JavaScript grammar: identifier appears directly inside class_heritage
+        relations.push({
+          childFile: filePath,
+          childClass,
+          parentClass: clause.text,
+          kind: 'inherit',
+        })
+      }
     }
   }
 
   private extractExtendsClause(
-    clause: Parser.SyntaxNode,
+    clause: NamuNode,
     childClass: string,
     filePath: string,
     relations: InheritanceRelation[],
@@ -192,7 +179,7 @@ export class InheritanceExtractor {
   }
 
   private extractImplementsClause(
-    clause: Parser.SyntaxNode,
+    clause: NamuNode,
     childClass: string,
     filePath: string,
     relations: InheritanceRelation[],
@@ -213,7 +200,7 @@ export class InheritanceExtractor {
    * Python: class_definition → superclasses field (argument_list) → identifier children
    */
   private extractFromPython(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     relations: InheritanceRelation[],
   ): void {
@@ -247,7 +234,7 @@ export class InheritanceExtractor {
    * Java: class_declaration → superclass field (contains type_identifier), super_interfaces child
    */
   private extractFromJava(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     relations: InheritanceRelation[],
   ): void {
@@ -265,7 +252,7 @@ export class InheritanceExtractor {
   }
 
   private extractJavaSuperclass(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     childClass: string,
     filePath: string,
     relations: InheritanceRelation[],
@@ -289,7 +276,7 @@ export class InheritanceExtractor {
   }
 
   private extractJavaSuperInterfaces(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     childClass: string,
     filePath: string,
     relations: InheritanceRelation[],
@@ -308,7 +295,7 @@ export class InheritanceExtractor {
   }
 
   private extractJavaTypeListInterfaces(
-    typeList: Parser.SyntaxNode,
+    typeList: NamuNode,
     childClass: string,
     filePath: string,
     relations: InheritanceRelation[],
@@ -329,7 +316,7 @@ export class InheritanceExtractor {
    * Rust: impl_item → trait field + type field
    */
   private extractFromRust(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     relations: InheritanceRelation[],
   ): void {
@@ -356,7 +343,7 @@ export class InheritanceExtractor {
    * Go: type_declaration → type_spec child → struct_type → embedded field_declarations
    */
   private extractFromGo(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     relations: InheritanceRelation[],
   ): void {
@@ -384,7 +371,7 @@ export class InheritanceExtractor {
   }
 
   private extractGoEmbeddedStructs(
-    structType: Parser.SyntaxNode,
+    structType: NamuNode,
     childClass: string,
     filePath: string,
     relations: InheritanceRelation[],
@@ -415,7 +402,7 @@ export class InheritanceExtractor {
    * First base_type is treated as superclass (inherit), rest as interfaces (implement)
    */
   private extractFromCSharp(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     relations: InheritanceRelation[],
   ): void {
@@ -458,7 +445,7 @@ export class InheritanceExtractor {
    * C++: class_specifier → base_class_clause → base_specifier → type_identifier children
    */
   private extractFromCpp(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     relations: InheritanceRelation[],
   ): void {
@@ -497,7 +484,7 @@ export class InheritanceExtractor {
    * Ruby: class node → superclass field → identifier / constant
    */
   private extractFromRuby(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     relations: InheritanceRelation[],
   ): void {
@@ -531,7 +518,7 @@ export class InheritanceExtractor {
    * Kotlin: class_declaration → delegation_specifiers → delegation_specifier children
    */
   private extractFromKotlin(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     filePath: string,
     relations: InheritanceRelation[],
   ): void {
@@ -569,7 +556,7 @@ export class InheritanceExtractor {
     }
   }
 
-  private getChildClassName(node: Parser.SyntaxNode): string | null {
+  private getChildClassName(node: NamuNode): string | null {
     const nameNode = node.childForFieldName('name')
     if (nameNode) {
       return nameNode.text

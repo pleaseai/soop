@@ -1,6 +1,7 @@
+import type { NamuNode, NamuParser, NamuTree } from '@pleaseai/soop-namu'
 import type { SupportedLanguage } from '@pleaseai/soop-utils/ast'
-import type Parser from 'tree-sitter'
 import type { CallSite, EntityNode, InheritanceRelation } from './dependency-graph'
+import { createParser, getLanguage } from '@pleaseai/soop-namu'
 import { LANGUAGE_CONFIGS } from '@pleaseai/soop-utils/ast'
 import { COMMON_METHOD_BLOCKLIST } from './type-inference-patterns'
 
@@ -25,7 +26,7 @@ export class TypeInferrer {
   private readonly classIndex: Map<string, EntityNode>
   private readonly parentIndex: Map<string, string[]>
   private readonly methodIndex: Map<string, string[]>
-  private parser: Parser | undefined
+  private parser: NamuParser | undefined
 
   constructor(entities: EntityNode[], inheritances: InheritanceRelation[]) {
     this.classIndex = new Map()
@@ -93,12 +94,16 @@ export class TypeInferrer {
   /**
    * Parse source code for the given language, returning null on failure.
    */
-  private parseSource(source: string, language: string): Parser.Tree | null {
-    const parser = this.getParser(language)
-    if (!parser)
+  private async parseSource(source: string, language: string): Promise<NamuTree | null> {
+    if (!this.isSupportedLanguage(language))
       return null
     try {
-      return parser.parse(source)
+      if (!this.parser) {
+        this.parser = await createParser()
+      }
+      const lang = await getLanguage(language)
+      this.parser.setLanguage(lang)
+      return this.parser.parse(source) as unknown as NamuTree
     }
     catch {
       return null
@@ -111,16 +116,16 @@ export class TypeInferrer {
    *
    * Supported languages: python, typescript, javascript, java.
    */
-  inferLocalVarType(source: string, language: string, varName: string): string | null {
+  async inferLocalVarType(source: string, language: string, varName: string): Promise<string | null> {
     if (!INFERENCE_SUPPORTED_LANGUAGES.has(language))
       return null
-    const tree = this.parseSource(source, language)
+    const tree = await this.parseSource(source, language)
     if (!tree)
       return null
     return this.findLocalVarType(tree.rootNode, language, varName)
   }
 
-  private matchPythonLocalVarType(node: Parser.SyntaxNode, varName: string): string | null {
+  private matchPythonLocalVarType(node: NamuNode, varName: string): string | null {
     if (node.type !== 'assignment')
       return null
     const left = node.childForFieldName('left')
@@ -133,7 +138,7 @@ export class TypeInferrer {
     return null
   }
 
-  private matchTSJSLocalVarType(node: Parser.SyntaxNode, varName: string): string | null {
+  private matchTSJSLocalVarType(node: NamuNode, varName: string): string | null {
     if (node.type !== 'variable_declarator')
       return null
     const nameNode = node.childForFieldName('name')
@@ -146,7 +151,7 @@ export class TypeInferrer {
     return null
   }
 
-  private matchJavaLocalVarType(node: Parser.SyntaxNode, varName: string): string | null {
+  private matchJavaLocalVarType(node: NamuNode, varName: string): string | null {
     if (node.type !== 'local_variable_declaration')
       return null
     for (const child of node.children) {
@@ -163,7 +168,7 @@ export class TypeInferrer {
     return null
   }
 
-  private findLocalVarType(node: Parser.SyntaxNode, language: string, varName: string): string | null {
+  private findLocalVarType(node: NamuNode, language: string, varName: string): string | null {
     let matched: string | null = null
     if (language === 'python')
       matched = this.matchPythonLocalVarType(node, varName)
@@ -189,16 +194,16 @@ export class TypeInferrer {
    *
    * Supported languages: python, typescript, javascript.
    */
-  inferAttributeType(source: string, language: string, attrName: string): string | null {
+  async inferAttributeType(source: string, language: string, attrName: string): Promise<string | null> {
     if (!INFERENCE_SUPPORTED_LANGUAGES.has(language))
       return null
-    const tree = this.parseSource(source, language)
+    const tree = await this.parseSource(source, language)
     if (!tree)
       return null
     return this.findAttributeType(tree.rootNode, language, attrName)
   }
 
-  private matchPythonAttributeType(node: Parser.SyntaxNode, attrName: string): string | null {
+  private matchPythonAttributeType(node: NamuNode, attrName: string): string | null {
     if (node.type !== 'assignment')
       return null
     const left = node.childForFieldName('left')
@@ -215,7 +220,7 @@ export class TypeInferrer {
     return null
   }
 
-  private matchTSJSAttributeType(node: Parser.SyntaxNode, attrName: string): string | null {
+  private matchTSJSAttributeType(node: NamuNode, attrName: string): string | null {
     if (node.type !== 'assignment_expression')
       return null
     const left = node.childForFieldName('left')
@@ -232,7 +237,7 @@ export class TypeInferrer {
     return null
   }
 
-  private findAttributeType(node: Parser.SyntaxNode, language: string, attrName: string): string | null {
+  private findAttributeType(node: NamuNode, language: string, attrName: string): string | null {
     let matched: string | null = null
     if (language === 'python')
       matched = this.matchPythonAttributeType(node, attrName)
@@ -260,7 +265,7 @@ export class TypeInferrer {
    * 3. variable → infer type via constructor assignment, then walk MRO
    * 4. Fuzzy global fallback (rejects common names + ambiguous matches)
    */
-  resolveQualifiedCall(callSite: CallSite, source: string, language: string): string | null {
+  async resolveQualifiedCall(callSite: CallSite, source: string, language: string): Promise<string | null> {
     const { receiverKind, calleeSymbol, callerEntity } = callSite
 
     if (!receiverKind || receiverKind === 'none')
@@ -281,7 +286,7 @@ export class TypeInferrer {
     return null
   }
 
-  private resolveVariableCall(callSite: CallSite, source: string, language: string): string | null {
+  private async resolveVariableCall(callSite: CallSite, source: string, language: string): Promise<string | null> {
     const { receiver, calleeSymbol } = callSite
 
     if (!receiver || !INFERENCE_SUPPORTED_LANGUAGES.has(language)) {
@@ -289,7 +294,7 @@ export class TypeInferrer {
     }
 
     // Parse the source once and reuse the tree for both inference attempts
-    const tree = this.parseSource(source, language)
+    const tree = await this.parseSource(source, language)
     if (!tree)
       return this.fuzzyFallback(calleeSymbol)
 
@@ -319,36 +324,6 @@ export class TypeInferrer {
     if (classes?.length !== 1)
       return null
     return `${classes[0]}.${methodName}`
-  }
-
-  private getParser(language: string): Parser | null {
-    if (!this.isSupportedLanguage(language))
-      return null
-    if (!this.parser) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const TreeSitter = require('tree-sitter')
-        this.parser = new TreeSitter() as Parser
-      }
-      catch (err) {
-        const code = (err as NodeJS.ErrnoException).code
-        if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
-          throw err
-        }
-        // tree-sitter not available in compiled binary
-        return null
-      }
-    }
-    const config = LANGUAGE_CONFIGS[language]
-    if (!config)
-      return null
-    try {
-      this.parser.setLanguage(config.parser as Parameters<typeof this.parser.setLanguage>[0])
-      return this.parser
-    }
-    catch {
-      return null
-    }
   }
 
   private isSupportedLanguage(language: string): language is SupportedLanguage {

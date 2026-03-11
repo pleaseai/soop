@@ -1,43 +1,24 @@
-import type { default as Parser } from 'tree-sitter'
+import type { NamuNode, NamuParser } from '@pleaseai/soop-namu'
 import type { CodeEntity, LanguageConfig, ParseResult, SupportedLanguage } from './types'
 
+import { createParser, getLanguage, isAvailable as namuIsAvailable } from '@pleaseai/soop-namu'
 import { LANGUAGE_CONFIGS } from './languages'
 
-// Try to load tree-sitter at runtime — gracefully unavailable in compiled Bun binary
-let ParserClass: (new () => Parser) | undefined
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  ParserClass = require('tree-sitter') as new () => Parser
-}
-catch (err) {
-  const code = (err as NodeJS.ErrnoException).code
-  if (code !== 'MODULE_NOT_FOUND' && code !== 'ERR_MODULE_NOT_FOUND') {
-    throw err
-  }
-  // tree-sitter native module not available (e.g., standalone compiled binary)
-}
-
 /**
- * AST Parser using tree-sitter
+ * AST Parser using WASM-based web-tree-sitter via @pleaseai/soop-namu.
  *
  * Extracts code structure for dependency analysis and semantic lifting.
- * Gracefully degrades when tree-sitter is not available (e.g., in standalone binary).
+ * Uses WASM grammars — no native compilation required.
  */
 export class ASTParser {
-  private readonly parser: Parser | undefined
-
-  constructor() {
-    if (ParserClass) {
-      this.parser = new ParserClass()
-    }
-  }
+  private parser: NamuParser | undefined
 
   /**
-   * Check if tree-sitter is available and AST parsing is supported.
-   * Returns false in standalone compiled binaries where tree-sitter is external.
+   * Check if WASM tree-sitter is available.
+   * Always returns true — WASM has no native compilation requirements.
    */
   isAvailable(): boolean {
-    return this.parser !== undefined
+    return namuIsAvailable()
   }
 
   /**
@@ -51,7 +32,7 @@ export class ASTParser {
    * Type guard to check if language is a supported language
    */
   private isSupportedLanguage(language: string): language is SupportedLanguage {
-    return language in LANGUAGE_CONFIGS && LANGUAGE_CONFIGS[language as SupportedLanguage] !== undefined
+    return language in LANGUAGE_CONFIGS
   }
 
   /**
@@ -94,11 +75,6 @@ export class ASTParser {
       errors: [],
     }
 
-    // Return empty result if tree-sitter is not available
-    if (!this.parser) {
-      return result
-    }
-
     // Handle empty source
     if (!source.trim()) {
       return result
@@ -112,9 +88,11 @@ export class ASTParser {
     const config = LANGUAGE_CONFIGS[language]!
 
     try {
-      this.parser.setLanguage(
-        config.parser as Parameters<typeof this.parser.setLanguage>[0],
-      )
+      if (!this.parser) {
+        this.parser = await createParser()
+      }
+      const lang = await getLanguage(language)
+      this.parser.setLanguage(lang)
 
       // Parse the source
       const tree = this.parser.parse(source)
@@ -153,7 +131,7 @@ export class ASTParser {
    * Extract entities and imports from AST node recursively
    */
   private extractFromNode(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     source: string,
     config: LanguageConfig,
     result: ParseResult,
@@ -187,7 +165,7 @@ export class ASTParser {
    * Extract entity information from a node
    */
   private extractEntity(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     source: string,
     entityType: CodeEntity['type'],
   ): CodeEntity | null {
@@ -227,7 +205,7 @@ export class ASTParser {
    * Extract entity name based on entity type
    */
   private extractEntityName(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     _entityType: CodeEntity['type'],
   ): string | null {
     // For arrow functions assigned to variables
@@ -283,7 +261,7 @@ export class ASTParser {
    *   - function_declarator → declarator (identifier or pointer_declarator → ...)
    *   - pointer_declarator → declarator → ...
    */
-  private extractCDeclaratorName(node: Parser.SyntaxNode): string | null {
+  private extractCDeclaratorName(node: NamuNode): string | null {
     if (node.type === 'identifier') {
       return node.text
     }
@@ -304,7 +282,7 @@ export class ASTParser {
   /**
    * Extract parameters from function/method node
    */
-  private extractParameters(node: Parser.SyntaxNode): string[] {
+  private extractParameters(node: NamuNode): string[] {
     const paramsNode = node.childForFieldName('parameters')
     if (!paramsNode)
       return []
@@ -322,7 +300,7 @@ export class ASTParser {
   /**
    * Extract parameter name from a parameter node
    */
-  private extractParameterName(child: Parser.SyntaxNode): string | null {
+  private extractParameterName(child: NamuNode): string | null {
     const validTypes = ['identifier', 'required_parameter', 'optional_parameter']
     if (!validTypes.includes(child.type))
       return null
@@ -338,7 +316,7 @@ export class ASTParser {
   /**
    * Extract documentation comment preceding the node
    */
-  private extractDocumentation(node: Parser.SyntaxNode, _source: string): string | null {
+  private extractDocumentation(node: NamuNode, _source: string): string | null {
     const prevSibling = node.previousSibling
     if (prevSibling?.type === 'comment') {
       return prevSibling.text
@@ -349,7 +327,7 @@ export class ASTParser {
   /**
    * Extract parent class name for methods
    */
-  private extractParentClass(node: Parser.SyntaxNode): string | undefined {
+  private extractParentClass(node: NamuNode): string | undefined {
     // For Go methods, extract receiver type
     if (node.type === 'method_declaration') {
       return this.extractGoReceiverType(node)
@@ -378,7 +356,7 @@ export class ASTParser {
   /**
    * Extract Go method receiver type (e.g., *User -> User)
    */
-  private extractGoReceiverType(node: Parser.SyntaxNode): string | undefined {
+  private extractGoReceiverType(node: NamuNode): string | undefined {
     const receiver = node.childForFieldName('receiver')
     if (!receiver)
       return undefined
@@ -398,7 +376,7 @@ export class ASTParser {
    * Extract import information from an import node
    */
   private extractImport(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
     _source: string,
     language: string,
   ): { module: string, names: string[] } | null {
@@ -432,7 +410,7 @@ export class ASTParser {
   /**
    * Extract JavaScript/TypeScript import
    */
-  private extractJSImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+  private extractJSImport(node: NamuNode): { module: string, names: string[] } | null {
     const sourceNode = node.childForFieldName('source')
     if (!sourceNode)
       return null
@@ -452,7 +430,7 @@ export class ASTParser {
   /**
    * Extract names from import clause
    */
-  private extractJSImportNames(clause: Parser.SyntaxNode, names: string[]): void {
+  private extractJSImportNames(clause: NamuNode, names: string[]): void {
     for (const child of clause.children) {
       if (child.type === 'identifier') {
         names.push(child.text)
@@ -469,7 +447,7 @@ export class ASTParser {
   /**
    * Extract named imports ({ foo, bar })
    */
-  private extractNamedImports(node: Parser.SyntaxNode, names: string[]): void {
+  private extractNamedImports(node: NamuNode, names: string[]): void {
     for (const importSpec of node.children) {
       if (importSpec.type === 'import_specifier') {
         const nameNode = importSpec.childForFieldName('name')
@@ -483,7 +461,7 @@ export class ASTParser {
   /**
    * Extract namespace import (* as name)
    */
-  private extractNamespaceImport(node: Parser.SyntaxNode, names: string[]): void {
+  private extractNamespaceImport(node: NamuNode, names: string[]): void {
     const nameNode = node.children.find(c => c.type === 'identifier')
     if (nameNode) {
       names.push(`* as ${nameNode.text}`)
@@ -493,7 +471,7 @@ export class ASTParser {
   /**
    * Extract Python import
    */
-  private extractPythonImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+  private extractPythonImport(node: NamuNode): { module: string, names: string[] } | null {
     if (node.type === 'import_statement') {
       return this.extractPythonBasicImport(node)
     }
@@ -507,7 +485,7 @@ export class ASTParser {
    * Extract Python basic import (import os, sys)
    */
   private extractPythonBasicImport(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
   ): { module: string, names: string[] } | null {
     const names: string[] = []
     let module = ''
@@ -526,7 +504,7 @@ export class ASTParser {
    * Extract Python from import (from module import name1, name2)
    */
   private extractPythonFromImport(
-    node: Parser.SyntaxNode,
+    node: NamuNode,
   ): { module: string, names: string[] } | null {
     const moduleNode = node.childForFieldName('module_name')
     const module = moduleNode?.text ?? ''
@@ -552,7 +530,7 @@ export class ASTParser {
   /**
    * Extract Rust use declaration
    */
-  private extractRustImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+  private extractRustImport(node: NamuNode): { module: string, names: string[] } | null {
     if (node.type !== 'use_declaration')
       return null
 
@@ -564,7 +542,7 @@ export class ASTParser {
   /**
    * Extract Go import spec
    */
-  private extractGoImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+  private extractGoImport(node: NamuNode): { module: string, names: string[] } | null {
     // Handle individual import_spec (both single and grouped imports recurse to this)
     if (node.type === 'import_spec') {
       const pathNode = node.childForFieldName('path')
@@ -581,7 +559,7 @@ export class ASTParser {
   /**
    * Extract C# using directive (e.g. using System.IO; using static Foo; using Alias = Bar;)
    */
-  private extractCSharpImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+  private extractCSharpImport(node: NamuNode): { module: string, names: string[] } | null {
     if (node.type !== 'using_directive')
       return null
 
@@ -599,7 +577,7 @@ export class ASTParser {
   /**
    * Extract C/C++ #include directive (e.g. #include <stdio.h> or #include "myheader.h")
    */
-  private extractCCppImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+  private extractCCppImport(node: NamuNode): { module: string, names: string[] } | null {
     if (node.type !== 'preproc_include')
       return null
 
@@ -617,7 +595,7 @@ export class ASTParser {
    * Extract Ruby require/require_relative calls
    * Only 'call' nodes whose function is 'require' or 'require_relative' are included.
    */
-  private extractRubyImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+  private extractRubyImport(node: NamuNode): { module: string, names: string[] } | null {
     if (node.type !== 'call')
       return null
 
@@ -649,7 +627,7 @@ export class ASTParser {
   /**
    * Extract Kotlin import header (e.g. import com.example.Foo)
    */
-  private extractKotlinImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+  private extractKotlinImport(node: NamuNode): { module: string, names: string[] } | null {
     if (node.type !== 'import_header')
       return null
 
@@ -665,7 +643,7 @@ export class ASTParser {
   /**
    * Extract Java import declaration
    */
-  private extractJavaImport(node: Parser.SyntaxNode): { module: string, names: string[] } | null {
+  private extractJavaImport(node: NamuNode): { module: string, names: string[] } | null {
     if (node.type !== 'import_declaration')
       return null
 

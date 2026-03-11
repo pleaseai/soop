@@ -44,10 +44,9 @@ export interface ParseResult {
 export type SupportedLanguage = 'typescript' | 'javascript' | 'python' | 'rust' | 'go' | 'java' | 'csharp' | 'c' | 'cpp' | 'ruby' | 'kotlin'
 
 /**
- * Language configurations with parser and settings
+ * Language configurations with AST node type mappings
  */
 export interface LanguageConfig {
-  parser: unknown
   entityTypes: Record<string, CodeEntity['type']>
   importTypes: string[]
 }
