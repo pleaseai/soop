@@ -4,16 +4,21 @@ import { Language, Parser } from 'web-tree-sitter'
 import { resolveWasmPath } from './languages'
 
 let initialized = false
+let initPromise: Promise<void> | undefined
 const languageCache = new Map<string, NamuLanguage>()
 
 /**
- * One-time WASM runtime init (lazy, idempotent).
+ * One-time WASM runtime init (lazy, idempotent, concurrency-safe).
  */
 export async function initNamu(): Promise<void> {
   if (initialized)
     return
-  await Parser.init()
-  initialized = true
+  if (!initPromise) {
+    initPromise = Parser.init().then(() => {
+      initialized = true
+    })
+  }
+  await initPromise
 }
 
 /**

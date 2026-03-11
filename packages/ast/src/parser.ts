@@ -11,7 +11,7 @@ import { isSupportedLanguage, LANGUAGE_CONFIGS } from './languages'
  * Uses WASM grammars — no native compilation required.
  */
 export class ASTParser {
-  private parser: NamuParser | undefined
+  private parserPromises = new Map<string, Promise<NamuParser>>()
 
   /**
    * Check if WASM tree-sitter is available.
@@ -81,14 +81,20 @@ export class ASTParser {
     const config = LANGUAGE_CONFIGS[language]!
 
     try {
-      if (!this.parser) {
-        this.parser = await createParser()
+      let parserPromise = this.parserPromises.get(language)
+      if (!parserPromise) {
+        parserPromise = (async () => {
+          const p = await createParser()
+          const lang = await getLanguage(language as Parameters<typeof getLanguage>[0])
+          p.setLanguage(lang)
+          return p
+        })()
+        this.parserPromises.set(language, parserPromise)
       }
-      const lang = await getLanguage(language)
-      this.parser.setLanguage(lang)
+      const parser = await parserPromise
 
       // Parse the source
-      const tree = this.parser.parse(source)
+      const tree = parser.parse(source)
 
       if (!tree.rootNode) {
         result.errors.push('Failed to parse source code')
