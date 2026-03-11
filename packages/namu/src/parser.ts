@@ -1,6 +1,4 @@
-import type { SupportedLanguage } from '@pleaseai/soop-utils/ast/types'
-
-import type { NamuLanguage, NamuParser } from './types'
+import type { NamuLanguage, NamuParser, SupportedLanguage } from './types'
 
 import { Language, Parser } from 'web-tree-sitter'
 import { resolveWasmPath } from './languages'

@@ -5,6 +5,11 @@
  * The monorepo root may have a different version visible to the TypeScript
  * language server, so we declare the required types locally.
  */
+
+/**
+ * Languages supported by the WASM tree-sitter grammars in soop-namu.
+ */
+export type SupportedLanguage = 'typescript' | 'javascript' | 'python' | 'rust' | 'go' | 'java' | 'csharp' | 'c' | 'cpp' | 'ruby' | 'kotlin'
 export interface NamuPoint {
   row: number
   column: number

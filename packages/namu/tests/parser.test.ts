@@ -1,4 +1,4 @@
-import type { SupportedLanguage } from '@pleaseai/soop-utils/ast/types'
+import type { SupportedLanguage } from '@pleaseai/soop-namu'
 
 import { describe, expect, it } from 'vitest'
 

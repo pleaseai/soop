@@ -49,6 +49,13 @@
         "zod": "^4.0.0",
       },
     },
+    "packages/ast": {
+      "name": "@pleaseai/soop-ast",
+      "version": "0.1.6",
+      "dependencies": {
+        "@pleaseai/soop-namu": "workspace:*",
+      },
+    },
     "packages/cli": {
       "name": "@pleaseai/soop-cli",
       "version": "0.1.6",
@@ -69,6 +76,7 @@
       "dependencies": {
         "@ai-sdk/openai": "^3.0.41",
         "@huggingface/transformers": "^3.8.1",
+        "@pleaseai/soop-ast": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
         "@pleaseai/soop-namu": "workspace:*",
         "@pleaseai/soop-store": "workspace:*",
@@ -98,6 +106,7 @@
       "version": "0.1.7",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.26.0",
+        "@pleaseai/soop-ast": "workspace:*",
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
         "@pleaseai/soop-store": "workspace:*",
@@ -206,7 +215,6 @@
         "@ai-sdk/anthropic": "^3.0.58",
         "@ai-sdk/google": "^3.0.43",
         "@ai-sdk/openai": "^3.0.41",
-        "@pleaseai/soop-namu": "workspace:*",
         "ai": "^6.0.116",
         "ai-sdk-provider-claude-code": "^3.4.0",
         "ai-sdk-provider-codex-cli": "^1.0.5",
@@ -455,6 +463,8 @@
     "@pkgr/core": ["@pkgr/core@0.2.9", "", {}, "sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA=="],
 
     "@pleaseai/soop": ["@pleaseai/soop@workspace:packages/soop"],
+
+    "@pleaseai/soop-ast": ["@pleaseai/soop-ast@workspace:packages/ast"],
 
     "@pleaseai/soop-cli": ["@pleaseai/soop-cli@workspace:packages/cli"],
 

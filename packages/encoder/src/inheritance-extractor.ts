@@ -1,8 +1,8 @@
 import type { NamuNode, NamuParser } from '@pleaseai/soop-namu'
-import type { SupportedLanguage } from '@pleaseai/soop-utils/ast'
+import type { SupportedLanguage } from '@pleaseai/soop-ast'
 import type { InheritanceRelation } from './dependency-graph'
 import { createParser, getLanguage } from '@pleaseai/soop-namu'
-import { LANGUAGE_CONFIGS } from '@pleaseai/soop-utils/ast'
+import { LANGUAGE_CONFIGS } from '@pleaseai/soop-ast'
 import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('InheritanceExtractor')

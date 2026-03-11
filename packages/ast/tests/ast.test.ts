@@ -1,4 +1,4 @@
-import { ASTParser } from '@pleaseai/soop-utils/ast'
+import { ASTParser } from '@pleaseai/soop-ast'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 describe('ASTParser', () => {
@@ -200,7 +200,7 @@ from typing import List, Dict`
   describe('parseFile', () => {
     it('parses file from path', async () => {
       // Use a file that exists in the project
-      const result = await parser.parseFile('./packages/utils/src/ast/parser.ts')
+      const result = await parser.parseFile('./packages/ast/src/parser.ts')
 
       expect(result.language).toBe('typescript')
       expect(result.entities.length).toBeGreaterThan(0)

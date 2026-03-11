@@ -1,5 +1,5 @@
 import type { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
-import type { ASTParser, ParseResult } from '@pleaseai/soop-utils/ast'
+import type { ASTParser, ParseResult } from '@pleaseai/soop-ast'
 import type { EntityNode, InheritanceRelation } from './dependency-graph'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'

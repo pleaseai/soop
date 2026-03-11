@@ -34,6 +34,7 @@
     "./embedding-manager": "./src/embedding-manager.ts"
   },
   "dependencies": {
+    "@pleaseai/soop-ast": "workspace:*",
     "@pleaseai/soop-graph": "workspace:*",
     "@pleaseai/soop-namu": "workspace:*",
     "@pleaseai/soop-store": "workspace:*",

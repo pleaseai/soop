@@ -1,5 +1,5 @@
-import type { LanguageConfig } from '@pleaseai/soop-utils/ast/types'
-import { LANGUAGE_CONFIGS } from '@pleaseai/soop-utils/ast/languages'
+import type { LanguageConfig } from '@pleaseai/soop-ast/types'
+import { LANGUAGE_CONFIGS } from '@pleaseai/soop-ast/languages'
 import { describe, expect, it } from 'vitest'
 
 describe('Language Configurations', () => {
@@ -52,11 +52,6 @@ describe('Language Configurations', () => {
   describe('TypeScript configuration', () => {
     let config: LanguageConfig
 
-    it('has parser', () => {
-      config = LANGUAGE_CONFIGS.typescript
-      expect(config.parser).toBeDefined()
-    })
-
     it('has entity types with function_declaration', () => {
       config = LANGUAGE_CONFIGS.typescript
       expect(config.entityTypes.function_declaration).toBe('function')
@@ -91,11 +86,6 @@ describe('Language Configurations', () => {
   describe('JavaScript configuration', () => {
     let config: LanguageConfig
 
-    it('has parser', () => {
-      config = LANGUAGE_CONFIGS.javascript
-      expect(config.parser).toBeDefined()
-    })
-
     it('has entity types with function_declaration', () => {
       config = LANGUAGE_CONFIGS.javascript
       expect(config.entityTypes.function_declaration).toBe('function')
@@ -126,20 +116,10 @@ describe('Language Configurations', () => {
       expect(config.importTypes).toEqual(['import_statement'])
     })
 
-    it('uses same parser as typescript', () => {
-      const tsConfig = LANGUAGE_CONFIGS.typescript
-      const jsConfig = LANGUAGE_CONFIGS.javascript
-      expect(jsConfig.parser).toEqual(tsConfig.parser)
-    })
   })
 
   describe('Python configuration', () => {
     let config: LanguageConfig
-
-    it('has parser', () => {
-      config = LANGUAGE_CONFIGS.python
-      expect(config.parser).toBeDefined()
-    })
 
     it('has entity types with function_definition', () => {
       config = LANGUAGE_CONFIGS.python
@@ -173,10 +153,6 @@ describe('Language Configurations', () => {
   })
 
   describe('Rust configuration', () => {
-    it('has parser', () => {
-      expect(LANGUAGE_CONFIGS.rust.parser).toBeDefined()
-    })
-
     it('has entity types with function_item', () => {
       expect(LANGUAGE_CONFIGS.rust.entityTypes.function_item).toBe('function')
     })
@@ -199,10 +175,6 @@ describe('Language Configurations', () => {
   })
 
   describe('Go configuration', () => {
-    it('has parser', () => {
-      expect(LANGUAGE_CONFIGS.go.parser).toBeDefined()
-    })
-
     it('has entity types with function_declaration', () => {
       expect(LANGUAGE_CONFIGS.go.entityTypes.function_declaration).toBe('function')
     })
@@ -221,10 +193,6 @@ describe('Language Configurations', () => {
   })
 
   describe('Java configuration', () => {
-    it('has parser', () => {
-      expect(LANGUAGE_CONFIGS.java.parser).toBeDefined()
-    })
-
     it('has entity types with class_declaration', () => {
       expect(LANGUAGE_CONFIGS.java.entityTypes.class_declaration).toBe('class')
     })
@@ -247,10 +215,6 @@ describe('Language Configurations', () => {
   })
 
   describe('C# configuration', () => {
-    it('has parser', () => {
-      expect(LANGUAGE_CONFIGS.csharp.parser).toBeDefined()
-    })
-
     it('has entity types with class_declaration', () => {
       expect(LANGUAGE_CONFIGS.csharp.entityTypes.class_declaration).toBe('class')
     })
@@ -273,10 +237,6 @@ describe('Language Configurations', () => {
   })
 
   describe('C configuration', () => {
-    it('has parser', () => {
-      expect(LANGUAGE_CONFIGS.c.parser).toBeDefined()
-    })
-
     it('has entity types with function_definition', () => {
       expect(LANGUAGE_CONFIGS.c.entityTypes.function_definition).toBe('function')
     })
@@ -291,10 +251,6 @@ describe('Language Configurations', () => {
   })
 
   describe('C++ configuration', () => {
-    it('has parser', () => {
-      expect(LANGUAGE_CONFIGS.cpp.parser).toBeDefined()
-    })
-
     it('has entity types with class_specifier', () => {
       expect(LANGUAGE_CONFIGS.cpp.entityTypes.class_specifier).toBe('class')
     })
@@ -309,10 +265,6 @@ describe('Language Configurations', () => {
   })
 
   describe('Ruby configuration', () => {
-    it('has parser', () => {
-      expect(LANGUAGE_CONFIGS.ruby.parser).toBeDefined()
-    })
-
     it('has entity types with method', () => {
       expect(LANGUAGE_CONFIGS.ruby.entityTypes.method).toBe('method')
     })
@@ -327,10 +279,6 @@ describe('Language Configurations', () => {
   })
 
   describe('Kotlin configuration', () => {
-    it('has parser', () => {
-      expect(LANGUAGE_CONFIGS.kotlin.parser).toBeDefined()
-    })
-
     it('has entity types with function_declaration', () => {
       expect(LANGUAGE_CONFIGS.kotlin.entityTypes.function_declaration).toBe('function')
     })

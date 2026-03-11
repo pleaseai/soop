@@ -1,3 +1,8 @@
+import type { SupportedLanguage } from '@pleaseai/soop-namu'
+
+// Re-export SupportedLanguage from namu (canonical definition)
+export type { SupportedLanguage }
+
 /**
  * Parsed code entity from AST
  */
@@ -37,11 +42,6 @@ export interface ParseResult {
   /** Parsing errors */
   errors: string[]
 }
-
-/**
- * Supported language names
- */
-export type SupportedLanguage = 'typescript' | 'javascript' | 'python' | 'rust' | 'go' | 'java' | 'csharp' | 'c' | 'cpp' | 'ruby' | 'kotlin'
 
 /**
  * Language configurations with AST node type mappings

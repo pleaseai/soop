@@ -1,4 +1,4 @@
-import type { SupportedLanguage } from '@pleaseai/soop-utils/ast/types'
+import type { SupportedLanguage } from './types'
 
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

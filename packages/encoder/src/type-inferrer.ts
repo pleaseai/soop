@@ -1,8 +1,8 @@
 import type { NamuNode, NamuParser, NamuTree } from '@pleaseai/soop-namu'
-import type { SupportedLanguage } from '@pleaseai/soop-utils/ast'
+import type { SupportedLanguage } from '@pleaseai/soop-ast'
 import type { CallSite, EntityNode, InheritanceRelation } from './dependency-graph'
 import { createParser, getLanguage } from '@pleaseai/soop-namu'
-import { LANGUAGE_CONFIGS } from '@pleaseai/soop-utils/ast'
+import { LANGUAGE_CONFIGS } from '@pleaseai/soop-ast'
 import { COMMON_METHOD_BLOCKLIST } from './type-inference-patterns'
 
 /**

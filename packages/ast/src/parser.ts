@@ -1,8 +1,8 @@
 import type { NamuNode, NamuParser } from '@pleaseai/soop-namu'
-import type { CodeEntity, LanguageConfig, ParseResult, SupportedLanguage } from './types'
+import type { CodeEntity, LanguageConfig, ParseResult } from './types'
 
 import { createParser, getLanguage, isAvailable as namuIsAvailable } from '@pleaseai/soop-namu'
-import { LANGUAGE_CONFIGS } from './languages'
+import { isSupportedLanguage, LANGUAGE_CONFIGS } from './languages'
 
 /**
  * AST Parser using WASM-based web-tree-sitter via @pleaseai/soop-namu.
@@ -25,14 +25,7 @@ export class ASTParser {
    * Check if a language is supported
    */
   isLanguageSupported(language: string): boolean {
-    return this.isSupportedLanguage(language)
-  }
-
-  /**
-   * Type guard to check if language is a supported language
-   */
-  private isSupportedLanguage(language: string): language is SupportedLanguage {
-    return language in LANGUAGE_CONFIGS
+    return isSupportedLanguage(language)
   }
 
   /**
@@ -81,7 +74,7 @@ export class ASTParser {
     }
 
     // Check if language is supported
-    if (!this.isSupportedLanguage(language)) {
+    if (!isSupportedLanguage(language)) {
       result.errors.push(`Unsupported language: ${language}`)
       return result
     }
@@ -141,7 +134,7 @@ export class ASTParser {
     // Check if this is an entity node
     const entityType = config.entityTypes[nodeType]
     if (entityType) {
-      const entity = this.extractEntity(node, source, entityType)
+      const entity = this.extractEntity(node, entityType)
       if (entity) {
         result.entities.push(entity)
       }
@@ -149,7 +142,7 @@ export class ASTParser {
 
     // Check if this is an import node
     if (config.importTypes.includes(nodeType)) {
-      const importInfo = this.extractImport(node, source, result.language)
+      const importInfo = this.extractImport(node, result.language)
       if (importInfo) {
         result.imports.push(importInfo)
       }
@@ -166,7 +159,6 @@ export class ASTParser {
    */
   private extractEntity(
     node: NamuNode,
-    source: string,
     entityType: CodeEntity['type'],
   ): CodeEntity | null {
     const name = this.extractEntityName(node, entityType)
@@ -188,7 +180,7 @@ export class ASTParser {
     }
 
     // Extract documentation (preceding comments)
-    const doc = this.extractDocumentation(node, source)
+    const doc = this.extractDocumentation(node)
     if (doc) {
       entity.documentation = doc
     }
@@ -316,7 +308,7 @@ export class ASTParser {
   /**
    * Extract documentation comment preceding the node
    */
-  private extractDocumentation(node: NamuNode, _source: string): string | null {
+  private extractDocumentation(node: NamuNode): string | null {
     const prevSibling = node.previousSibling
     if (prevSibling?.type === 'comment') {
       return prevSibling.text
@@ -377,7 +369,6 @@ export class ASTParser {
    */
   private extractImport(
     node: NamuNode,
-    _source: string,
     language: string,
   ): { module: string, names: string[] } | null {
     if (language === 'python') {
