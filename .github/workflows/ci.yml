@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.branch-check.outputs.skip != 'true'
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: .nvmrc
       - run: bun install --frozen-lockfile
         if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run typecheck
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.branch-check.outputs.skip != 'true'
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: .nvmrc
       - run: bun install --frozen-lockfile
         if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run lint
@@ -82,7 +82,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.branch-check.outputs.skip != 'true'
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: .nvmrc
       - run: bun install --frozen-lockfile
         if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run test:unit -- --coverage --coverage.reportsDirectory=./coverage/unit
@@ -118,7 +118,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.branch-check.outputs.skip != 'true'
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: .nvmrc
       - run: bun install --frozen-lockfile
         if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run test:integration -- --coverage --coverage.reportsDirectory=./coverage/integration
