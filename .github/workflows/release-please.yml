@@ -74,7 +74,7 @@ jobs:
       always() && (
         (github.event_name == 'push' &&
           needs.release-please.result == 'success' &&
-          needs.release-please.outputs.releases_created == 'true') ||
+          needs.release-please.outputs.soop_release_created == 'true') ||
         github.event_name == 'workflow_dispatch'
       )
     strategy:
@@ -129,7 +129,7 @@ jobs:
       needs.build-binaries.result == 'success' && (
         (github.event_name == 'push' &&
           needs.release-please.result == 'success' &&
-          needs.release-please.outputs.releases_created == 'true') ||
+          needs.release-please.outputs.soop_release_created == 'true') ||
         github.event_name == 'workflow_dispatch'
       )
     runs-on: ubuntu-latest
