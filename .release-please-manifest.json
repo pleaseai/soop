@@ -1,11 +1,11 @@
 {
-  "packages/soop": "0.1.18",
-  "packages/cli": "0.1.6",
-  "packages/encoder": "0.1.6",
-  "packages/graph": "0.1.6",
-  "packages/mcp": "0.1.7",
+  "packages/soop": "0.1.19",
+  "packages/cli": "0.1.7",
+  "packages/encoder": "0.1.7",
+  "packages/graph": "0.1.7",
+  "packages/mcp": "0.1.8",
   "packages/store": "0.1.6",
-  "packages/tools": "0.1.6",
-  "packages/utils": "0.1.6",
-  "packages/zerorepo": "0.1.6"
+  "packages/tools": "0.1.7",
+  "packages/utils": "0.1.7",
+  "packages/zerorepo": "0.1.7"
 }

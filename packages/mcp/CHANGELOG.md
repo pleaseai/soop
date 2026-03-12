@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.1.8](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.7...soop-mcp-v0.1.8) (2026-03-12)
+
+
+### Features
+
+* **namu,ast:** migrate to WASM tree-sitter and extract @pleaseai/soop-ast package ([#185](https://github.com/pleaseai/soop/issues/185)) ([0b29d7a](https://github.com/pleaseai/soop/commit/0b29d7ad39cb80a16bb7bd8766c83c1ec8f00904))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.7
+    * @pleaseai/soop-encoder bumped to 0.1.7
+    * @pleaseai/soop-tools bumped to 0.1.7
+    * @pleaseai/soop-utils bumped to 0.1.7
+
 ## [0.1.7](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.6...soop-mcp-v0.1.7) (2026-03-09)
 
 
