@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/pleaseai/soop/compare/soop-store-v0.1.6...soop-store-v0.1.7) (2026-03-12)
+
+
+### Bug Fixes
+
+* **store:** add bun:sqlite runtime adapter for compiled binary support ([#196](https://github.com/pleaseai/soop/issues/196)) ([1cdb1bc](https://github.com/pleaseai/soop/commit/1cdb1bc4f45c98250be74b47f7e5b14318c6dbfd))
+
 ## [0.1.6](https://github.com/pleaseai/soop/compare/soop-store-v0.1.5...soop-store-v0.1.6) (2026-03-09)
 
 

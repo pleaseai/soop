@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.1.20](https://github.com/pleaseai/soop/compare/soop-v0.1.19...soop-v0.1.20) (2026-03-12)
+
+
+### Features
+
+* **soop-native:** split platform binaries into @pleaseai/soop-native package ([#194](https://github.com/pleaseai/soop/issues/194)) ([facd2ca](https://github.com/pleaseai/soop/commit/facd2ca62dd14cb9f5f53c305ea73f262e2b2ec8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @pleaseai/soop-cli bumped to 0.1.8
+    * @pleaseai/soop-encoder bumped to 0.1.8
+    * @pleaseai/soop-graph bumped to 0.1.8
+    * @pleaseai/soop-mcp bumped to 0.1.9
+    * @pleaseai/soop-store bumped to 0.1.7
+    * @pleaseai/soop-tools bumped to 0.1.8
+    * @pleaseai/soop-zerorepo bumped to 0.1.8
+
 ## [0.1.19](https://github.com/pleaseai/soop/compare/soop-v0.1.18...soop-v0.1.19) (2026-03-12)
 
 

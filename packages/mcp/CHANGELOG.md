@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.9](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.8...soop-mcp-v0.1.9) (2026-03-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.8
+    * @pleaseai/soop-encoder bumped to 0.1.8
+    * @pleaseai/soop-store bumped to 0.1.7
+    * @pleaseai/soop-tools bumped to 0.1.8
+
 ## [0.1.8](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.7...soop-mcp-v0.1.8) (2026-03-12)
 
 
