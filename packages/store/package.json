@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "surrealdb": "^2.0.0",
-    "@surrealdb/node": "^2.6.0"
+    "@surrealdb/node": "^3.0.3"
   },
   "optionalDependencies": {
     "better-sqlite3": "^12.6.2",
