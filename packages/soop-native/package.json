@@ -11,10 +11,6 @@
     "soop": "bin/soop",
     "soop-mcp": "bin/soop-mcp"
   },
-  "scripts": {
-    "prepack": "node -e \"const fs=require('fs');const pkg=fs.readFileSync('package.json','utf8');fs.writeFileSync('package.json.bak',pkg);const p=JSON.parse(pkg);delete p.devDependencies;fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\\n')\"",
-    "postpack": "node -e \"const fs=require('fs');fs.renameSync('package.json.bak','package.json');\""
-  },
   "optionalDependencies": {
     "@pleaseai/soop-darwin-arm64": "0.1.19",
     "@pleaseai/soop-darwin-x64": "0.1.19",
