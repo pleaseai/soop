@@ -2,8 +2,10 @@ import { defineConfig } from 'tsdown'
 
 // Packages that cannot be bundled: native binaries, ONNX runtime, optional heavy deps
 const external = [
-  // Native SQLite / vector / graph DB bindings
+  // SQLite: better-sqlite3 is a native addon (Node.js), bun:sqlite is a Bun built-in.
+  // Both are kept external so the bundle loads them at runtime from the host environment.
   'better-sqlite3',
+  'bun:sqlite',
   '@lancedb/lancedb',
   '@surrealdb/node',
   // WASM-based tree-sitter (loads .wasm files at runtime, cannot bundle)

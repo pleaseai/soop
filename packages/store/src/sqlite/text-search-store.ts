@@ -1,6 +1,7 @@
 import type { TextSearchStore } from '../text-search-store'
 import type { TextSearchOpts, TextSearchResult } from '../types'
-import Database from 'better-sqlite3'
+import type { SqliteDb } from './db'
+import { openSqliteDatabase } from './db'
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS text_docs (
@@ -68,11 +69,11 @@ END;
  * or open its own connection.
  */
 export class SQLiteTextSearchStore implements TextSearchStore {
-  private db!: InstanceType<typeof Database>
+  private db!: SqliteDb
   private ownsDb = false
 
   /** Create with an optional shared database connection */
-  constructor(sharedDb?: InstanceType<typeof Database>) {
+  constructor(sharedDb?: SqliteDb) {
     if (sharedDb) {
       this.db = sharedDb
       this.ownsDb = false
@@ -81,10 +82,9 @@ export class SQLiteTextSearchStore implements TextSearchStore {
 
   async open(config: unknown): Promise<void> {
     if (!this.db) {
-      const path = config as string
-      this.db = new Database(path === 'memory' ? ':memory:' : path)
-      this.db.pragma('journal_mode = WAL')
-      this.db.pragma('foreign_keys = ON')
+      this.db = await openSqliteDatabase(config as string)
+      this.db.exec('PRAGMA journal_mode = WAL')
+      this.db.exec('PRAGMA foreign_keys = ON')
       this.ownsDb = true
     }
     this.db.exec(SCHEMA)
