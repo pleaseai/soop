@@ -24,6 +24,6 @@
   },
   "optionalDependencies": {
     "better-sqlite3": "^12.6.2",
-    "@lancedb/lancedb": "^0.13.0"
+    "@lancedb/lancedb": "^0.26.2"
   }
 }
