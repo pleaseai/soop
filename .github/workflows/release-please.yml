@@ -62,71 +62,19 @@ jobs:
           git push
 
   # -------------------------------------------------------------------------
-  # Job 2: Build platform binaries (matrix — each OS builds its own targets)
+  # Job 2: Build all platform binaries and publish to npm
+  #
+  # WASM migration (web-tree-sitter) eliminated native deps — single ubuntu-latest
+  # runner can cross-compile all 7 targets with `bun compile`.
   #
   # Runs when:
   #   - push: release was created by release-please
   #   - workflow_dispatch: always (manual trigger)
   # -------------------------------------------------------------------------
-  build-binaries:
+  publish:
     needs: release-please
     if: |
       always() && (
-        (github.event_name == 'push' &&
-          needs.release-please.result == 'success' &&
-          needs.release-please.outputs.soop_release_created == 'true') ||
-        github.event_name == 'workflow_dispatch'
-      )
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # macOS — builds darwin-arm64 and darwin-x64 natively on Apple Silicon
-          - os: macos-latest
-            filter: darwin
-            artifact: darwin
-
-          # Linux x64 — builds linux-x64-glibc and linux-x64-musl
-          - os: ubuntu-latest
-            filter: linux-x64
-            artifact: linux-x64
-
-          # Linux arm64 — builds linux-arm64-glibc and linux-arm64-musl
-          - os: ubuntu-24.04-arm
-            filter: linux-arm64
-            artifact: linux-arm64
-
-          # Windows x64
-          - os: windows-latest
-            filter: win32
-            artifact: win32
-
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Build binaries (${{ matrix.filter }})
-        run: bun run scripts/generate-packages.ts --filter ${{ matrix.filter }}
-
-      - name: Upload binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: binaries-${{ matrix.artifact }}
-          path: npm/
-          retention-days: 1
-
-  # -------------------------------------------------------------------------
-  # Job 3: Collect all platform packages and publish to npm
-  # -------------------------------------------------------------------------
-  publish:
-    needs: [release-please, build-binaries]
-    if: |
-      always() &&
-      needs.build-binaries.result == 'success' && (
         (github.event_name == 'push' &&
           needs.release-please.result == 'success' &&
           needs.release-please.outputs.soop_release_created == 'true') ||
@@ -153,19 +101,11 @@ jobs:
       - name: Build main package
         run: bunx turbo run build
 
-      - name: Download all platform binaries
-        uses: actions/download-artifact@v4
-        with:
-          pattern: binaries-*
-          path: npm/
-          merge-multiple: true
+      - name: Build all platform binaries
+        run: bun run scripts/generate-packages.ts
 
       - name: List collected packages
         run: ls -la npm/
-
-      # Sync optionalDependencies in packages/soop/package.json to current version
-      - name: Bump optional dependency versions
-        run: bun run scripts/bump-version.ts
 
       # Publish platform packages first — main package references them via optionalDependencies
       - name: Publish platform packages

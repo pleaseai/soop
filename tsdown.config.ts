@@ -6,19 +6,8 @@ const external = [
   'better-sqlite3',
   '@lancedb/lancedb',
   '@surrealdb/node',
-  // Tree-sitter native parser + WASM-based alternative (web-tree-sitter)
-  'tree-sitter',
+  // WASM-based tree-sitter (loads .wasm files at runtime, cannot bundle)
   'web-tree-sitter',
-  'tree-sitter-typescript',
-  'tree-sitter-python',
-  'tree-sitter-rust',
-  'tree-sitter-go',
-  'tree-sitter-java',
-  'tree-sitter-c',
-  'tree-sitter-c-sharp',
-  'tree-sitter-cpp',
-  'tree-sitter-ruby',
-  'tree-sitter-kotlin',
   // HuggingFace transformers + ONNX (loads model files at runtime, cannot bundle)
   '@huggingface/transformers',
   'onnxruntime-node',

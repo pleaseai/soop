@@ -12,7 +12,6 @@
     "build": "tsdown && bun run build:copy-assets",
     "build:copy-assets": "mkdir -p packages/soop/dist/packages/cli/templates && cp packages/cli/src/templates/*.yml packages/soop/dist/packages/cli/templates/ && cp README.md LICENSE packages/soop/",
     "build:npm": "bun run scripts/generate-packages.ts",
-    "bump-version": "bun run scripts/bump-version.ts",
     "publish:npm": "bun run build:npm && for dir in npm/soop-*/; do (cd \"$dir\" && npm publish --access public); done",
     "test": "vitest run",
     "test:unit": "vitest run --project=unit",
