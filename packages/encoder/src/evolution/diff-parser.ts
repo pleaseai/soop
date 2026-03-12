@@ -1,5 +1,5 @@
-import type { EntityType } from '@pleaseai/soop-graph/node'
 import type { CodeEntity } from '@pleaseai/soop-ast'
+import type { EntityType } from '@pleaseai/soop-graph/node'
 import type { ChangedEntity, DiffResult, FileChange, FileChangeStatus } from './types'
 import { execFileSync } from 'node:child_process'
 import { ASTParser } from '@pleaseai/soop-ast'

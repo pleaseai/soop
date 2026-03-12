@@ -1,5 +1,5 @@
-import type { DataFlowEdge } from '@pleaseai/soop-graph/edge'
 import type { ParseResult } from '@pleaseai/soop-ast'
+import type { DataFlowEdge } from '@pleaseai/soop-graph/edge'
 import path from 'node:path'
 import { DataFlowEdgeSchema } from '@pleaseai/soop-graph/edge'
 import { createLogger } from '@pleaseai/soop-utils/logger'

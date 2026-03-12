@@ -1,6 +1,6 @@
+import type { ASTParser } from '@pleaseai/soop-ast'
 import type { SemanticFeature } from '@pleaseai/soop-graph/node'
 import type { RepositoryPlanningGraph } from '@pleaseai/soop-graph/rpg'
-import type { ASTParser } from '@pleaseai/soop-ast'
 import type { Embedding } from '../embedding'
 import type { SemanticExtractor } from '../semantic'
 import type { SemanticRouter } from './semantic-router'
