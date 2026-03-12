@@ -8,15 +8,15 @@
  */
 
 export interface SqliteStatement {
-  run: (...args: unknown[]) => unknown
-  get: (...args: unknown[]) => unknown
-  all: (...args: unknown[]) => unknown[]
+  run: (...args: any[]) => any
+  get: (...args: any[]) => any
+  all: (...args: any[]) => any[]
 }
 
 export interface SqliteDb {
   exec: (sql: string) => void
   prepare: (sql: string) => SqliteStatement
-  transaction: <T>(fn: () => T) => () => T
+  transaction: (fn: (...args: any[]) => any) => (...args: any[]) => any
   close: () => void
 }
 
@@ -27,9 +27,9 @@ export async function openSqliteDatabase(path: string): Promise<SqliteDb> {
     // bun:sqlite is built into the Bun runtime (and compiled binaries).
     // The import is dynamic so bundlers don't try to resolve it statically.
     const { Database } = await import('bun:sqlite')
-    return new Database(p) as unknown as SqliteDb
+    return new Database(p)
   }
 
   const { default: BetterSQLite } = await import('better-sqlite3')
-  return new BetterSQLite(p) as unknown as SqliteDb
+  return new BetterSQLite(p)
 }
