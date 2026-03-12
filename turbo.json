@@ -20,8 +20,8 @@
     },
     "build": {
       "dependsOn": ["typecheck"],
-      "inputs": ["src/**/*.ts", "packages/*/src/**/*.ts"],
-      "outputs": ["dist/**"]
+      "inputs": ["tsdown.config.ts", "packages/*/src/**/*.ts", "scripts/**/*.ts", "packages/*/package.json"],
+      "outputs": ["packages/soop/dist/**", "packages/soop-native/dist/**"]
     },
     "clean": {
       "cache": false
