@@ -2,6 +2,7 @@ import type { RPGConfig } from '@pleaseai/soop-graph'
 import type { FileFeatures, InteractiveState, LiftableEntity } from './state'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { ASTParser } from '@pleaseai/soop-ast'
 import {
   discoverFiles,
   extractEntitiesFromFile,
@@ -9,7 +10,6 @@ import {
 } from '@pleaseai/soop-encoder/encoder'
 import { ArtifactGrounder } from '@pleaseai/soop-encoder/grounding'
 import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
-import { ASTParser } from '@pleaseai/soop-ast'
 import { createStderrLogger } from '@pleaseai/soop-utils/logger'
 import {
   DOMAIN_DISCOVERY_INSTRUCTIONS,

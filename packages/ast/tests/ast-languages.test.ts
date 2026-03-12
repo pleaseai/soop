@@ -115,7 +115,6 @@ describe('Language Configurations', () => {
       config = LANGUAGE_CONFIGS.javascript
       expect(config.importTypes).toEqual(['import_statement'])
     })
-
   })
 
   describe('Python configuration', () => {
