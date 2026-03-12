@@ -104,6 +104,20 @@ jobs:
       - name: Build main package
         run: bunx turbo run build
 
+      - name: Verify build artifacts exist
+        run: |
+          for f in \
+            packages/soop/dist/packages/cli/src/cli.mjs \
+            packages/soop/dist/packages/mcp/src/server.mjs \
+            packages/soop/dist/src/index.mjs \
+            packages/soop/dist/src/index.d.mts; do
+            if [ ! -f "$f" ]; then
+              echo "ERROR: Missing required artifact: $f"
+              exit 1
+            fi
+          done
+          echo "All required artifacts present."
+
       - name: Build all platform binaries
         run: bun run scripts/generate-packages.ts
 
