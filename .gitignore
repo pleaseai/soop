@@ -59,4 +59,5 @@ packages/soop/LICENSE
 # namu: WASM grammars (built locally via `bun run build:wasm`, not committed)
 packages/namu/wasm/*.wasm
 
-
+.please/cache
+.rpg/cache

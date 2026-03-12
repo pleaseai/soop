@@ -126,17 +126,7 @@ async function buildBinary(
       'onnxruntime-common',
       'sharp',
       'better-sqlite3',
-      'tree-sitter',
-      'tree-sitter-typescript',
-      'tree-sitter-python',
-      'tree-sitter-rust',
-      'tree-sitter-go',
-      'tree-sitter-java',
-      'tree-sitter-c',
-      'tree-sitter-c-sharp',
-      'tree-sitter-cpp',
-      'tree-sitter-ruby',
-      'tree-sitter-kotlin',
+      'web-tree-sitter',
       'detect-libc',
     ],
   })
@@ -259,7 +249,7 @@ for (const target of BUILD_TARGETS) {
   }
 }
 
-// Sync optionalDependencies in packages/soop/package.json so versions stay in sync with VERSION
+// Sync optionalDependencies in packages/soop/package.json so platform package versions stay in sync
 const repoPkgPath = join(ROOT, 'packages', 'soop', 'package.json')
 const repoPkg = await Bun.file(repoPkgPath).json() as Record<string, unknown>
 const optDeps = repoPkg.optionalDependencies as Record<string, string>
@@ -270,7 +260,7 @@ for (const target of TARGETS) {
   }
 }
 await writeFile(repoPkgPath, `${JSON.stringify(repoPkg, null, 2)}\n`)
-console.log(`\nSynced optionalDependencies in packages/soop/package.json → v${VERSION}`)
+console.log(`\nSynced platform optionalDependencies in packages/soop/package.json → v${VERSION}`)
 
 console.log('\nBuild complete!')
 console.log('Platform packages written to npm/')

@@ -4,19 +4,6 @@
   "workspaces": {
     "": {
       "name": "@pleaseai/rpg",
-      "dependencies": {
-        "tree-sitter": "0.25.0",
-        "tree-sitter-c": "0.24.1",
-        "tree-sitter-c-sharp": "0.23.1",
-        "tree-sitter-cpp": "0.23.4",
-        "tree-sitter-go": "0.25.0",
-        "tree-sitter-java": "0.23.5",
-        "tree-sitter-kotlin": "0.3.8",
-        "tree-sitter-python": "0.25.0",
-        "tree-sitter-ruby": "0.23.1",
-        "tree-sitter-rust": "0.24.0",
-        "tree-sitter-typescript": "0.23.2",
-      },
       "devDependencies": {
         "@ai-sdk/anthropic": "^3.0.58",
         "@ai-sdk/google": "^3.0.43",
@@ -145,24 +132,13 @@
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
       },
-      "dependencies": {
-        "tree-sitter": "0.25.0",
-        "tree-sitter-c": "0.24.1",
-        "tree-sitter-c-sharp": "0.23.1",
-        "tree-sitter-cpp": "0.23.4",
-        "tree-sitter-go": "0.25.0",
-        "tree-sitter-java": "0.23.5",
-        "tree-sitter-kotlin": "0.3.8",
-        "tree-sitter-python": "0.25.0",
-        "tree-sitter-ruby": "0.23.1",
-        "tree-sitter-rust": "0.24.0",
-        "tree-sitter-typescript": "0.23.2",
-      },
       "devDependencies": {
+        "@pleaseai/soop-ast": "workspace:*",
         "@pleaseai/soop-cli": "workspace:*",
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
         "@pleaseai/soop-mcp": "workspace:*",
+        "@pleaseai/soop-namu": "workspace:*",
         "@pleaseai/soop-store": "workspace:*",
         "@pleaseai/soop-tools": "workspace:*",
         "@pleaseai/soop-utils": "workspace:*",
@@ -231,18 +207,7 @@
     },
   },
   "trustedDependencies": [
-    "tree-sitter-java",
-    "tree-sitter-kotlin",
-    "tree-sitter",
-    "tree-sitter-cpp",
-    "tree-sitter-go",
-    "tree-sitter-typescript",
-    "tree-sitter-ruby",
-    "tree-sitter-c-sharp",
-    "tree-sitter-c",
-    "tree-sitter-python",
     "better-sqlite3",
-    "tree-sitter-rust",
   ],
   "packages": {
     "@ai-sdk/anthropic": ["@ai-sdk/anthropic@3.0.58", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-/53SACgmVukO4bkms4dpxpRlYhW8Ct6QZRe6sj1Pi5H00hYhxIrqfiLbZBGxkdRvjsBQeP/4TVGsXgH5rQeb8Q=="],
@@ -464,6 +429,8 @@
     "@pleaseai/soop-ast": ["@pleaseai/soop-ast@workspace:packages/ast"],
 
     "@pleaseai/soop-cli": ["@pleaseai/soop-cli@workspace:packages/cli"],
+
+    "@pleaseai/soop-darwin-arm64": ["@pleaseai/soop-darwin-arm64@0.1.19", "", { "os": "darwin", "cpu": "arm64", "bin": { "soop": "soop", "soop-mcp": "soop-mcp" } }, "sha512-3d6C2gEYMMtquXvkvGcaqqj0S4CGIrdGP3OnOOBeLhdpmVPP6iQMgana8odCAACXTTi2n3PubPuJKdHuCOiQUw=="],
 
     "@pleaseai/soop-encoder": ["@pleaseai/soop-encoder@workspace:packages/encoder"],
 
