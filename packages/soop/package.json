@@ -31,7 +31,6 @@
     "url": "https://github.com/pleaseai/soop.git"
   },
   "engines": {
-    "bun": ">=1.0.0",
     "node": ">=20.0.0"
   },
   "scripts": {
@@ -51,13 +50,6 @@
     "@pleaseai/soop-zerorepo": "workspace:*"
   },
   "optionalDependencies": {
-    "@pleaseai/soop-darwin-arm64": "0.1.19",
-    "@pleaseai/soop-darwin-x64": "0.1.19",
-    "@pleaseai/soop-linux-x64-glibc": "0.1.19",
-    "@pleaseai/soop-linux-arm64-glibc": "0.1.19",
-    "@pleaseai/soop-linux-x64-musl": "0.1.19",
-    "@pleaseai/soop-linux-arm64-musl": "0.1.19",
-    "@pleaseai/soop-win32-x64": "0.1.19",
     "@huggingface/transformers": "^3.8.1",
     "@lancedb/lancedb": "^0.13.0",
     "@surrealdb/node": "^2.6.0",

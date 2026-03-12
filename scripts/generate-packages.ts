@@ -249,18 +249,18 @@ for (const target of BUILD_TARGETS) {
   }
 }
 
-// Sync optionalDependencies in packages/soop/package.json so platform package versions stay in sync
-const repoPkgPath = join(ROOT, 'packages', 'soop', 'package.json')
-const repoPkg = await Bun.file(repoPkgPath).json() as Record<string, unknown>
-const optDeps = repoPkg.optionalDependencies as Record<string, string>
+// Sync optionalDependencies in packages/soop-native/package.json so platform package versions stay in sync
+const nativePkgPath = join(ROOT, 'packages', 'soop-native', 'package.json')
+const nativePkg = await Bun.file(nativePkgPath).json() as Record<string, unknown>
+const optDeps = nativePkg.optionalDependencies as Record<string, string>
 for (const target of TARGETS) {
   const name = packageName(target.packageSuffix)
   if (name in optDeps) {
     optDeps[name] = VERSION
   }
 }
-await writeFile(repoPkgPath, `${JSON.stringify(repoPkg, null, 2)}\n`)
-console.log(`\nSynced platform optionalDependencies in packages/soop/package.json → v${VERSION}`)
+await writeFile(nativePkgPath, `${JSON.stringify(nativePkg, null, 2)}\n`)
+console.log(`\nSynced platform optionalDependencies in packages/soop-native/package.json → v${VERSION}`)
 
 console.log('\nBuild complete!')
 console.log('Platform packages written to npm/')

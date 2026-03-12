@@ -13,41 +13,45 @@
   "packages": {
     "packages/soop": {
       "package-name": "@pleaseai/soop",
+      "include-component-in-tag": true
+    },
+    "packages/soop-native": {
+      "package-name": "@pleaseai/soop-native",
       "include-component-in-tag": true,
       "extra-files": [
         {
           "type": "json",
-          "path": "/packages/soop/package.json",
+          "path": "/packages/soop-native/package.json",
           "jsonpath": "$.optionalDependencies['@pleaseai/soop-darwin-arm64']"
         },
         {
           "type": "json",
-          "path": "/packages/soop/package.json",
+          "path": "/packages/soop-native/package.json",
           "jsonpath": "$.optionalDependencies['@pleaseai/soop-darwin-x64']"
         },
         {
           "type": "json",
-          "path": "/packages/soop/package.json",
+          "path": "/packages/soop-native/package.json",
           "jsonpath": "$.optionalDependencies['@pleaseai/soop-linux-x64-glibc']"
         },
         {
           "type": "json",
-          "path": "/packages/soop/package.json",
+          "path": "/packages/soop-native/package.json",
           "jsonpath": "$.optionalDependencies['@pleaseai/soop-linux-arm64-glibc']"
         },
         {
           "type": "json",
-          "path": "/packages/soop/package.json",
+          "path": "/packages/soop-native/package.json",
           "jsonpath": "$.optionalDependencies['@pleaseai/soop-linux-x64-musl']"
         },
         {
           "type": "json",
-          "path": "/packages/soop/package.json",
+          "path": "/packages/soop-native/package.json",
           "jsonpath": "$.optionalDependencies['@pleaseai/soop-linux-arm64-musl']"
         },
         {
           "type": "json",
-          "path": "/packages/soop/package.json",
+          "path": "/packages/soop-native/package.json",
           "jsonpath": "$.optionalDependencies['@pleaseai/soop-win32-x64']"
         }
       ]

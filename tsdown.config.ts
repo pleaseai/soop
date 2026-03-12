@@ -59,8 +59,8 @@ export default defineConfig([
     banner: { js: '#!/usr/bin/env node' },
     inlineOnly: false,
   },
-  // Launcher scripts: compiled from scripts/launcher/*.ts → packages/soop/dist/launcher-{cli,mcp}.mjs
-  // These are pure Node.js scripts (no native deps) used by bin/soop and bin/soop-mcp shims
+  // Launcher scripts: compiled from scripts/launcher/*.ts → packages/soop-native/dist/launcher-{cli,mcp}.mjs
+  // These are pure Node.js scripts (no native deps) used by bin/soop and bin/soop-mcp shims in soop-native
   {
     entry: {
       'launcher-cli': './scripts/launcher/cli.ts',
@@ -69,7 +69,7 @@ export default defineConfig([
     format: 'esm',
     platform: 'node',
     dts: false,
-    outDir: 'packages/soop/dist',
+    outDir: 'packages/soop-native/dist',
     // Launchers have no @pleaseai/* deps — they only use Node.js built-ins
     inlineOnly: false,
   },
