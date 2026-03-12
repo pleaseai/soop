@@ -6,8 +6,8 @@
  * @pleaseai/soop-<platform>-<arch>[-<libc>] optional package, and
  * executes its pre-compiled `soop-mcp` binary.
  *
- * This file is compiled to packages/soop/dist/launcher-mcp.mjs by tsdown and is the
- * target of the `bin/soop-mcp` Node.js shim.
+ * This file is compiled to packages/soop-native/dist/launcher-mcp.mjs by tsdown and is the
+ * target of the `bin/soop-mcp` Node.js shim in @pleaseai/soop-native.
  */
 
 import { execFileSync, spawnSync } from 'node:child_process'

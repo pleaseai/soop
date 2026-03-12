@@ -1,0 +1,32 @@
+{
+  "name": "@pleaseai/soop-native",
+  "version": "0.1.19",
+  "description": "Soop Please - native binary distribution (bun compiled)",
+  "type": "module",
+  "files": [
+    "bin/",
+    "dist/"
+  ],
+  "bin": {
+    "soop": "bin/soop",
+    "soop-mcp": "bin/soop-mcp"
+  },
+  "optionalDependencies": {
+    "@pleaseai/soop-darwin-arm64": "0.1.19",
+    "@pleaseai/soop-darwin-x64": "0.1.19",
+    "@pleaseai/soop-linux-x64-glibc": "0.1.19",
+    "@pleaseai/soop-linux-arm64-glibc": "0.1.19",
+    "@pleaseai/soop-linux-x64-musl": "0.1.19",
+    "@pleaseai/soop-linux-arm64-musl": "0.1.19",
+    "@pleaseai/soop-win32-x64": "0.1.19"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "author": "Minsu Lee <amond@amond.net>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pleaseai/soop.git"
+  }
+}

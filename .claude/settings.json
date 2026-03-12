@@ -16,6 +16,7 @@
     "eslint-lsp@code-intelligence": true,
     "gatekeeper@pleaseai": true,
     "mcp-dev@pleaseai": true,
+    "ast-grep@pleaseai": true,
     "plugin-dev@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {

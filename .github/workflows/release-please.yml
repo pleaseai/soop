@@ -23,6 +23,8 @@ jobs:
       paths_released: ${{ steps.release.outputs.paths_released }}
       soop_release_created: ${{ steps.release.outputs['packages/soop--release_created'] }}
       soop_tag_name: ${{ steps.release.outputs['packages/soop--tag_name'] }}
+      soop_native_release_created: ${{ steps.release.outputs['packages/soop-native--release_created'] }}
+      soop_native_tag_name: ${{ steps.release.outputs['packages/soop-native--tag_name'] }}
     steps:
       - uses: actions/create-github-app-token@v2
         id: app-token
@@ -77,7 +79,8 @@ jobs:
       always() && (
         (github.event_name == 'push' &&
           needs.release-please.result == 'success' &&
-          needs.release-please.outputs.soop_release_created == 'true') ||
+          (needs.release-please.outputs.soop_release_created == 'true' ||
+           needs.release-please.outputs.soop_native_release_created == 'true')) ||
         github.event_name == 'workflow_dispatch'
       )
     runs-on: ubuntu-latest
@@ -124,6 +127,20 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # Publish @pleaseai/soop-native package (platform binary launcher)
+      - name: Publish soop-native package
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          name=$(cat packages/soop-native/package.json | python3 -c "import json,sys; print(json.load(sys.stdin)['name'])")
+          version=$(cat packages/soop-native/package.json | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
+          if npm view "${name}@${version}" version 2>/dev/null | grep -q "${version}"; then
+            echo "Skipping ${name}@${version} (already published)"
+          else
+            cd packages/soop-native && npm publish --access public --provenance
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       # Publish main @pleaseai/soop package (OIDC trusted publishing — no token needed)
       - name: Publish main package
         if: ${{ github.event.inputs.dry_run != 'true' }}
@@ -146,4 +163,5 @@ jobs:
             version=$(cat "$dir/package.json" | python3 -c "import json,sys; print(json.load(sys.stdin)['version'])")
             echo "  $name@$version"
           done
+          echo "  @pleaseai/soop-native (native launcher package)"
           echo "  @pleaseai/soop (main package)"

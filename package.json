@@ -24,7 +24,7 @@
     "lint:fix": "eslint --cache --fix .",
     "format": "eslint --cache --fix .",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf packages/soop/dist",
+    "clean": "rm -rf packages/soop/dist packages/soop-native/dist",
     "prepare": "husky"
   },
   "packageManager": "bun@1.3.10",
