@@ -8,7 +8,8 @@ import type {
   TraverseOpts,
   TraverseResult,
 } from '../types'
-import Database from 'better-sqlite3'
+import type { SqliteDb } from './db'
+import { openSqliteDatabase } from './db'
 
 type BindValue = string | number | null | undefined
 
@@ -53,24 +54,26 @@ CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target, type);
 `
 
 /**
- * SQLiteGraphStore — GraphStore implementation using better-sqlite3.
+ * SQLiteGraphStore — GraphStore implementation backed by better-sqlite3 (Node.js)
+ * or bun:sqlite (Bun compiled binaries).
  *
  * Stores nodes as (id, JSON attrs) and edges as (source, target, type, JSON attrs).
  * Uses recursive CTEs for traversal.
  */
 export class SQLiteGraphStore implements GraphStore {
-  private db!: InstanceType<typeof Database>
+  private db!: SqliteDb
 
   async open(path: unknown): Promise<void> {
-    const p = path as string
-    this.db = new Database(p === 'memory' ? ':memory:' : p)
-    this.db.pragma('journal_mode = WAL')
-    this.db.pragma('foreign_keys = ON')
+    this.db = await openSqliteDatabase(path as string)
+    this.db.exec('PRAGMA journal_mode = WAL')
+    this.db.exec('PRAGMA foreign_keys = ON')
     this.db.exec(SCHEMA)
     // Migrate existing databases that were created without the data_id column.
     const cols = this.db.prepare('PRAGMA table_info(edges)').all() as Array<{ name: string }>
     if (!cols.some(c => c.name === 'data_id')) {
-      this.db.transaction(() => { this.db.exec(MIGRATION_ADD_DATA_ID) })()
+      this.db.transaction(() => {
+        this.db.exec(MIGRATION_ADD_DATA_ID)
+      })()
     }
   }
 
@@ -371,7 +374,7 @@ export class SQLiteGraphStore implements GraphStore {
   }
 
   /** Expose the underlying DB for shared-connection use (e.g., SQLiteTextSearchStore) */
-  getDatabase(): InstanceType<typeof Database> {
+  getDatabase(): SqliteDb {
     return this.db
   }
 }
