@@ -31,7 +31,7 @@
     "url": "https://github.com/pleaseai/soop.git"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "scripts": {
     "prepack": "node -e \"const fs=require('fs');const pkg=fs.readFileSync('package.json','utf8');fs.writeFileSync('package.json.bak',pkg);const p=JSON.parse(pkg);delete p.devDependencies;fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\\n')\"",
