@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.8](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.7...soop-graph-v0.1.8) (2026-03-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-store bumped to 0.1.7
+
 ## [0.1.7](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.6...soop-graph-v0.1.7) (2026-03-12)
 
 

@@ -1,12 +1,12 @@
 {
-  "packages/soop": "0.1.19",
-  "packages/soop-native": "0.1.19",
-  "packages/cli": "0.1.7",
-  "packages/encoder": "0.1.7",
-  "packages/graph": "0.1.7",
-  "packages/mcp": "0.1.8",
-  "packages/store": "0.1.6",
-  "packages/tools": "0.1.7",
+  "packages/soop": "0.1.20",
+  "packages/soop-native": "0.1.20",
+  "packages/cli": "0.1.8",
+  "packages/encoder": "0.1.8",
+  "packages/graph": "0.1.8",
+  "packages/mcp": "0.1.9",
+  "packages/store": "0.1.7",
+  "packages/tools": "0.1.8",
   "packages/utils": "0.1.7",
-  "packages/zerorepo": "0.1.7"
+  "packages/zerorepo": "0.1.8"
 }

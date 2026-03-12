@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.8](https://github.com/pleaseai/soop/compare/soop-cli-v0.1.7...soop-cli-v0.1.8) (2026-03-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-encoder bumped to 0.1.8
+    * @pleaseai/soop-graph bumped to 0.1.8
+    * @pleaseai/soop-store bumped to 0.1.7
+    * @pleaseai/soop-tools bumped to 0.1.8
+    * @pleaseai/soop-zerorepo bumped to 0.1.8
+
 ## [0.1.7](https://github.com/pleaseai/soop/compare/soop-cli-v0.1.6...soop-cli-v0.1.7) (2026-03-12)
 
 
