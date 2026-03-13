@@ -18,7 +18,7 @@ permissions:
 jobs:
   encode:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,7 +32,7 @@ jobs:
         run: bun install -g @pleaseai/soop@next
 
       - name: Restore semantic cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .soop/cache/semantic-cache.db*
           key: semantic-cache-${{ github.sha }}
@@ -69,6 +69,13 @@ jobs:
               soop embed --rpg .soop/graph.json --stamp --embed-model $EMBED_MODEL
             fi
           fi
+
+      - name: Save semantic cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .soop/cache/semantic-cache.db*
+          key: semantic-cache-${{ github.sha }}
 
       - name: Create PR with updated graph
         uses: peter-evans/create-pull-request@v7
