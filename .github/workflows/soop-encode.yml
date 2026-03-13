@@ -7,6 +7,10 @@ on:
       - .soop/graph.json
       - .soop/embeddings.json
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: write
