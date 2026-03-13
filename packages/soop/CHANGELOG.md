@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.21](https://github.com/pleaseai/soop/compare/soop-v0.1.20...soop-v0.1.21) (2026-03-12)
+
+
+### Bug Fixes
+
+* **soop:** update minimum Node.js requirement to 24 ([#198](https://github.com/pleaseai/soop/issues/198)) ([a4cffad](https://github.com/pleaseai/soop/commit/a4cffad23c31111e5049bda1e982f2e72cc2af10))
+
 ## [0.1.20](https://github.com/pleaseai/soop/compare/soop-v0.1.19...soop-v0.1.20) (2026-03-12)
 
 
