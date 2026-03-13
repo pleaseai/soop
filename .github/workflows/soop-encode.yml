@@ -14,6 +14,8 @@ on:
       - '!**/node_modules/**'
       - '!**/dist/**'
       - '!**/build/**'
+      - '!.soop/graph.json'
+      - '!.soop/embeddings.json'
 
 concurrency:
   group: ${{ github.workflow }}
