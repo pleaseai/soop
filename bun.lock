@@ -127,10 +127,13 @@
     },
     "packages/soop": {
       "name": "@pleaseai/soop",
-      "version": "0.1.20",
+      "version": "0.1.21",
       "bin": {
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
+      },
+      "dependencies": {
+        "web-tree-sitter": "^0.26.0",
       },
       "devDependencies": {
         "@pleaseai/soop-ast": "workspace:*",

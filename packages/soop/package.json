@@ -1,6 +1,6 @@
 {
   "name": "@pleaseai/soop",
-  "version": "0.1.21",
+  "version": "0.1.22-alpha.0",
   "description": "Repository Planning Graph - A unified framework for repository understanding and generation",
   "type": "module",
   "files": [
