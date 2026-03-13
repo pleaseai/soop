@@ -49,6 +49,9 @@
     "@pleaseai/soop-utils": "workspace:*",
     "@pleaseai/soop-zerorepo": "workspace:*"
   },
+  "dependencies": {
+    "web-tree-sitter": "^0.26.0"
+  },
   "optionalDependencies": {
     "@huggingface/transformers": "^3.8.1",
     "@lancedb/lancedb": "^0.13.0",
