@@ -19,7 +19,7 @@
     "@ai-sdk/openai": "^3.0.41",
     "ai": "^6.0.116",
     "ai-sdk-provider-claude-code": "^3.4.0",
-    "ai-sdk-provider-codex-cli": "^1.0.5",
+    "ai-sdk-provider-codex-cli": "^1.1.0",
     "consola": "^3.4.2"
   },
   "peerDependencies": {
