@@ -10,7 +10,7 @@
     "dev": "bun run --watch packages/cli/src/cli.ts",
     "mcp": "bun run packages/mcp/src/server.ts",
     "build": "tsdown && bun run build:copy-assets",
-    "build:copy-assets": "mkdir -p packages/soop/dist/packages/cli/templates && cp packages/cli/src/templates/*.yml packages/soop/dist/packages/cli/templates/ && cp README.md LICENSE packages/soop/",
+    "build:copy-assets": "mkdir -p packages/soop/dist/packages/cli/templates packages/soop/dist/wasm && cp packages/cli/src/templates/*.yml packages/soop/dist/packages/cli/templates/ && cp packages/namu/wasm/*.wasm packages/soop/dist/wasm/ && cp README.md LICENSE packages/soop/",
     "build:npm": "bun run scripts/generate-packages.ts",
     "publish:npm": "bun run build:npm && for dir in npm/soop-*/; do (cd \"$dir\" && npm publish --access public); done",
     "test": "vitest run",
