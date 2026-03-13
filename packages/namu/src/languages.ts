@@ -20,18 +20,20 @@ const WASM_MAP: Record<SupportedLanguage, string> = {
 }
 
 function findWasmDir(): string {
+  const MAX_UPWARD_SEARCH = 10
   let dir = path.dirname(fileURLToPath(import.meta.url))
-  for (let i = 0; i < 10; i++) {
+  const startDir = dir
+  for (let i = 0; i < MAX_UPWARD_SEARCH; i++) {
     const candidate = path.join(dir, 'wasm')
     if (existsSync(path.join(candidate, 'tree-sitter-typescript.wasm'))) {
       return candidate
     }
     const parent = path.dirname(dir)
-    if (parent === dir) break
+    if (parent === dir)
+      break
     dir = parent
   }
-  // fallback: original relative path
-  return path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'wasm')
+  throw new Error(`Could not find tree-sitter WASM directory. Searched ${MAX_UPWARD_SEARCH} levels up from ${startDir}.`)
 }
 
 const wasmDir = findWasmDir()
