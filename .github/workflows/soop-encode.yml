@@ -1,6 +1,7 @@
 name: Soop Encode
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -30,11 +31,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56745cba8c7296529d2fc39830 # v4
         with:
           fetch-depth: 0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@ecf28ddc73e819eb6fa29df6b34ef8921c743461 # v2
         with:
           bun-version: latest
 
@@ -42,7 +43,7 @@ jobs:
         run: bun install -g @pleaseai/soop@next
 
       - name: Restore semantic cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .soop/cache/semantic-cache.db*
           key: semantic-cache-${{ github.sha }}
@@ -81,14 +82,14 @@ jobs:
           fi
 
       - name: Save semantic cache
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         if: always()
         with:
           path: .soop/cache/semantic-cache.db*
           key: semantic-cache-${{ github.sha }}
 
       - name: Create PR with updated graph
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
         with:
           commit-message: 'chore(soop): update graph'
           title: 'chore(soop): update graph'
