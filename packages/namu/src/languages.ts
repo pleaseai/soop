@@ -1,5 +1,6 @@
 import type { SupportedLanguage } from './types'
 
+import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -18,7 +19,24 @@ const WASM_MAP: Record<SupportedLanguage, string> = {
   kotlin: 'tree-sitter-kotlin.wasm',
 }
 
-const wasmDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'wasm')
+function findWasmDir(): string {
+  const MAX_UPWARD_SEARCH = 10
+  let dir = path.dirname(fileURLToPath(import.meta.url))
+  const startDir = dir
+  for (let i = 0; i < MAX_UPWARD_SEARCH; i++) {
+    const candidate = path.join(dir, 'wasm')
+    if (existsSync(path.join(candidate, 'tree-sitter-typescript.wasm'))) {
+      return candidate
+    }
+    const parent = path.dirname(dir)
+    if (parent === dir)
+      break
+    dir = parent
+  }
+  throw new Error(`Could not find tree-sitter WASM directory. Searched ${MAX_UPWARD_SEARCH} levels up from ${startDir}.`)
+}
+
+const wasmDir = findWasmDir()
 
 /**
  * Resolve the absolute path to a language's WASM grammar file.
