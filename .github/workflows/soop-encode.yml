@@ -3,9 +3,17 @@ name: Soop Encode
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - .soop/graph.json
-      - .soop/embeddings.json
+    paths:
+      - '**/*.ts'
+      - '**/*.js'
+      - '**/*.py'
+      - '**/*.rs'
+      - '**/*.go'
+      - '**/*.java'
+      - '!vendor/**'
+      - '!**/node_modules/**'
+      - '!**/dist/**'
+      - '!**/build/**'
 
 concurrency:
   group: ${{ github.workflow }}
