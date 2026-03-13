@@ -61,3 +61,6 @@ packages/namu/wasm/*.wasm
 
 .please/cache
 .rpg/cache
+
+# please plugin runtime state
+.please/state/
