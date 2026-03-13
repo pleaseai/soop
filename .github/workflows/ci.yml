@@ -23,11 +23,11 @@ jobs:
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "Release-please branch — skipping typecheck"
           fi
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         if: steps.branch-check.outputs.skip != 'true'
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@ecf28ddc73e819eb6fa29df6b34ef8921c743461 # v2
         if: steps.branch-check.outputs.skip != 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.branch-check.outputs.skip != 'true'
         with:
           node-version-file: .nvmrc
@@ -48,11 +48,11 @@ jobs:
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "Release-please branch — skipping lint"
           fi
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         if: steps.branch-check.outputs.skip != 'true'
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@ecf28ddc73e819eb6fa29df6b34ef8921c743461 # v2
         if: steps.branch-check.outputs.skip != 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.branch-check.outputs.skip != 'true'
         with:
           node-version-file: .nvmrc
@@ -73,13 +73,13 @@ jobs:
             echo "skip=true" >> $GITHUB_OUTPUT
             echo "Release-please branch — skipping tests"
           fi
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         if: steps.branch-check.outputs.skip != 'true'
         with:
           fetch-depth: 2
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@ecf28ddc73e819eb6fa29df6b34ef8921c743461 # v2
         if: steps.branch-check.outputs.skip != 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.branch-check.outputs.skip != 'true'
         with:
           node-version-file: .nvmrc
@@ -87,7 +87,7 @@ jobs:
         if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run test:unit -- --coverage --coverage.reportsDirectory=./coverage/unit
         if: steps.branch-check.outputs.skip != 'true'
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         if: steps.branch-check.outputs.skip != 'true'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -109,18 +109,18 @@ jobs:
             echo "Release-please branch — skipping integration tests"
           fi
       - name: Cache git folder
-        uses: actions/cache@v5
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
         with:
           path: .git
           key: git-folder
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         if: steps.branch-check.outputs.skip != 'true'
         with:
           fetch-depth: 0
           submodules: recursive
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@ecf28ddc73e819eb6fa29df6b34ef8921c743461 # v2
         if: steps.branch-check.outputs.skip != 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.branch-check.outputs.skip != 'true'
         with:
           node-version-file: .nvmrc
@@ -128,7 +128,7 @@ jobs:
         if: steps.branch-check.outputs.skip != 'true'
       - run: bunx turbo run test:integration -- --coverage --coverage.reportsDirectory=./coverage/integration
         if: steps.branch-check.outputs.skip != 'true'
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         if: steps.branch-check.outputs.skip != 'true'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
