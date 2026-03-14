@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.12](https://github.com/pleaseai/soop/compare/soop-tools-v0.1.11...soop-tools-v0.1.12) (2026-03-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-encoder bumped to 0.3.0
+
 ## [0.1.11](https://github.com/pleaseai/soop/compare/soop-tools-v0.1.10...soop-tools-v0.1.11) (2026-03-14)
 
 
