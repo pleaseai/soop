@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.11](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.10...soop-mcp-v0.1.11) (2026-03-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-encoder bumped to 0.1.10
+    * @pleaseai/soop-tools bumped to 0.1.10
+
 ## [0.1.10](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.9...soop-mcp-v0.1.10) (2026-03-14)
 
 
