@@ -385,6 +385,8 @@ const HUGGINGFACE_MODELS: Record<
     description: string
     queryPrefix?: string
     poolingStrategy: HuggingFacePoolingStrategy
+    /** Override model ID for ONNX loading (e.g. onnx-community conversions) */
+    onnxModelId?: string
   }
 > = {
   'MongoDB/mdbr-leaf-ir': {
@@ -407,6 +409,7 @@ const HUGGINGFACE_MODELS: Record<
     description: 'Voyage 4 Nano — open-weight multilingual embedding model (180M params, Matryoshka: 2048/1024/512/256)',
     queryPrefix: undefined,
     poolingStrategy: 'mean_pooling',
+    onnxModelId: 'onnx-community/voyage-4-nano-ONNX',
   },
 }
 
@@ -469,6 +472,7 @@ export class HuggingFaceEmbedding extends Embedding {
       description: string
       queryPrefix?: string
       poolingStrategy: HuggingFacePoolingStrategy
+      onnxModelId?: string
     }
   > {
     return { ...HUGGINGFACE_MODELS }
@@ -533,12 +537,14 @@ export class HuggingFaceEmbedding extends Embedding {
     try {
       const transformers = await this.getTransformersModule()
       const modelId = this.config.model ?? 'MongoDB/mdbr-leaf-ir'
+      const modelInfo = HUGGINGFACE_MODELS[modelId]
+      const loadModelId = modelInfo?.onnxModelId ?? modelId
 
-      log.info(`Loading model: ${modelId} (dtype: ${this.config.dtype})`)
+      log.info(`Loading model: ${modelId} (dtype: ${this.config.dtype}${loadModelId !== modelId ? `, onnx: ${loadModelId}` : ''})`)
 
       const [tokenizer, model] = await Promise.all([
-        transformers.AutoTokenizer.from_pretrained(modelId),
-        transformers.AutoModel.from_pretrained(modelId, {
+        transformers.AutoTokenizer.from_pretrained(loadModelId),
+        transformers.AutoModel.from_pretrained(loadModelId, {
           dtype: this.config.dtype,
         }),
       ])

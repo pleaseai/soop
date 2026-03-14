@@ -79,6 +79,11 @@ describe('voyage-4-nano model registry', () => {
     const models = HuggingFaceEmbedding.getSupportedModels()
     expect(models['voyageai/voyage-4-nano']!.queryPrefix).toBeUndefined()
   })
+
+  it('should have onnxModelId pointing to onnx-community conversion', () => {
+    const models = HuggingFaceEmbedding.getSupportedModels()
+    expect(models['voyageai/voyage-4-nano']!.onnxModelId).toBe('onnx-community/voyage-4-nano-ONNX')
+  })
 })
 
 // ============================================================================
@@ -104,6 +109,42 @@ describe('voyage-4-nano constructor', () => {
   it('should have no query prefix', () => {
     const embedding = new HuggingFaceEmbedding({ model: 'voyageai/voyage-4-nano' })
     expect(embedding.getQueryPrefix()).toBeUndefined()
+  })
+
+  it('should return original model id (not onnxModelId) from getModel()', () => {
+    const embedding = new HuggingFaceEmbedding({ model: 'voyageai/voyage-4-nano' })
+    expect(embedding.getModel()).toBe('voyageai/voyage-4-nano')
+  })
+})
+
+// ============================================================================
+// 2.5. ONNX model resolution
+// ============================================================================
+
+describe('onnxModelId resolution in loadModel', () => {
+  it('should load from onnxModelId instead of original model id', async () => {
+    const embedding = new HuggingFaceEmbedding({ model: 'voyageai/voyage-4-nano' })
+
+    const fromPretrainedTokenizer = vi.fn().mockResolvedValue(
+      vi.fn().mockResolvedValue({ attention_mask: makeTensor([[1]]) }),
+    )
+    const fromPretrainedModel = vi.fn().mockResolvedValue(
+      vi.fn().mockResolvedValue({ last_hidden_state: makeTensor([[[0.6, 0.8]]]) }),
+    )
+
+    const fakeModule = {
+      env: {},
+      AutoTokenizer: { from_pretrained: fromPretrainedTokenizer },
+      AutoModel: { from_pretrained: fromPretrainedModel },
+    }
+    vi.spyOn(embedding as unknown as { getTransformersModule: () => Promise<unknown> }, 'getTransformersModule')
+      .mockResolvedValue(fakeModule)
+
+    await embedding.embed('test')
+
+    // Should call from_pretrained with the ONNX model ID, not the original
+    expect(fromPretrainedTokenizer).toHaveBeenCalledWith('onnx-community/voyage-4-nano-ONNX')
+    expect(fromPretrainedModel).toHaveBeenCalledWith('onnx-community/voyage-4-nano-ONNX', { dtype: 'fp32' })
   })
 })
 
