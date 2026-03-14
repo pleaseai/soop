@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/pleaseai/soop/compare/soop-store-v0.1.7...soop-store-v0.1.8) (2026-03-14)
+
+
+### Features
+
+* **store:** add BM25 scoring to LocalTextSearchStore ([#233](https://github.com/pleaseai/soop/issues/233)) ([d04445d](https://github.com/pleaseai/soop/commit/d04445dc81f19e12e7086d6fdb0c6ac48a918195))
+
 ## [0.1.7](https://github.com/pleaseai/soop/compare/soop-store-v0.1.6...soop-store-v0.1.7) (2026-03-12)
 
 
