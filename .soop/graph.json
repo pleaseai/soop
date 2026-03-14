@@ -2,11 +2,11 @@
   "version": "1.0.0",
   "config": {
     "name": ".",
-    "rootPath": ".",
+    "rootPath": "/home/runner/work/soop/soop",
     "github": {
       "owner": "",
       "repo": ".",
-      "commit": "2de2ed00d0be89f32b313962f72ec5f7b3fe7825"
+      "commit": "29b01fb47898d56031c3d1ba3555baded0794acf"
     }
   },
   "nodes": [
@@ -137,6 +137,32 @@
       "metadata": {
         "entityType": "file",
         "path": "agent-evals/experiments/cc-rpg.ts"
+      }
+    },
+    {
+      "id": "agent-evals/experiments/cc-rpg.ts:file:agent-evals/experiments/cc-rpg.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "configure agent evaluation experiment",
+        "keywords": [
+          "experiment",
+          "configuration",
+          "sandbox",
+          "mcp",
+          "agent-evals"
+        ],
+        "subFeatures": [
+          "initialize experiment sandbox environment",
+          "provision agent configuration files",
+          "deploy repository planning graph data"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "agent-evals/experiments/cc-rpg.ts",
+        "qualifiedName": "agent-evals/experiments/cc-rpg.ts",
+        "startLine": 1,
+        "endLine": 60
       }
     },
     {
@@ -290,37 +316,46 @@
       }
     },
     {
-      "id": "packages/ast/src/languages/index.ts:file",
+      "id": "packages/ast/src/languages/index.ts:file:packages/ast/src/languages/index.ts",
       "type": "low_level",
       "feature": {
-        "description": "validate supported programming languages",
+        "description": "coordinate language configuration registry",
         "keywords": [
+          "ast",
           "language",
-          "validation",
-          "support"
+          "configuration",
+          "registry",
+          "type-guard"
+        ],
+        "subFeatures": [
+          "validate supported languages"
         ]
       },
       "metadata": {
         "entityType": "file",
-        "path": "packages/ast/src/languages/index.ts"
+        "path": "packages/ast/src/languages/index.ts",
+        "qualifiedName": "packages/ast/src/languages/index.ts",
+        "startLine": 1,
+        "endLine": 47
       }
     },
     {
-      "id": "packages/ast/src/languages/index.ts:function:isSupportedLanguage:44",
+      "id": "packages/ast/src/languages/index.ts:function:isSupportedLanguage",
       "type": "low_level",
       "feature": {
         "description": "validate supported programming language",
         "keywords": [
           "language",
           "validation",
-          "support",
-          "check"
+          "configuration",
+          "support"
         ],
         "subFeatures": []
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/ast/src/languages/index.ts",
+        "qualifiedName": "isSupportedLanguage",
         "startLine": 44,
         "endLine": 46
       }
@@ -1406,6 +1441,35 @@
       }
     },
     {
+      "id": "packages/cli/src/cli.ts:file:packages/cli/src/cli.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "orchestrate command line interface",
+        "keywords": [
+          "cli",
+          "repository",
+          "planning",
+          "graph",
+          "command",
+          "automation"
+        ],
+        "subFeatures": [
+          "register initialization command",
+          "register mcp command",
+          "register synchronization command",
+          "configure environment variables",
+          "define repository encoding command"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/cli/src/cli.ts",
+        "qualifiedName": "packages/cli/src/cli.ts",
+        "startLine": 1,
+        "endLine": 588
+      }
+    },
+    {
       "id": "packages/cli/src/cli.ts:function:buildSemanticOptions:424",
       "type": "low_level",
       "feature": {
@@ -1431,28 +1495,54 @@
       }
     },
     {
-      "id": "packages/cli/src/cli.ts:function:generateEmbeddings:466",
+      "id": "packages/cli/src/cli.ts:function:createEmbeddingManager",
       "type": "low_level",
       "feature": {
-        "description": "generate repository code embeddings",
+        "description": "initialize embedding manager instance",
+        "keywords": [
+          "embedding",
+          "manager",
+          "model",
+          "provider",
+          "configuration"
+        ],
+        "subFeatures": [
+          "configure local transformer embedding",
+          "configure remote api embedding",
+          "resolve embedding provider settings"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/cli/src/cli.ts",
+        "qualifiedName": "createEmbeddingManager",
+        "startLine": 466,
+        "endLine": 501
+      }
+    },
+    {
+      "id": "packages/cli/src/cli.ts:function:generateEmbeddings",
+      "type": "low_level",
+      "feature": {
+        "description": "generate repository embeddings",
         "keywords": [
           "embeddings",
           "repository",
           "indexing",
-          "ai",
-          "vector"
+          "vector",
+          "commit"
         ],
         "subFeatures": [
-          "initialize local embedding model",
-          "initialize remote embedding provider",
+          "initialize embedding manager",
           "index repository planning graph"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/cli/src/cli.ts",
-        "startLine": 466,
-        "endLine": 509
+        "qualifiedName": "generateEmbeddings",
+        "startLine": 506,
+        "endLine": 513
       }
     },
     {
@@ -1503,6 +1593,30 @@
         "entityType": "function",
         "path": "packages/cli/src/cli.ts",
         "startLine": 406,
+        "endLine": 419
+      }
+    },
+    {
+      "id": "packages/cli/src/cli.ts:function:validateSearchStrategy",
+      "type": "low_level",
+      "feature": {
+        "description": "validate search strategy",
+        "keywords": [
+          "validation",
+          "search",
+          "strategy",
+          "cli"
+        ],
+        "subFeatures": [
+          "report invalid strategy error",
+          "terminate application execution"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/cli/src/cli.ts",
+        "qualifiedName": "validateSearchStrategy",
+        "startLine": 414,
         "endLine": 419
       }
     },
@@ -1591,6 +1705,35 @@
       }
     },
     {
+      "id": "packages/cli/src/commands/init.ts:file:packages/cli/src/commands/init.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "initialize project configuration",
+        "keywords": [
+          "cli",
+          "init",
+          "configuration",
+          "repository",
+          "setup"
+        ],
+        "subFeatures": [
+          "create project directory structure",
+          "generate default configuration file",
+          "configure embedding settings",
+          "install git hooks",
+          "generate ci workflow file",
+          "trigger initial data encoding"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/cli/src/commands/init.ts",
+        "qualifiedName": "packages/cli/src/commands/init.ts",
+        "startLine": 1,
+        "endLine": 163
+      }
+    },
+    {
       "id": "packages/cli/src/commands/init.ts:function:ensureGitignoreEntry:131",
       "type": "low_level",
       "feature": {
@@ -1663,8 +1806,59 @@
       "metadata": {
         "entityType": "function",
         "path": "packages/cli/src/commands/init.ts",
-        "startLine": 28,
-        "endLine": 129
+        "qualifiedName": "registerInitCommand",
+        "startLine": 27,
+        "endLine": 116
+      }
+    },
+    {
+      "id": "packages/cli/src/commands/mcp.ts:file:packages/cli/src/commands/mcp.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "register mcp command",
+        "keywords": [
+          "mcp",
+          "cli",
+          "server",
+          "integration",
+          "command"
+        ],
+        "subFeatures": [
+          "configure command output",
+          "initialize mcp server"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/cli/src/commands/mcp.ts",
+        "qualifiedName": "packages/cli/src/commands/mcp.ts",
+        "startLine": 1,
+        "endLine": 25
+      }
+    },
+    {
+      "id": "packages/cli/src/commands/mcp.ts:function:registerMcpCommand",
+      "type": "low_level",
+      "feature": {
+        "description": "register mcp command interface",
+        "keywords": [
+          "mcp",
+          "cli",
+          "command",
+          "server",
+          "integration"
+        ],
+        "subFeatures": [
+          "configure command output streams",
+          "initialize mcp server instance"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/cli/src/commands/mcp.ts",
+        "qualifiedName": "registerMcpCommand",
+        "startLine": 3,
+        "endLine": 24
       }
     },
     {
@@ -1681,6 +1875,35 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/cli/src/commands/sync.ts"
+      }
+    },
+    {
+      "id": "packages/cli/src/commands/sync.ts:file:packages/cli/src/commands/sync.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "synchronize canonical graph to local environment",
+        "keywords": [
+          "sync",
+          "cli",
+          "graph",
+          "embeddings",
+          "git",
+          "incremental"
+        ],
+        "subFeatures": [
+          "validate canonical graph existence",
+          "initialize local storage directory",
+          "retrieve repository git state",
+          "compute incremental graph updates",
+          "persist local synchronization state"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/cli/src/commands/sync.ts",
+        "qualifiedName": "packages/cli/src/commands/sync.ts",
+        "startLine": 1,
+        "endLine": 224
       }
     },
     {
@@ -1707,8 +1930,9 @@
       "metadata": {
         "entityType": "function",
         "path": "packages/cli/src/commands/sync.ts",
+        "qualifiedName": "registerSyncCommand",
         "startLine": 21,
-        "endLine": 225
+        "endLine": 223
       }
     },
     {
@@ -4609,30 +4833,31 @@
       }
     },
     {
-      "id": "packages/encoder/src/encoder.ts:class:RPGEncoder:510",
+      "id": "packages/encoder/src/encoder.ts:class:RPGEncoder",
       "type": "low_level",
       "feature": {
-        "description": "encode repository source code",
+        "description": "coordinate repository planning graph lifecycle",
         "keywords": [
+          "rpg",
           "encoder",
           "repository",
-          "semantic",
-          "ast",
-          "caching"
+          "planning",
+          "graph",
+          "serialization"
         ],
         "subFeatures": [
-          "parse source code structure",
-          "extract semantic information",
-          "manage semantic data cache",
-          "initialize language model client",
-          "configure repository scanning options"
+          "load graph from file",
+          "save graph to file",
+          "evolve repository planning graph",
+          "initialize encoder configuration"
         ]
       },
       "metadata": {
         "entityType": "class",
         "path": "packages/encoder/src/encoder.ts",
-        "startLine": 510,
-        "endLine": 1640
+        "qualifiedName": "RPGEncoder",
+        "startLine": 511,
+        "endLine": 1739
       }
     },
     {
@@ -4649,6 +4874,37 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/encoder/src/encoder.ts"
+      }
+    },
+    {
+      "id": "packages/encoder/src/encoder.ts:file:packages/encoder/src/encoder.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "encode repository into semantic graph",
+        "keywords": [
+          "repository",
+          "encoder",
+          "semantic",
+          "graph",
+          "ast",
+          "evolution"
+        ],
+        "subFeatures": [
+          "parse source code",
+          "detect data flow",
+          "discover domain hierarchy",
+          "evolve repository graph",
+          "ground repository artifacts",
+          "extract semantic features",
+          "manage repository cache"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/encoder/src/encoder.ts",
+        "qualifiedName": "packages/encoder/src/encoder.ts",
+        "startLine": 1,
+        "endLine": 1740
       }
     },
     {
@@ -5257,8 +5513,9 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/encoder.ts",
-        "startLine": 1056,
-        "endLine": 1299
+        "qualifiedName": "RPGEncoder.encode",
+        "startLine": 1133,
+        "endLine": 1378
       }
     },
     {
@@ -5267,14 +5524,15 @@
       "feature": {
         "description": "evolve repository planning graph",
         "keywords": [
+          "rpg",
           "evolution",
           "repository",
           "planning",
-          "graph",
           "commit",
-          "semantic"
+          "graph"
         ],
         "subFeatures": [
+          "validate graph state",
           "initialize evolution engine",
           "execute graph evolution"
         ]
@@ -5282,8 +5540,9 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/encoder.ts",
-        "startLine": 1627,
-        "endLine": 1639
+        "qualifiedName": "RPGEncoder.evolve",
+        "startLine": 1707,
+        "endLine": 1738
       }
     },
     {
@@ -5512,6 +5771,83 @@
         "path": "packages/encoder/src/encoder.ts",
         "startLine": 765,
         "endLine": 782
+      }
+    },
+    {
+      "id": "packages/encoder/src/encoder.ts:method:RPGEncoder.fromSaved",
+      "type": "low_level",
+      "feature": {
+        "description": "initialize encoder from saved file",
+        "keywords": [
+          "rpg",
+          "encoder",
+          "repository",
+          "planning",
+          "graph",
+          "load"
+        ],
+        "subFeatures": [
+          "read saved file content",
+          "parse planning graph data",
+          "resolve repository root path",
+          "instantiate encoder instance",
+          "log loading statistics"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/encoder/src/encoder.ts",
+        "qualifiedName": "RPGEncoder.fromSaved",
+        "startLine": 535,
+        "endLine": 562
+      }
+    },
+    {
+      "id": "packages/encoder/src/encoder.ts:method:RPGEncoder.rpg",
+      "type": "low_level",
+      "feature": {
+        "description": "retrieve repository planning graph",
+        "keywords": [
+          "repository",
+          "planning",
+          "graph",
+          "accessor"
+        ],
+        "subFeatures": []
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/encoder/src/encoder.ts",
+        "qualifiedName": "RPGEncoder.rpg",
+        "startLine": 523,
+        "endLine": 525
+      }
+    },
+    {
+      "id": "packages/encoder/src/encoder.ts:method:RPGEncoder.save",
+      "type": "low_level",
+      "feature": {
+        "description": "save rpg data to file",
+        "keywords": [
+          "rpg",
+          "persistence",
+          "serialization",
+          "git",
+          "commit"
+        ],
+        "subFeatures": [
+          "validate rpg existence",
+          "stamp repository commit metadata",
+          "serialize rpg configuration",
+          "write data to disk"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/encoder/src/encoder.ts",
+        "qualifiedName": "RPGEncoder.save",
+        "startLine": 568,
+        "endLine": 595
       }
     },
     {
@@ -6722,7 +7058,8 @@
           "path"
         ],
         "subFeatures": [
-          "propagate artifact paths",
+          "identify high level nodes",
+          "propagate node metadata",
           "compute lowest common ancestor paths",
           "update node metadata"
         ]
@@ -6730,6 +7067,7 @@
       "metadata": {
         "entityType": "class",
         "path": "packages/encoder/src/grounding.ts",
+        "qualifiedName": "ArtifactGrounder",
         "startLine": 66,
         "endLine": 142
       }
@@ -6798,6 +7136,33 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/encoder/src/grounding.ts"
+      }
+    },
+    {
+      "id": "packages/encoder/src/grounding.ts:file:packages/encoder/src/grounding.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "compute lowest common ancestor file paths",
+        "keywords": [
+          "trie",
+          "path",
+          "lca",
+          "grounding",
+          "graph",
+          "traversal"
+        ],
+        "subFeatures": [
+          "insert directory path into trie",
+          "prune consolidated subtrees",
+          "identify branching and terminal nodes"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/encoder/src/grounding.ts",
+        "qualifiedName": "packages/encoder/src/grounding.ts",
+        "startLine": 1,
+        "endLine": 156
       }
     },
     {
@@ -6982,9 +7347,9 @@
           "metadata"
         ],
         "subFeatures": [
-          "retrieve node from graph",
+          "retrieve node metadata",
           "identify low level node paths",
-          "traverse child nodes recursively",
+          "traverse artifact subtree",
           "compute lowest common ancestor paths",
           "update node metadata with paths"
         ]
@@ -6992,6 +7357,7 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/grounding.ts",
+        "qualifiedName": "ArtifactGrounder.propagate",
         "startLine": 89,
         "endLine": 141
       }
@@ -7541,8 +7907,9 @@
       "metadata": {
         "entityType": "class",
         "path": "packages/encoder/src/reorganization/domain-discovery.ts",
+        "qualifiedName": "DomainDiscovery",
         "startLine": 21,
-        "endLine": 189
+        "endLine": 187
       }
     },
     {
@@ -7559,6 +7926,33 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/encoder/src/reorganization/domain-discovery.ts"
+      }
+    },
+    {
+      "id": "packages/encoder/src/reorganization/domain-discovery.ts:file:packages/encoder/src/reorganization/domain-discovery.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "identify functional domains from file features",
+        "keywords": [
+          "domain discovery",
+          "functional abstraction",
+          "repository analysis",
+          "semantic manifold",
+          "llm"
+        ],
+        "subFeatures": [
+          "generate domain discovery prompts",
+          "execute iterative domain discovery",
+          "parse functional area candidates",
+          "synthesize domain results via voting"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/encoder/src/reorganization/domain-discovery.ts",
+        "qualifiedName": "packages/encoder/src/reorganization/domain-discovery.ts",
+        "startLine": 1,
+        "endLine": 188
       }
     },
     {
@@ -7657,8 +8051,9 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/reorganization/domain-discovery.ts",
+        "qualifiedName": "DomainDiscovery.synthesizeCandidates",
         "startLine": 119,
-        "endLine": 142
+        "endLine": 140
       }
     },
     {
@@ -8652,6 +9047,7 @@
       "metadata": {
         "entityType": "class",
         "path": "packages/encoder/src/semantic.ts",
+        "qualifiedName": "SemanticExtractor",
         "startLine": 142,
         "endLine": 1686
       }
@@ -8673,6 +9069,33 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/encoder/src/semantic.ts"
+      }
+    },
+    {
+      "id": "packages/encoder/src/semantic.ts:file:packages/encoder/src/semantic.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "extract semantic features from code entities",
+        "keywords": [
+          "semantic",
+          "extraction",
+          "llm",
+          "code-analysis",
+          "batching"
+        ],
+        "subFeatures": [
+          "generate composite entity keys",
+          "estimate entity token usage",
+          "construct batch processing prompts",
+          "configure semantic extraction settings"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/encoder/src/semantic.ts",
+        "qualifiedName": "packages/encoder/src/semantic.ts",
+        "startLine": 1,
+        "endLine": 1687
       }
     },
     {
@@ -8834,13 +9257,14 @@
         ],
         "subFeatures": [
           "identify primary verb",
-          "generate descriptive label",
+          "generate descriptive summary",
           "merge feature keywords"
         ]
       },
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/semantic.ts",
+        "qualifiedName": "SemanticExtractor.aggregateWithHeuristic",
         "startLine": 1218,
         "endLine": 1245
       }
@@ -8976,57 +9400,33 @@
       "id": "packages/encoder/src/semantic.ts:method:createClassGroupBatches:855",
       "type": "low_level",
       "feature": {
-        "description": "partition class groups into token-constrained batches",
+        "description": "partition class groups into token-limited batches",
         "keywords": [
           "batching",
           "tokenization",
-          "optimization",
           "grouping",
+          "optimization",
           "encoder"
         ],
         "subFeatures": [
-          "estimate token usage per group",
+          "estimate token usage for entities",
           "enforce maximum batch token limits",
-          "merge underfilled final batches"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/encoder/src/semantic.ts",
-        "startLine": 855,
-        "endLine": 916
-      }
-    },
-    {
-      "id": "packages/encoder/src/semantic.ts:method:createFileSummaryBatches:1042",
-      "type": "low_level",
-      "feature": {
-        "description": "group file summaries into batches",
-        "keywords": [
-          "batching",
-          "tokenization",
-          "summarization",
-          "optimization",
-          "grouping"
-        ],
-        "subFeatures": [
-          "estimate summary token count",
-          "enforce maximum batch size",
           "merge small final batches"
         ]
       },
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/semantic.ts",
-        "startLine": 1042,
-        "endLine": 1083
+        "qualifiedName": "SemanticExtractor.createClassGroupBatches",
+        "startLine": 855,
+        "endLine": 916
       }
     },
     {
       "id": "packages/encoder/src/semantic.ts:method:createTokenAwareBatches:789",
       "type": "low_level",
       "feature": {
-        "description": "group entities into token-constrained batches",
+        "description": "group entities into token constrained batches",
         "keywords": [
           "batching",
           "tokenization",
@@ -9035,7 +9435,7 @@
           "encoder"
         ],
         "subFeatures": [
-          "estimate entity token counts",
+          "estimate entity token requirements",
           "enforce maximum batch token limits",
           "merge small final batches"
         ]
@@ -9043,6 +9443,7 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/semantic.ts",
+        "qualifiedName": "SemanticExtractor.createTokenAwareBatches",
         "startLine": 789,
         "endLine": 849
       }
@@ -9311,8 +9712,8 @@
         "description": "generate file description",
         "keywords": [
           "metadata",
-          "naming",
           "documentation",
+          "naming",
           "path",
           "semantic"
         ],
@@ -9325,6 +9726,7 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/semantic.ts",
+        "qualifiedName": "SemanticExtractor.generateFileDescription",
         "startLine": 1446,
         "endLine": 1457
       }
@@ -9592,6 +9994,31 @@
         "path": "packages/encoder/src/semantic.ts",
         "startLine": 1089,
         "endLine": 1168
+      }
+    },
+    {
+      "id": "packages/encoder/src/semantic.ts:method:SemanticExtractor.createFileSummaryBatches",
+      "type": "low_level",
+      "feature": {
+        "description": "group file summaries into batches",
+        "keywords": [
+          "batching",
+          "token estimation",
+          "file summary",
+          "optimization"
+        ],
+        "subFeatures": [
+          "estimate file summary tokens",
+          "enforce maximum batch size",
+          "merge small final batches"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/encoder/src/semantic.ts",
+        "qualifiedName": "SemanticExtractor.createFileSummaryBatches",
+        "startLine": 1042,
+        "endLine": 1083
       }
     },
     {
@@ -11741,6 +12168,32 @@
       }
     },
     {
+      "id": "packages/encoder/tests/semantic-retry.test.ts:file:packages/encoder/tests/semantic-retry.test.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "test semantic extraction retry logic",
+        "keywords": [
+          "semantic",
+          "extractor",
+          "retry",
+          "iteration",
+          "testing"
+        ],
+        "subFeatures": [
+          "validate default extraction iterations",
+          "configure custom extraction iterations",
+          "verify single pass extraction behavior"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/encoder/tests/semantic-retry.test.ts",
+        "qualifiedName": "packages/encoder/tests/semantic-retry.test.ts",
+        "startLine": 1,
+        "endLine": 274
+      }
+    },
+    {
       "id": "packages/encoder/tests/semantic.test.ts:file",
       "type": "low_level",
       "feature": {
@@ -12154,6 +12607,34 @@
       }
     },
     {
+      "id": "packages/graph/src/embeddings.ts:file:packages/graph/src/embeddings.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "define schema serialized vector embeddings",
+        "keywords": [
+          "embeddings",
+          "serialization",
+          "schema",
+          "vector",
+          "float16",
+          "codec"
+        ],
+        "subFeatures": [
+          "validate embedding configuration",
+          "validate embedding entry data",
+          "validate serialized embedding structure",
+          "encode float32 to float16"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/graph/src/embeddings.ts",
+        "qualifiedName": "packages/graph/src/embeddings.ts",
+        "startLine": 1,
+        "endLine": 265
+      }
+    },
+    {
       "id": "packages/graph/src/embeddings.ts:function:base64Float16ToFloat32:178",
       "type": "low_level",
       "feature": {
@@ -12347,7 +12828,7 @@
       }
     },
     {
-      "id": "packages/graph/src/embeddings.ts:function:serializeEmbeddingsJsonl:227",
+      "id": "packages/graph/src/embeddings.ts:function:serializeEmbeddingsJsonl",
       "type": "low_level",
       "feature": {
         "description": "serialize embedding data",
@@ -12355,17 +12836,19 @@
           "embeddings",
           "serialization",
           "jsonl",
-          "data formatting"
+          "metadata",
+          "sorting"
         ],
         "subFeatures": [
-          "extract metadata from embeddings",
-          "sort embedding entries by identifier",
-          "format data as line delimited records"
+          "extract embedding metadata",
+          "sort embedding entries",
+          "format data as lines"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/graph/src/embeddings.ts",
+        "qualifiedName": "serializeEmbeddingsJsonl",
         "startLine": 227,
         "endLine": 235
       }
@@ -12515,8 +12998,9 @@
       "metadata": {
         "entityType": "class",
         "path": "packages/graph/src/rpg.ts",
+        "qualifiedName": "RepositoryPlanningGraph",
         "startLine": 97,
-        "endLine": 612
+        "endLine": 608
       }
     },
     {
@@ -12533,6 +13017,35 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/graph/src/rpg.ts"
+      }
+    },
+    {
+      "id": "packages/graph/src/rpg.ts:file:packages/graph/src/rpg.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "coordinate repository planning graph",
+        "keywords": [
+          "graph",
+          "repository",
+          "planning",
+          "nodes",
+          "edges",
+          "persistence"
+        ],
+        "subFeatures": [
+          "calculate graph statistics",
+          "serialize graph data",
+          "configure repository metadata",
+          "create graph nodes",
+          "create graph edges"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/graph/src/rpg.ts",
+        "qualifiedName": "packages/graph/src/rpg.ts",
+        "startLine": 1,
+        "endLine": 609
       }
     },
     {
@@ -13270,6 +13783,32 @@
       }
     },
     {
+      "id": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.serialize",
+      "type": "low_level",
+      "feature": {
+        "description": "serialize planning graph data",
+        "keywords": [
+          "serialization",
+          "graph",
+          "planning",
+          "export"
+        ],
+        "subFeatures": [
+          "retrieve graph nodes",
+          "retrieve graph edges",
+          "categorize data flow edges",
+          "sort graph components"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/graph/src/rpg.ts",
+        "qualifiedName": "RepositoryPlanningGraph.serialize",
+        "startLine": 451,
+        "endLine": 472
+      }
+    },
+    {
       "id": "packages/graph/src/rpg.ts:method:searchByFeature:377",
       "type": "low_level",
       "feature": {
@@ -13320,31 +13859,6 @@
         "path": "packages/graph/src/rpg.ts",
         "startLine": 423,
         "endLine": 447
-      }
-    },
-    {
-      "id": "packages/graph/src/rpg.ts:method:serialize:451",
-      "type": "low_level",
-      "feature": {
-        "description": "serialize repository planning graph",
-        "keywords": [
-          "serialization",
-          "graph",
-          "export",
-          "data structure"
-        ],
-        "subFeatures": [
-          "retrieve graph nodes",
-          "retrieve graph edges",
-          "categorize data flow edges",
-          "sort graph components"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/graph/src/rpg.ts",
-        "startLine": 451,
-        "endLine": 476
       }
     },
     {
@@ -13434,6 +13948,32 @@
       }
     },
     {
+      "id": "packages/graph/tests/embeddings.test.ts:file:packages/graph/tests/embeddings.test.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "validate embedding codec functionality",
+        "keywords": [
+          "embeddings",
+          "codec",
+          "testing",
+          "serialization",
+          "float16"
+        ],
+        "subFeatures": [
+          "verify float conversion roundtrips",
+          "validate vector similarity preservation",
+          "check encoded data size"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/graph/tests/embeddings.test.ts",
+        "qualifiedName": "packages/graph/tests/embeddings.test.ts",
+        "startLine": 1,
+        "endLine": 264
+      }
+    },
+    {
       "id": "packages/graph/tests/graph.test.ts:file",
       "type": "low_level",
       "feature": {
@@ -13449,6 +13989,38 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/graph/tests/graph.test.ts"
+      }
+    },
+    {
+      "id": "packages/graph/tests/graph.test.ts:file:packages/graph/tests/graph.test.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "verify graph node",
+        "keywords": [
+          "graph",
+          "testing",
+          "nodes",
+          "edges",
+          "validation"
+        ],
+        "subFeatures": [
+          "validate high level node creation",
+          "validate low level node creation",
+          "verify node type identification",
+          "verify edge type identification",
+          "validate functional edge creation",
+          "validate data flow edge creation",
+          "validate dependency edge creation",
+          "verify edge attribute serialization",
+          "edge creation"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/graph/tests/graph.test.ts",
+        "qualifiedName": "packages/graph/tests/graph.test.ts",
+        "startLine": 1,
+        "endLine": 643
       }
     },
     {
@@ -13694,6 +14266,7 @@
       "metadata": {
         "entityType": "class",
         "path": "packages/mcp/src/interactive/encoder.ts",
+        "qualifiedName": "InteractiveEncoder",
         "startLine": 53,
         "endLine": 909
       }
@@ -13712,6 +14285,37 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/mcp/src/interactive/encoder.ts"
+      }
+    },
+    {
+      "id": "packages/mcp/src/interactive/encoder.ts:file:packages/mcp/src/interactive/encoder.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "coordinate interactive repository encoding state",
+        "keywords": [
+          "encoder",
+          "interactive",
+          "repository",
+          "state",
+          "ast",
+          "mcp"
+        ],
+        "subFeatures": [
+          "index repository entities",
+          "parse source code structure",
+          "discover project files",
+          "extract code entities",
+          "inject code dependencies",
+          "ground repository artifacts",
+          "invalidate entity index"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/mcp/src/interactive/encoder.ts",
+        "qualifiedName": "packages/mcp/src/interactive/encoder.ts",
+        "startLine": 1,
+        "endLine": 926
       }
     },
     {
@@ -14119,6 +14723,34 @@
       }
     },
     {
+      "id": "packages/mcp/src/interactive/encoder.ts:method:InteractiveEncoder.submitRouting",
+      "type": "low_level",
+      "feature": {
+        "description": "submit routing decisions",
+        "keywords": [
+          "routing",
+          "hierarchy",
+          "revision",
+          "validation",
+          "assignment"
+        ],
+        "subFeatures": [
+          "validate graph revision",
+          "parse routing decisions",
+          "verify entity existence",
+          "update hierarchy assignments",
+          "remove pending routing entries"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/mcp/src/interactive/encoder.ts",
+        "qualifiedName": "InteractiveEncoder.submitRouting",
+        "startLine": 745,
+        "endLine": 821
+      }
+    },
+    {
       "id": "packages/mcp/src/interactive/encoder.ts:method:invalidateEntityIndex:71",
       "type": "low_level",
       "feature": {
@@ -14267,33 +14899,6 @@
         "path": "packages/mcp/src/interactive/encoder.ts",
         "startLine": 615,
         "endLine": 681
-      }
-    },
-    {
-      "id": "packages/mcp/src/interactive/encoder.ts:method:submitRouting:745",
-      "type": "low_level",
-      "feature": {
-        "description": "submit routing decisions",
-        "keywords": [
-          "routing",
-          "hierarchy",
-          "assignment",
-          "validation",
-          "state"
-        ],
-        "subFeatures": [
-          "validate graph revision",
-          "parse routing decisions",
-          "verify entity existence",
-          "update hierarchy assignments",
-          "remove pending routing entries"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/mcp/src/interactive/encoder.ts",
-        "startLine": 745,
-        "endLine": 821
       }
     },
     {
@@ -14523,30 +15128,29 @@
       "id": "packages/mcp/src/interactive/state.ts:class:InteractiveState:59",
       "type": "low_level",
       "feature": {
-        "description": "coordinate interactive repository planning state",
+        "description": "coordinate interactive repository state",
         "keywords": [
           "repository",
-          "planning",
           "state",
           "graph",
           "routing",
-          "hierarchy"
+          "hierarchy",
+          "revision"
         ],
         "subFeatures": [
+          "compute graph revision hash",
           "track repository entities",
-          "store batch boundaries",
-          "map entity features",
-          "record file features",
-          "assign hierarchy paths",
-          "track pending routing decisions",
-          "compute graph revision hash"
+          "store lifted entity features",
+          "manage routing decisions",
+          "assign hierarchy paths"
         ]
       },
       "metadata": {
         "entityType": "class",
         "path": "packages/mcp/src/interactive/state.ts",
+        "qualifiedName": "InteractiveState",
         "startLine": 59,
-        "endLine": 218
+        "endLine": 214
       }
     },
     {
@@ -14564,6 +15168,36 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/mcp/src/interactive/state.ts"
+      }
+    },
+    {
+      "id": "packages/mcp/src/interactive/state.ts:file:packages/mcp/src/interactive/state.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "coordinate interactive encoding state",
+        "keywords": [
+          "state",
+          "entities",
+          "batching",
+          "routing",
+          "hierarchy",
+          "repository"
+        ],
+        "subFeatures": [
+          "track repository planning graph",
+          "cache liftable code entities",
+          "define batch boundaries",
+          "store entity features",
+          "maintain pending routing queue",
+          "assign file hierarchy paths"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/mcp/src/interactive/state.ts",
+        "qualifiedName": "packages/mcp/src/interactive/state.ts",
+        "startLine": 1,
+        "endLine": 215
       }
     },
     {
@@ -14659,33 +15293,6 @@
       }
     },
     {
-      "id": "packages/mcp/src/interactive/state.ts:method:getGraphRevision:88",
-      "type": "low_level",
-      "feature": {
-        "description": "compute graph state fingerprint",
-        "keywords": [
-          "revision",
-          "hash",
-          "fingerprint",
-          "state",
-          "consistency"
-        ],
-        "subFeatures": [
-          "collect entity identifiers",
-          "serialize lifted features",
-          "serialize routing configuration",
-          "serialize hierarchy assignments",
-          "generate unique state hash"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/mcp/src/interactive/state.ts",
-        "startLine": 88,
-        "endLine": 126
-      }
-    },
-    {
       "id": "packages/mcp/src/interactive/state.ts:method:getLiftedCount:165",
       "type": "low_level",
       "feature": {
@@ -14723,6 +15330,34 @@
         "path": "packages/mcp/src/interactive/state.ts",
         "startLine": 172,
         "endLine": 174
+      }
+    },
+    {
+      "id": "packages/mcp/src/interactive/state.ts:method:InteractiveState.getGraphRevision",
+      "type": "low_level",
+      "feature": {
+        "description": "compute graph state fingerprint",
+        "keywords": [
+          "revision",
+          "hash",
+          "fingerprint",
+          "state",
+          "graph"
+        ],
+        "subFeatures": [
+          "serialize entity identifiers",
+          "serialize lifted features",
+          "serialize routing configuration",
+          "serialize hierarchy assignments",
+          "generate cryptographic hash"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/mcp/src/interactive/state.ts",
+        "qualifiedName": "InteractiveState.getGraphRevision",
+        "startLine": 88,
+        "endLine": 122
       }
     },
     {
@@ -14887,6 +15522,34 @@
       }
     },
     {
+      "id": "packages/mcp/src/server.ts:file:packages/mcp/src/server.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "initialize mcp server instance",
+        "keywords": [
+          "mcp",
+          "server",
+          "repository",
+          "planning",
+          "tools",
+          "protocol"
+        ],
+        "subFeatures": [
+          "configure server transport",
+          "register repository planning tools",
+          "enable interactive protocol",
+          "configure semantic search capabilities"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/mcp/src/server.ts",
+        "qualifiedName": "packages/mcp/src/server.ts",
+        "startLine": 1,
+        "endLine": 453
+      }
+    },
+    {
       "id": "packages/mcp/src/server.ts:function:createEmbeddingForSearch:319",
       "type": "low_level",
       "feature": {
@@ -14966,7 +15629,7 @@
       }
     },
     {
-      "id": "packages/mcp/src/server.ts:function:initFromPrecomputedEmbeddings:370",
+      "id": "packages/mcp/src/server.ts:function:initFromPrecomputedEmbeddings",
       "type": "low_level",
       "feature": {
         "description": "initialize semantic search from precomputed embeddings",
@@ -14974,26 +15637,27 @@
           "embeddings",
           "vector store",
           "semantic search",
-          "repository planning graph",
-          "initialization"
+          "initialization",
+          "repository"
         ],
         "subFeatures": [
           "load embedding data",
           "configure query embedding provider",
-          "open local vector store",
-          "map graph nodes to vectors",
+          "initialize local vector store",
+          "map repository nodes to vectors",
           "upsert document vectors into store"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/mcp/src/server.ts",
-        "startLine": 370,
-        "endLine": 423
+        "qualifiedName": "initFromPrecomputedEmbeddings",
+        "startLine": 391,
+        "endLine": 444
       }
     },
     {
-      "id": "packages/mcp/src/server.ts:function:initSemanticSearch:253",
+      "id": "packages/mcp/src/server.ts:function:initSemanticSearch",
       "type": "low_level",
       "feature": {
         "description": "initialize semantic search engine",
@@ -15002,20 +15666,22 @@
           "embeddings",
           "vector store",
           "indexing",
-          "rpg"
+          "repository"
         ],
         "subFeatures": [
           "load precomputed embeddings",
           "configure embedding model",
-          "initialize local vector store",
-          "index repository nodes"
+          "open local vector store",
+          "index repository nodes",
+          "verify existing vector data"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/mcp/src/server.ts",
-        "startLine": 253,
-        "endLine": 308
+        "qualifiedName": "initSemanticSearch",
+        "startLine": 274,
+        "endLine": 329
       }
     },
     {
@@ -15044,31 +15710,56 @@
       }
     },
     {
-      "id": "packages/mcp/src/server.ts:function:main:179",
+      "id": "packages/mcp/src/server.ts:function:main",
       "type": "low_level",
       "feature": {
         "description": "initialize mcp server",
         "keywords": [
-          "mcp",
           "server",
-          "initialization",
-          "cli",
-          "rpg",
-          "semantic-search"
+          "configuration",
+          "startup",
+          "arguments",
+          "mcp"
         ],
         "subFeatures": [
           "parse command line arguments",
-          "load repository planning graph",
-          "initialize semantic search engine",
-          "configure server transport",
-          "start mcp server instance"
+          "extract server configuration parameters",
+          "launch mcp server instance"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/mcp/src/server.ts",
-        "startLine": 179,
-        "endLine": 245
+        "qualifiedName": "main",
+        "startLine": 241,
+        "endLine": 266
+      }
+    },
+    {
+      "id": "packages/mcp/src/server.ts:function:startMcpServer",
+      "type": "low_level",
+      "feature": {
+        "description": "initialize mcp server instance",
+        "keywords": [
+          "mcp",
+          "server",
+          "rpg",
+          "semantic search",
+          "transport"
+        ],
+        "subFeatures": [
+          "load repository planning graph",
+          "initialize semantic search engine",
+          "configure server root path",
+          "establish stdio transport connection"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/mcp/src/server.ts",
+        "qualifiedName": "startMcpServer",
+        "startLine": 187,
+        "endLine": 236
       }
     },
     {
@@ -15114,19 +15805,45 @@
       }
     },
     {
-      "id": "packages/mcp/src/tools.ts:function:executeEncode:241",
+      "id": "packages/mcp/src/tools.ts:file:packages/mcp/src/tools.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "define tool input schemas",
+        "keywords": [
+          "mcp",
+          "tools",
+          "schema",
+          "validation",
+          "search",
+          "fetch"
+        ],
+        "subFeatures": [
+          "validate search parameters",
+          "validate fetch parameters"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/mcp/src/tools.ts",
+        "qualifiedName": "packages/mcp/src/tools.ts",
+        "startLine": 1,
+        "endLine": 335
+      }
+    },
+    {
+      "id": "packages/mcp/src/tools.ts:function:executeEncode",
       "type": "low_level",
       "feature": {
         "description": "encode repository content",
         "keywords": [
           "encode",
           "repository",
-          "serialization",
-          "file-processing"
+          "rpg",
+          "files",
+          "extraction"
         ],
         "subFeatures": [
-          "initialize repository encoder",
-          "serialize encoded data",
+          "initialize encoder configuration",
           "save encoded output",
           "report encoding metrics"
         ]
@@ -15134,6 +15851,7 @@
       "metadata": {
         "entityType": "function",
         "path": "packages/mcp/src/tools.ts",
+        "qualifiedName": "executeEncode",
         "startLine": 241,
         "endLine": 267
       }
@@ -16227,6 +16945,7 @@
       "metadata": {
         "entityType": "class",
         "path": "packages/store/src/local/graph-store.ts",
+        "qualifiedName": "LocalGraphStore",
         "startLine": 36,
         "endLine": 321
       }
@@ -16245,6 +16964,34 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/store/src/local/graph-store.ts"
+      }
+    },
+    {
+      "id": "packages/store/src/local/graph-store.ts:file:packages/store/src/local/graph-store.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "coordinate local graph data persistence",
+        "keywords": [
+          "graph",
+          "storage",
+          "persistence",
+          "json",
+          "local"
+        ],
+        "subFeatures": [
+          "initialize storage directory",
+          "load graph data",
+          "save graph data",
+          "manage temporary storage",
+          "cleanup temporary resources"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/store/src/local/graph-store.ts",
+        "qualifiedName": "packages/store/src/local/graph-store.ts",
+        "startLine": 1,
+        "endLine": 322
       }
     },
     {
@@ -16314,54 +17061,6 @@
         "path": "packages/store/src/local/graph-store.ts",
         "startLine": 84,
         "endLine": 97
-      }
-    },
-    {
-      "id": "packages/store/src/local/graph-store.ts:method:export:288",
-      "type": "low_level",
-      "feature": {
-        "description": "serialize graph data",
-        "keywords": [
-          "export",
-          "graph",
-          "serialization",
-          "nodes",
-          "edges"
-        ],
-        "subFeatures": [
-          "extract graph nodes",
-          "extract graph edges"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/store/src/local/graph-store.ts",
-        "startLine": 288,
-        "endLine": 292
-      }
-    },
-    {
-      "id": "packages/store/src/local/graph-store.ts:method:flush:312",
-      "type": "low_level",
-      "feature": {
-        "description": "persist graph data to storage",
-        "keywords": [
-          "persistence",
-          "storage",
-          "graph",
-          "serialization",
-          "file"
-        ],
-        "subFeatures": [
-          "serialize graph nodes and edges",
-          "write data to file system"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/store/src/local/graph-store.ts",
-        "startLine": 312,
-        "endLine": 320
       }
     },
     {
@@ -16498,6 +17197,55 @@
         "path": "packages/store/src/local/graph-store.ts",
         "startLine": 294,
         "endLine": 310
+      }
+    },
+    {
+      "id": "packages/store/src/local/graph-store.ts:method:LocalGraphStore.export",
+      "type": "low_level",
+      "feature": {
+        "description": "serialize graph data",
+        "keywords": [
+          "export",
+          "graph",
+          "serialization",
+          "store"
+        ],
+        "subFeatures": [
+          "extract node data",
+          "extract edge data"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/store/src/local/graph-store.ts",
+        "qualifiedName": "LocalGraphStore.export",
+        "startLine": 288,
+        "endLine": 292
+      }
+    },
+    {
+      "id": "packages/store/src/local/graph-store.ts:method:LocalGraphStore.flush",
+      "type": "low_level",
+      "feature": {
+        "description": "persist graph data to storage",
+        "keywords": [
+          "persistence",
+          "graph",
+          "storage",
+          "serialization",
+          "flush"
+        ],
+        "subFeatures": [
+          "serialize graph nodes and edges",
+          "write data to file system"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/store/src/local/graph-store.ts",
+        "qualifiedName": "LocalGraphStore.flush",
+        "startLine": 312,
+        "endLine": 320
       }
     },
     {
@@ -16665,30 +17413,31 @@
       }
     },
     {
-      "id": "packages/store/src/local/text-search-store.ts:class:LocalTextSearchStore:16",
+      "id": "packages/store/src/local/text-search-store.ts:class:LocalTextSearchStore",
       "type": "low_level",
       "feature": {
         "description": "coordinate local text search index",
         "keywords": [
           "search",
           "indexing",
-          "storage",
-          "retrieval"
+          "bm25",
+          "text",
+          "storage"
         ],
         "subFeatures": [
           "initialize search store",
           "clear search store",
           "index document content",
-          "remove indexed document",
-          "execute text search query",
-          "index document batch"
+          "remove document from index",
+          "execute text search query"
         ]
       },
       "metadata": {
         "entityType": "class",
         "path": "packages/store/src/local/text-search-store.ts",
-        "startLine": 16,
-        "endLine": 65
+        "qualifiedName": "LocalTextSearchStore",
+        "startLine": 21,
+        "endLine": 113
       }
     },
     {
@@ -16705,6 +17454,34 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/store/src/local/text-search-store.ts"
+      }
+    },
+    {
+      "id": "packages/store/src/local/text-search-store.ts:file:packages/store/src/local/text-search-store.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "coordinate in-memory text search index",
+        "keywords": [
+          "search",
+          "indexing",
+          "bm25",
+          "in-memory",
+          "text-retrieval"
+        ],
+        "subFeatures": [
+          "initialize search store",
+          "index document content",
+          "remove indexed document",
+          "perform ranked text search",
+          "clear search index"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/store/src/local/text-search-store.ts",
+        "qualifiedName": "packages/store/src/local/text-search-store.ts",
+        "startLine": 1,
+        "endLine": 119
       }
     },
     {
@@ -16736,7 +17513,7 @@
       "id": "packages/store/src/local/text-search-store.ts:function:tokenize:67",
       "type": "low_level",
       "feature": {
-        "description": "extract text tokens",
+        "description": "extract words from text",
         "keywords": [
           "tokenize",
           "text",
@@ -16750,8 +17527,9 @@
       "metadata": {
         "entityType": "function",
         "path": "packages/store/src/local/text-search-store.ts",
-        "startLine": 67,
-        "endLine": 70
+        "qualifiedName": "tokenize",
+        "startLine": 115,
+        "endLine": 118
       }
     },
     {
@@ -16821,6 +17599,34 @@
       }
     },
     {
+      "id": "packages/store/src/local/text-search-store.ts:method:LocalTextSearchStore.search",
+      "type": "low_level",
+      "feature": {
+        "description": "execute full text search",
+        "keywords": [
+          "search",
+          "bm25",
+          "ranking",
+          "indexing",
+          "query"
+        ],
+        "subFeatures": [
+          "tokenize search query",
+          "filter document fields",
+          "calculate corpus statistics",
+          "compute document relevance scores",
+          "rank search results"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/store/src/local/text-search-store.ts",
+        "qualifiedName": "LocalTextSearchStore.search",
+        "startLine": 44,
+        "endLine": 106
+      }
+    },
+    {
       "id": "packages/store/src/local/text-search-store.ts:method:open:19",
       "type": "low_level",
       "feature": {
@@ -16861,33 +17667,6 @@
         "path": "packages/store/src/local/text-search-store.ts",
         "startLine": 35,
         "endLine": 37
-      }
-    },
-    {
-      "id": "packages/store/src/local/text-search-store.ts:method:search:39",
-      "type": "low_level",
-      "feature": {
-        "description": "execute text search query",
-        "keywords": [
-          "search",
-          "query",
-          "ranking",
-          "indexing",
-          "retrieval"
-        ],
-        "subFeatures": [
-          "tokenize search query",
-          "calculate document relevance score",
-          "filter documents by fields",
-          "rank search results",
-          "limit search result count"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/store/src/local/text-search-store.ts",
-        "startLine": 39,
-        "endLine": 58
       }
     },
     {
@@ -17236,6 +18015,7 @@
       "metadata": {
         "entityType": "class",
         "path": "packages/store/src/sqlite/graph-store.ts",
+        "qualifiedName": "SQLiteGraphStore",
         "startLine": 63,
         "endLine": 380
       }
@@ -17254,6 +18034,34 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/store/src/sqlite/graph-store.ts"
+      }
+    },
+    {
+      "id": "packages/store/src/sqlite/graph-store.ts:file:packages/store/src/sqlite/graph-store.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "coordinate graph data in sqlite",
+        "keywords": [
+          "sqlite",
+          "graph",
+          "database",
+          "storage",
+          "traversal"
+        ],
+        "subFeatures": [
+          "initialize database schema",
+          "migrate database tables",
+          "store graph nodes",
+          "store graph edges",
+          "traverse graph structure"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/store/src/sqlite/graph-store.ts",
+        "qualifiedName": "packages/store/src/sqlite/graph-store.ts",
+        "startLine": 1,
+        "endLine": 381
       }
     },
     {
@@ -17627,6 +18435,7 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/store/src/sqlite/graph-store.ts",
+        "qualifiedName": "SQLiteGraphStore.traverse",
         "startLine": 217,
         "endLine": 303
       }
@@ -18970,6 +19779,35 @@
       }
     },
     {
+      "id": "packages/store/tests/store/local-text-search-store.test.ts:file:packages/store/tests/store/local-text-search-store.test.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "validate local text search store",
+        "keywords": [
+          "test",
+          "search",
+          "index",
+          "store",
+          "text-search"
+        ],
+        "subFeatures": [
+          "initialize search store",
+          "terminate search store",
+          "index text documents",
+          "search indexed content",
+          "remove indexed documents",
+          "update existing index entries"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/store/tests/store/local-text-search-store.test.ts",
+        "qualifiedName": "packages/store/tests/store/local-text-search-store.test.ts",
+        "startLine": 1,
+        "endLine": 146
+      }
+    },
+    {
       "id": "packages/store/tests/store/local-vector-store.test.ts:file",
       "type": "low_level",
       "feature": {
@@ -19587,13 +20425,14 @@
           "resolve search results",
           "filter unique search nodes",
           "determine search strategy",
-          "perform feature based search",
-          "perform path based search"
+          "search repository by path",
+          "search repository by features"
         ]
       },
       "metadata": {
         "entityType": "class",
         "path": "packages/tools/src/search.ts",
+        "qualifiedName": "SearchNode",
         "startLine": 55,
         "endLine": 176
       }
@@ -19612,6 +20451,33 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/tools/src/search.ts"
+      }
+    },
+    {
+      "id": "packages/tools/src/search.ts:file:packages/tools/src/search.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "retrieve code entities based on functional descriptions",
+        "keywords": [
+          "search",
+          "retrieval",
+          "semantic",
+          "code",
+          "graph"
+        ],
+        "subFeatures": [
+          "map functional descriptions to code",
+          "retrieve code snippets via symbols",
+          "execute hybrid semantic search",
+          "filter search results by scope"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/tools/src/search.ts",
+        "qualifiedName": "packages/tools/src/search.ts",
+        "startLine": 1,
+        "endLine": 177
       }
     },
     {
@@ -19687,30 +20553,6 @@
         "path": "packages/tools/src/search.ts",
         "startLine": 153,
         "endLine": 159
-      }
-    },
-    {
-      "id": "packages/tools/src/search.ts:method:query:67",
-      "type": "low_level",
-      "feature": {
-        "description": "execute search query",
-        "keywords": [
-          "search",
-          "query",
-          "results",
-          "deduplication"
-        ],
-        "subFeatures": [
-          "resolve search results",
-          "deduplicate search nodes",
-          "format search response"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/tools/src/search.ts",
-        "startLine": 67,
-        "endLine": 76
       }
     },
     {
@@ -19832,6 +20674,31 @@
         "path": "packages/tools/src/search.ts",
         "startLine": 111,
         "endLine": 126
+      }
+    },
+    {
+      "id": "packages/tools/src/search.ts:method:SearchNode.query",
+      "type": "low_level",
+      "feature": {
+        "description": "execute search query",
+        "keywords": [
+          "search",
+          "query",
+          "results",
+          "nodes"
+        ],
+        "subFeatures": [
+          "resolve search results",
+          "filter duplicate nodes",
+          "format search response"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/tools/src/search.ts",
+        "qualifiedName": "SearchNode.query",
+        "startLine": 67,
+        "endLine": 76
       }
     },
     {
@@ -20111,6 +20978,7 @@
       "metadata": {
         "entityType": "class",
         "path": "packages/utils/src/llm.ts",
+        "qualifiedName": "LLMClient",
         "startLine": 294,
         "endLine": 669
       }
@@ -20129,6 +20997,32 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/utils/src/llm.ts"
+      }
+    },
+    {
+      "id": "packages/utils/src/llm.ts:file:packages/utils/src/llm.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "initialize language model client",
+        "keywords": [
+          "llm",
+          "ai",
+          "provider",
+          "generative",
+          "client"
+        ],
+        "subFeatures": [
+          "configure model parameters",
+          "select language model provider",
+          "define error handling callbacks"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/utils/src/llm.ts",
+        "qualifiedName": "packages/utils/src/llm.ts",
+        "startLine": 1,
+        "endLine": 670
       }
     },
     {
@@ -20331,32 +21225,6 @@
       }
     },
     {
-      "id": "packages/utils/src/llm.ts:method:completeJSON:394",
-      "type": "low_level",
-      "feature": {
-        "description": "generate structured model output",
-        "keywords": [
-          "llm",
-          "json",
-          "schema",
-          "validation",
-          "fallback"
-        ],
-        "subFeatures": [
-          "request structured model response",
-          "extract json from text",
-          "validate output against schema",
-          "perform text fallback parsing"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/utils/src/llm.ts",
-        "startLine": 394,
-        "endLine": 454
-      }
-    },
-    {
       "id": "packages/utils/src/llm.ts:method:constructor:299",
       "type": "low_level",
       "feature": {
@@ -20522,6 +21390,33 @@
       }
     },
     {
+      "id": "packages/utils/src/llm.ts:method:LLMClient.completeJSON",
+      "type": "low_level",
+      "feature": {
+        "description": "generate structured model output",
+        "keywords": [
+          "llm",
+          "structured-output",
+          "json",
+          "schema-validation",
+          "fallback"
+        ],
+        "subFeatures": [
+          "request structured model response",
+          "extract json from raw text",
+          "validate output against schema",
+          "perform text fallback on failure"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/utils/src/llm.ts",
+        "qualifiedName": "LLMClient.completeJSON",
+        "startLine": 394,
+        "endLine": 454
+      }
+    },
+    {
       "id": "packages/utils/src/llm.ts:method:resetUsageStats:495",
       "type": "low_level",
       "feature": {
@@ -20651,27 +21546,28 @@
       }
     },
     {
-      "id": "packages/utils/src/memory.ts:class:Memory:31",
+      "id": "packages/utils/src/memory.ts:class:Memory",
       "type": "low_level",
       "feature": {
         "description": "coordinate conversation message history",
         "keywords": [
           "memory",
-          "chat",
           "history",
           "context",
+          "conversation",
           "messages"
         ],
         "subFeatures": [
           "store conversation messages",
           "retrieve recent messages",
-          "limit history by context window",
-          "initialize memory configuration"
+          "limit message context window",
+          "access full message history"
         ]
       },
       "metadata": {
         "entityType": "class",
         "path": "packages/utils/src/memory.ts",
+        "qualifiedName": "Memory",
         "startLine": 31,
         "endLine": 144
       }
@@ -20693,6 +21589,35 @@
       }
     },
     {
+      "id": "packages/utils/src/memory.ts:file:packages/utils/src/memory.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "coordinate conversation history",
+        "keywords": [
+          "memory",
+          "conversation",
+          "context",
+          "llm",
+          "history"
+        ],
+        "subFeatures": [
+          "configure context window",
+          "append system message",
+          "append user message",
+          "append assistant message",
+          "append raw message",
+          "retrieve recent messages"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/utils/src/memory.ts",
+        "qualifiedName": "packages/utils/src/memory.ts",
+        "startLine": 1,
+        "endLine": 145
+      }
+    },
+    {
       "id": "packages/utils/src/memory.ts:method:_trimToWindow:113",
       "type": "low_level",
       "feature": {
@@ -20705,14 +21630,15 @@
           "messages"
         ],
         "subFeatures": [
-          "preserve system instructions",
+          "preserve system message",
           "preserve final user message",
-          "truncate middle message history"
+          "truncate middle message sequence"
         ]
       },
       "metadata": {
         "entityType": "method",
         "path": "packages/utils/src/memory.ts",
+        "qualifiedName": "Memory._trimToWindow",
         "startLine": 113,
         "endLine": 143
       }
@@ -20904,6 +21830,7 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/utils/src/memory.ts",
+        "qualifiedName": "Memory.last",
         "startLine": 67,
         "endLine": 77
       }
@@ -21088,6 +22015,36 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/utils/tests/memory.test.ts"
+      }
+    },
+    {
+      "id": "packages/utils/tests/memory.test.ts:file:packages/utils/tests/memory.test.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "validate memory management functionality",
+        "keywords": [
+          "memory",
+          "context",
+          "history",
+          "messages",
+          "testing"
+        ],
+        "subFeatures": [
+          "initialize memory configuration",
+          "validate default context window",
+          "add system messages",
+          "add user messages",
+          "add assistant messages",
+          "add raw model messages",
+          "support fluent message chaining"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/utils/tests/memory.test.ts",
+        "qualifiedName": "packages/utils/tests/memory.test.ts",
+        "startLine": 1,
+        "endLine": 232
       }
     },
     {
@@ -21319,6 +22276,33 @@
       }
     },
     {
+      "id": "scripts/generate-packages.ts:file:scripts/generate-packages.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "generate cross-platform binary packages",
+        "keywords": [
+          "distribution",
+          "build",
+          "packaging",
+          "cross-platform",
+          "binary"
+        ],
+        "subFeatures": [
+          "compile standalone executable",
+          "create package directories",
+          "generate package manifests",
+          "read project version"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "scripts/generate-packages.ts",
+        "qualifiedName": "scripts/generate-packages.ts",
+        "startLine": 1,
+        "endLine": 260
+      }
+    },
+    {
       "id": "scripts/generate-packages.ts:function:binaryName:99",
       "type": "low_level",
       "feature": {
@@ -21376,8 +22360,8 @@
         "keywords": [
           "package",
           "configuration",
-          "deployment",
           "metadata",
+          "deployment",
           "binary"
         ],
         "subFeatures": [
@@ -21389,8 +22373,9 @@
       "metadata": {
         "entityType": "function",
         "path": "scripts/generate-packages.ts",
+        "qualifiedName": "generatePackageJson",
         "startLine": 149,
-        "endLine": 184
+        "endLine": 182
       }
     },
     {
@@ -21651,6 +22636,34 @@
       }
     },
     {
+      "id": "tsdown.config.ts:file:tsdown.config.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "configure project build settings",
+        "keywords": [
+          "bundling",
+          "configuration",
+          "build",
+          "typescript",
+          "external-dependencies"
+        ],
+        "subFeatures": [
+          "define library bundle configuration",
+          "define cli binary configuration",
+          "define launcher script configuration",
+          "exclude native dependencies from bundle",
+          "include internal workspace packages in bundle"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "tsdown.config.ts",
+        "qualifiedName": "tsdown.config.ts",
+        "startLine": 1,
+        "endLine": 65
+      }
+    },
+    {
       "id": "vitest.config.ts:file",
       "type": "low_level",
       "feature": {
@@ -21709,6 +22722,11 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "agent-evals/experiments/cc-rpg.ts:file:agent-evals/experiments/cc-rpg.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "agent-evals/experiments/cc.ts:file",
       "type": "functional"
     },
@@ -21739,7 +22757,12 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
-      "target": "packages/ast/src/languages/index.ts:file",
+      "target": "packages/ast/src/languages/index.ts:file:packages/ast/src/languages/index.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/ast/src/languages/index.ts:function:isSupportedLanguage",
       "type": "functional"
     },
     {
@@ -21839,6 +22862,26 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/cli/src/cli.ts:file:packages/cli/src/cli.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/cli/src/cli.ts:function:createEmbeddingManager",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/cli/src/cli.ts:function:generateEmbeddings",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/cli/src/cli.ts:function:validateSearchStrategy",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/cli/src/commands/hooks.ts:file",
       "type": "functional"
     },
@@ -21849,7 +22892,27 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/cli/src/commands/init.ts:file:packages/cli/src/commands/init.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/cli/src/commands/mcp.ts:file:packages/cli/src/commands/mcp.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/cli/src/commands/mcp.ts:function:registerMcpCommand",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/cli/src/commands/sync.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/cli/src/commands/sync.ts:file:packages/cli/src/commands/sync.ts",
       "type": "functional"
     },
     {
@@ -21904,7 +22967,32 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/encoder.ts:class:RPGEncoder",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/encoder/src/encoder.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/encoder.ts:file:packages/encoder/src/encoder.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/encoder.ts:method:RPGEncoder.fromSaved",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/encoder.ts:method:RPGEncoder.rpg",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/encoder.ts:method:RPGEncoder.save",
       "type": "functional"
     },
     {
@@ -21949,6 +23037,11 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/grounding.ts:file:packages/encoder/src/grounding.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/encoder/src/index.ts:file",
       "type": "functional"
     },
@@ -21960,6 +23053,11 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/encoder/src/reorganization/domain-discovery.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/reorganization/domain-discovery.ts:file:packages/encoder/src/reorganization/domain-discovery.ts",
       "type": "functional"
     },
     {
@@ -21990,6 +23088,16 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/encoder/src/semantic.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/semantic.ts:file:packages/encoder/src/semantic.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/semantic.ts:method:SemanticExtractor.createFileSummaryBatches",
       "type": "functional"
     },
     {
@@ -22164,6 +23272,11 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/tests/semantic-retry.test.ts:file:packages/encoder/tests/semantic-retry.test.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/encoder/tests/semantic.test.ts:file",
       "type": "functional"
     },
@@ -22204,6 +23317,16 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/embeddings.ts:file:packages/graph/src/embeddings.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/embeddings.ts:function:serializeEmbeddingsJsonl",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/graph/src/index.ts:file",
       "type": "functional"
     },
@@ -22219,12 +23342,32 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/rpg.ts:file:packages/graph/src/rpg.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.serialize",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/graph/tests/embeddings.test.ts:file",
       "type": "functional"
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/tests/embeddings.test.ts:file:packages/graph/tests/embeddings.test.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/graph/tests/graph.test.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/tests/graph.test.ts:file:packages/graph/tests/graph.test.ts",
       "type": "functional"
     },
     {
@@ -22245,6 +23388,16 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/mcp/src/interactive/encoder.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/interactive/encoder.ts:file:packages/mcp/src/interactive/encoder.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/interactive/encoder.ts:method:InteractiveEncoder.submitRouting",
       "type": "functional"
     },
     {
@@ -22274,6 +23427,16 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/interactive/state.ts:file:packages/mcp/src/interactive/state.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/interactive/state.ts:method:InteractiveState.getGraphRevision",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/mcp/src/interactive/tools.ts:file",
       "type": "functional"
     },
@@ -22284,7 +23447,42 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/server.ts:file:packages/mcp/src/server.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/server.ts:function:initFromPrecomputedEmbeddings",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/server.ts:function:initSemanticSearch",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/server.ts:function:main",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/server.ts:function:startMcpServer",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/mcp/src/tools.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/tools.ts:file:packages/mcp/src/tools.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/tools.ts:function:executeEncode",
       "type": "functional"
     },
     {
@@ -22384,12 +23582,42 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/store/src/local/graph-store.ts:file:packages/store/src/local/graph-store.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/store/src/local/graph-store.ts:method:LocalGraphStore.export",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/store/src/local/graph-store.ts:method:LocalGraphStore.flush",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/store/src/local/index.ts:file",
       "type": "functional"
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/store/src/local/text-search-store.ts:class:LocalTextSearchStore",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/store/src/local/text-search-store.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/store/src/local/text-search-store.ts:file:packages/store/src/local/text-search-store.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/store/src/local/text-search-store.ts:method:LocalTextSearchStore.search",
       "type": "functional"
     },
     {
@@ -22405,6 +23633,11 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/store/src/sqlite/graph-store.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/store/src/sqlite/graph-store.ts:file:packages/store/src/sqlite/graph-store.ts",
       "type": "functional"
     },
     {
@@ -22469,6 +23702,11 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/store/tests/store/local-text-search-store.test.ts:file:packages/store/tests/store/local-text-search-store.test.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/store/tests/store/local-vector-store.test.ts:file",
       "type": "functional"
     },
@@ -22504,6 +23742,16 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/tools/src/search.ts:file:packages/tools/src/search.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/tools/src/search.ts:method:SearchNode.query",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/tools/tests/tools.test.ts:file",
       "type": "functional"
     },
@@ -22529,12 +23777,32 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/utils/src/llm.ts:file:packages/utils/src/llm.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/utils/src/llm.ts:method:LLMClient.completeJSON",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/utils/src/logger.ts:file",
       "type": "functional"
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/utils/src/memory.ts:class:Memory",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/utils/src/memory.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/utils/src/memory.ts:file:packages/utils/src/memory.ts",
       "type": "functional"
     },
     {
@@ -22550,6 +23818,11 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/utils/tests/memory.test.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/utils/tests/memory.test.ts:file:packages/utils/tests/memory.test.ts",
       "type": "functional"
     },
     {
@@ -22579,6 +23852,11 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "scripts/generate-packages.ts:file:scripts/generate-packages.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "scripts/launcher/cli.ts:file",
       "type": "functional"
     },
@@ -22590,6 +23868,11 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "tsdown.config.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "tsdown.config.ts:file:tsdown.config.ts",
       "type": "functional"
     },
     {
@@ -22611,71 +23894,6 @@
     },
     {
       "source": "packages/ast/src/languages/go.ts:file",
-      "target": "packages/ast/src/types.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/c-cpp.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/csharp.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/go.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/index.ts:function:isSupportedLanguage:44",
-      "type": "functional"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/java.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/kotlin.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/python.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/ruby.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/rust.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/typescript.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
       "target": "packages/ast/src/types.ts:file",
       "type": "dependency",
       "dependencyType": "import"
@@ -22713,12 +23931,6 @@
     {
       "source": "packages/ast/src/languages/typescript.ts:file",
       "target": "packages/ast/src/types.ts:file",
-      "type": "dependency",
-      "dependencyType": "import"
-    },
-    {
-      "source": "packages/ast/src/parser.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
       "type": "dependency",
       "dependencyType": "import"
     },
@@ -22977,11 +24189,6 @@
     {
       "source": "packages/cli/src/cli.ts:file",
       "target": "packages/cli/src/cli.ts:function:buildSemanticOptions:424",
-      "type": "functional"
-    },
-    {
-      "source": "packages/cli/src/cli.ts:file",
-      "target": "packages/cli/src/cli.ts:function:generateEmbeddings:466",
       "type": "functional"
     },
     {
@@ -24131,11 +25338,6 @@
       "dependencyType": "call",
       "line": 566,
       "symbol": "getProvider"
-    },
-    {
-      "source": "packages/encoder/src/encoder.ts:file",
-      "target": "packages/encoder/src/encoder.ts:class:RPGEncoder:510",
-      "type": "functional"
     },
     {
       "source": "packages/encoder/src/encoder.ts:file",
@@ -25437,11 +26639,6 @@
     },
     {
       "source": "packages/encoder/src/semantic.ts:file",
-      "target": "packages/encoder/src/semantic.ts:method:createFileSummaryBatches:1042",
-      "type": "functional"
-    },
-    {
-      "source": "packages/encoder/src/semantic.ts:file",
       "target": "packages/encoder/src/semantic.ts:method:createTokenAwareBatches:789",
       "type": "functional"
     },
@@ -26600,11 +27797,6 @@
       "type": "functional"
     },
     {
-      "source": "packages/graph/src/embeddings.ts:file",
-      "target": "packages/graph/src/embeddings.ts:function:serializeEmbeddingsJsonl:227",
-      "type": "functional"
-    },
-    {
       "source": "packages/graph/src/node.ts:file",
       "target": "packages/graph/src/node.ts:function:createHighLevelNode:115",
       "type": "functional"
@@ -26814,11 +28006,6 @@
     },
     {
       "source": "packages/graph/src/rpg.ts:file",
-      "target": "packages/graph/src/rpg.ts:method:serialize:451",
-      "type": "functional"
-    },
-    {
-      "source": "packages/graph/src/rpg.ts:file",
       "target": "packages/graph/src/rpg.ts:method:toJSON:478",
       "type": "functional"
     },
@@ -26989,11 +28176,6 @@
     },
     {
       "source": "packages/mcp/src/interactive/encoder.ts:file",
-      "target": "packages/mcp/src/interactive/encoder.ts:method:submitRouting:745",
-      "type": "functional"
-    },
-    {
-      "source": "packages/mcp/src/interactive/encoder.ts:file",
       "target": "packages/mcp/src/interactive/encoder.ts:method:submitSynthesis:529",
       "type": "functional"
     },
@@ -27109,11 +28291,6 @@
     },
     {
       "source": "packages/mcp/src/interactive/state.ts:file",
-      "target": "packages/mcp/src/interactive/state.ts:method:getGraphRevision:88",
-      "type": "functional"
-    },
-    {
-      "source": "packages/mcp/src/interactive/state.ts:file",
       "target": "packages/mcp/src/interactive/state.ts:method:getLiftedCount:165",
       "type": "functional"
     },
@@ -27182,22 +28359,7 @@
     },
     {
       "source": "packages/mcp/src/server.ts:file",
-      "target": "packages/mcp/src/server.ts:function:initFromPrecomputedEmbeddings:370",
-      "type": "functional"
-    },
-    {
-      "source": "packages/mcp/src/server.ts:file",
-      "target": "packages/mcp/src/server.ts:function:initSemanticSearch:253",
-      "type": "functional"
-    },
-    {
-      "source": "packages/mcp/src/server.ts:file",
       "target": "packages/mcp/src/server.ts:function:loadRPG:166",
-      "type": "functional"
-    },
-    {
-      "source": "packages/mcp/src/server.ts:file",
-      "target": "packages/mcp/src/server.ts:function:main:179",
       "type": "functional"
     },
     {
@@ -27216,11 +28378,6 @@
       "target": "packages/mcp/src/errors.ts:file",
       "type": "dependency",
       "dependencyType": "import"
-    },
-    {
-      "source": "packages/mcp/src/tools.ts:file",
-      "target": "packages/mcp/src/tools.ts:function:executeEncode:241",
-      "type": "functional"
     },
     {
       "source": "packages/mcp/src/tools.ts:file",
@@ -27501,16 +28658,6 @@
     },
     {
       "source": "packages/store/src/local/graph-store.ts:file",
-      "target": "packages/store/src/local/graph-store.ts:method:export:288",
-      "type": "functional"
-    },
-    {
-      "source": "packages/store/src/local/graph-store.ts:file",
-      "target": "packages/store/src/local/graph-store.ts:method:flush:312",
-      "type": "functional"
-    },
-    {
-      "source": "packages/store/src/local/graph-store.ts:file",
       "target": "packages/store/src/local/graph-store.ts:method:getEdges:171",
       "type": "functional"
     },
@@ -27577,11 +28724,6 @@
     },
     {
       "source": "packages/store/src/local/text-search-store.ts:file",
-      "target": "packages/store/src/local/text-search-store.ts:class:LocalTextSearchStore:16",
-      "type": "functional"
-    },
-    {
-      "source": "packages/store/src/local/text-search-store.ts:file",
       "target": "packages/store/src/local/text-search-store.ts:function:scoreDoc:72",
       "type": "functional"
     },
@@ -27613,11 +28755,6 @@
     {
       "source": "packages/store/src/local/text-search-store.ts:file",
       "target": "packages/store/src/local/text-search-store.ts:method:remove:35",
-      "type": "functional"
-    },
-    {
-      "source": "packages/store/src/local/text-search-store.ts:file",
-      "target": "packages/store/src/local/text-search-store.ts:method:search:39",
       "type": "functional"
     },
     {
@@ -28213,11 +29350,6 @@
     },
     {
       "source": "packages/tools/src/search.ts:file",
-      "target": "packages/tools/src/search.ts:method:query:67",
-      "type": "functional"
-    },
-    {
-      "source": "packages/tools/src/search.ts:file",
       "target": "packages/tools/src/search.ts:method:resolveResults:78",
       "type": "functional"
     },
@@ -28334,11 +29466,6 @@
     },
     {
       "source": "packages/utils/src/llm.ts:file",
-      "target": "packages/utils/src/llm.ts:method:completeJSON:394",
-      "type": "functional"
-    },
-    {
-      "source": "packages/utils/src/llm.ts:file",
       "target": "packages/utils/src/llm.ts:method:constructor:299",
       "type": "functional"
     },
@@ -28407,11 +29534,6 @@
     {
       "source": "packages/utils/src/logger.ts:file",
       "target": "packages/utils/src/logger.ts:function:setLogLevel:27",
-      "type": "functional"
-    },
-    {
-      "source": "packages/utils/src/memory.ts:file",
-      "target": "packages/utils/src/memory.ts:class:Memory:31",
       "type": "functional"
     },
     {
@@ -28587,90 +29709,6 @@
   ],
   "dataFlowEdges": [
     {
-      "source": "packages/ast/src/languages/c-cpp.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "cConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/c-cpp.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "cppConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/csharp.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "csharpConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/go.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "goConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/index.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "language",
-      "dataType": "parameter"
-    },
-    {
-      "source": "packages/ast/src/languages/java.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "javaConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/kotlin.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "kotlinConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/python.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "pythonConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/ruby.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "rubyConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/rust.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "rustConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/typescript.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "javascriptConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/languages/typescript.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "typescriptConfig",
-      "dataType": "import"
-    },
-    {
       "source": "packages/ast/src/types.ts:file",
       "target": "packages/ast/src/languages/c-cpp.ts:file",
       "type": "data_flow",
@@ -28710,20 +29748,6 @@
       "target": "packages/ast/src/languages/go.ts:file",
       "type": "data_flow",
       "dataId": "LanguageConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/types.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "LanguageConfig",
-      "dataType": "import"
-    },
-    {
-      "source": "packages/ast/src/types.ts:file",
-      "target": "packages/ast/src/languages/index.ts:file",
-      "type": "data_flow",
-      "dataId": "SupportedLanguage",
       "dataType": "import"
     },
     {
