@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.26-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.25-alpha.1...soop-v0.1.26-alpha.1) (2026-03-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @pleaseai/soop-cli bumped to 0.2.0
+    * @pleaseai/soop-encoder bumped to 0.2.0
+    * @pleaseai/soop-graph bumped to 0.1.9
+    * @pleaseai/soop-mcp bumped to 0.2.0
+    * @pleaseai/soop-store bumped to 0.1.8
+    * @pleaseai/soop-tools bumped to 0.1.11
+    * @pleaseai/soop-utils bumped to 0.1.8
+    * @pleaseai/soop-zerorepo bumped to 0.1.9
+
 ## [0.1.25-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.24-alpha.1...soop-v0.1.25-alpha.1) (2026-03-14)
 
 

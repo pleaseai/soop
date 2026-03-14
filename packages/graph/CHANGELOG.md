@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.9](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.8...soop-graph-v0.1.9) (2026-03-14)
+
+
+### Features
+
+* **store:** add BM25 scoring to LocalTextSearchStore ([#233](https://github.com/pleaseai/soop/issues/233)) ([d04445d](https://github.com/pleaseai/soop/commit/d04445dc81f19e12e7086d6fdb0c6ac48a918195))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-store bumped to 0.1.8
+    * @pleaseai/soop-utils bumped to 0.1.8
+
 ## [0.1.8](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.7...soop-graph-v0.1.8) (2026-03-12)
 
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.11](https://github.com/pleaseai/soop/compare/soop-tools-v0.1.10...soop-tools-v0.1.11) (2026-03-14)
+
+
+### Features
+
+* **store:** add BM25 scoring to LocalTextSearchStore ([#233](https://github.com/pleaseai/soop/issues/233)) ([d04445d](https://github.com/pleaseai/soop/commit/d04445dc81f19e12e7086d6fdb0c6ac48a918195))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.9
+    * @pleaseai/soop-encoder bumped to 0.2.0
+
 ## [0.1.10](https://github.com/pleaseai/soop/compare/soop-tools-v0.1.9...soop-tools-v0.1.10) (2026-03-14)
 
 

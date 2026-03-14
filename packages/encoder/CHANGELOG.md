@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.2.0](https://github.com/pleaseai/soop/compare/soop-encoder-v0.1.10...soop-encoder-v0.2.0) (2026-03-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **encoder:** evolve CLI interface changed — requires <repo-path> positional arg, --graph option renamed to -l/--load-path, --stamp flag removed (auto-applied in save()).
+
+### Features
+
+* **store:** add BM25 scoring to LocalTextSearchStore ([#233](https://github.com/pleaseai/soop/issues/233)) ([d04445d](https://github.com/pleaseai/soop/commit/d04445dc81f19e12e7086d6fdb0c6ac48a918195))
+
+
+### Code Refactoring
+
+* **encoder:** align RPGEncoder API and CLI with reference implementation ([#231](https://github.com/pleaseai/soop/issues/231)) ([9a2a89a](https://github.com/pleaseai/soop/commit/9a2a89a464b265caf951fc54cbe4879d5933d52c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.9
+    * @pleaseai/soop-store bumped to 0.1.8
+    * @pleaseai/soop-utils bumped to 0.1.8
+
 ## [0.1.10](https://github.com/pleaseai/soop/compare/soop-encoder-v0.1.9...soop-encoder-v0.1.10) (2026-03-14)
 
 
