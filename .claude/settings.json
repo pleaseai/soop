@@ -12,6 +12,7 @@
     "standards@passionfactory": true,
     "tidy-first@passionfactory": true,
     "backend@passionfactory": true,
+    "github@passionfactory": true,    
     "typescript-lsp@code-intelligence": true,
     "eslint-lsp@code-intelligence": true,
     "gatekeeper@pleaseai": true,
