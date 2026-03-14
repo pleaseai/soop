@@ -2,13 +2,14 @@
 import type { SemanticOptions } from '@pleaseai/soop-encoder/semantic'
 import type { SerializedEmbeddings } from '@pleaseai/soop-graph/embeddings'
 
+import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { RPGEncoder } from '@pleaseai/soop-encoder'
 import { AISDKEmbedding, HuggingFaceEmbedding } from '@pleaseai/soop-encoder/embedding'
 import { EmbeddingManager } from '@pleaseai/soop-encoder/embedding-manager'
 import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
-import { serializeEmbeddingsJsonl } from '@pleaseai/soop-graph/embeddings'
+import { parseEmbeddingsJsonl, serializeEmbeddingsJsonl } from '@pleaseai/soop-graph/embeddings'
 import { ExploreRPG, FetchNode, SearchNode } from '@pleaseai/soop-tools'
 import { getHeadCommitSha } from '@pleaseai/soop-utils/git-helpers'
 import { parseModelString } from '@pleaseai/soop-utils/llm'
@@ -302,15 +303,23 @@ program
 
     await encoder.save(outputPath)
 
-    // Generate embeddings for vector/hybrid search
-    if (options.search === 'vector' || options.search === 'hybrid') {
+    // Incremental embedding update for vector/hybrid search
+    if ((options.search === 'vector' || options.search === 'hybrid') && result.embeddingChanges) {
       const embedSha = getHeadCommitSha(path.resolve(repoPath))
-      const embeddings = await generateEmbeddings(
-        encoder.rpg!,
-        embedSha,
-        options.embedModel,
-      )
-      await writeEmbeddingsFile(embeddings, options.embedOutput)
+      const embeddingManager = await createEmbeddingManager(options.embedModel)
+
+      if (existsSync(options.embedOutput)) {
+        // Incremental: update only changed nodes
+        const existingJsonl = await readFile(options.embedOutput, 'utf-8')
+        const existing = parseEmbeddingsJsonl(existingJsonl)
+        const updated = await embeddingManager.applyChanges(existing, encoder.rpg!, result.embeddingChanges, embedSha)
+        await writeEmbeddingsFile(updated, options.embedOutput)
+      }
+      else {
+        // No existing embeddings — full generation
+        const embeddings = await embeddingManager.indexAll(encoder.rpg!, embedSha)
+        await writeEmbeddingsFile(embeddings, options.embedOutput)
+      }
     }
 
     console.log('\nEvolution complete:')
@@ -421,28 +430,22 @@ function buildSemanticOptions(
 const GIT_LFS_THRESHOLD = 10 * 1024 * 1024
 
 /**
- * Generate embeddings for an RPG using the specified model.
+ * Create an EmbeddingManager from a model string.
  * Supports API-based providers (voyage-ai/, openai/) and local transformers (transformers/).
  */
-async function generateEmbeddings(
-  rpg: RepositoryPlanningGraph,
-  commit: string,
+async function createEmbeddingManager(
   embedModelStr: string = 'voyage-ai/voyage-code-3',
-): Promise<SerializedEmbeddings> {
+): Promise<EmbeddingManager> {
   const [providerPart] = embedModelStr.split('/')
 
   if (providerPart === 'transformers') {
-    // Local HuggingFace model via @huggingface/transformers (ONNX)
     const modelId = embedModelStr.slice('transformers/'.length)
     const embedding = new HuggingFaceEmbedding({ model: modelId })
-
-    const manager = new EmbeddingManager(embedding, {
+    return new EmbeddingManager(embedding, {
       provider: 'transformers',
       model: modelId,
       dimension: embedding.getDimension(),
     })
-
-    return manager.indexAll(rpg, commit)
   }
 
   const { createOpenAI } = await import('@ai-sdk/openai')
@@ -459,13 +462,23 @@ async function generateEmbeddings(
     providerName: parsed.providerName,
   })
 
-  const manager = new EmbeddingManager(embedding, {
+  return new EmbeddingManager(embedding, {
     provider: parsed.providerName,
     model: parsed.model,
     dimension: parsed.dimension,
     space: parsed.space,
   })
+}
 
+/**
+ * Generate embeddings for all nodes in an RPG.
+ */
+async function generateEmbeddings(
+  rpg: RepositoryPlanningGraph,
+  commit: string,
+  embedModelStr?: string,
+): Promise<SerializedEmbeddings> {
+  const manager = await createEmbeddingManager(embedModelStr)
   return manager.indexAll(rpg, commit)
 }
 
