@@ -232,6 +232,7 @@ export class RepositoryPlanningGraph {
     return edge
   }
 
+  /** Remove an edge. No-op if the edge does not exist. */
   async removeEdge(source: string, target: string, type: string): Promise<void> {
     await this.context.graph.removeEdge(source, target, type)
   }

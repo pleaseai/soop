@@ -120,8 +120,13 @@ export class RPGEvolver {
         }
         else {
           result.modified++
-          if (modResult.modifiedId)
+          if (modResult.modifiedId) {
             embeddingChanges.modified.push(modResult.modifiedId)
+          }
+          else if (modResult.addedId) {
+            // Node was not found in graph — treated as insertion by processModification
+            embeddingChanges.added.push(modResult.addedId)
+          }
         }
         result.prunedNodes += modResult.prunedNodes
         if (modResult.newAreaCreated) {
