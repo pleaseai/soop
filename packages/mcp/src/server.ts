@@ -1,7 +1,7 @@
 import type { Embedding } from '@pleaseai/soop-encoder/embedding'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { AISDKEmbedding, HuggingFaceEmbedding } from '@pleaseai/soop-encoder/embedding'
@@ -275,7 +275,7 @@ async function initSemanticSearch(
   rpg: RepositoryPlanningGraph,
   rpgPath: string,
 ): Promise<SemanticSearch> {
-  const dbPath = join(dirname(rpgPath), `${rpgPath}.vectors`)
+  const dbPath = join(dirname(rpgPath), `${basename(rpgPath)}.vectors`)
 
   // Check for pre-computed embeddings (.jsonl preferred, .json as fallback)
   const embeddingsPathJsonl = join(dirname(rpgPath), 'embeddings.jsonl')
