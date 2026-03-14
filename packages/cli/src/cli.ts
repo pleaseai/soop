@@ -303,7 +303,7 @@ program
     const semantic = buildSemanticOptions(options.model, options.llm, options.minBatchTokens, options.maxBatchTokens)
 
     const encoder = await RPGEncoder.fromSaved(options.loadPath, repoPath, { semantic })
-    encoder.rpg?.updateConfig({ rootPath: repoPath })
+    encoder.rpg?.updateConfig({ rootPath: path.resolve(repoPath) })
     const result = await encoder.evolve({ commitRange: options.commits })
 
     await encoder.save(outputPath)
@@ -320,7 +320,8 @@ program
         // Incremental: update only changed nodes (if model matches)
         const existingJsonl = await readFile(options.embedOutput, 'utf-8')
         const existing = parseEmbeddingsJsonl(existingJsonl)
-        const currentModel = options.embedModel ?? 'voyage-ai/voyage-code-3'
+        const parsed = parseEmbedModelString(options.embedModel ?? 'voyage-ai/voyage-code-3')
+        const currentModel = `${parsed.providerName}/${parsed.model}`
         const existingModel = `${existing.config.provider}/${existing.config.model}`
         if (existingModel.toLowerCase() !== currentModel.toLowerCase()) {
           log.warn(`Embedding model changed (${existingModel} → ${currentModel}) — full re-index required`)

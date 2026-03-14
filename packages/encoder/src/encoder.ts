@@ -552,10 +552,7 @@ export class RPGEncoder {
       throw new Error(`Could not parse RPG file "${savePath}": ${error instanceof Error ? error.message : error}`)
     }
     const savedRootPath = rpg.getConfig().rootPath
-    if (!repoPath && savedRootPath && !path.isAbsolute(savedRootPath)) {
-      throw new Error(`Saved RPG rootPath "${savedRootPath}" is relative; pass repoPath explicitly when loading.`)
-    }
-    const resolvedPath = repoPath ?? savedRootPath ?? '.'
+    const resolvedPath = repoPath ?? (savedRootPath ? path.resolve(savedRootPath) : '.')
     const encoder = new RPGEncoder(resolvedPath, options)
     encoder._rpg = rpg
     log.info(`Loaded RPG from ${savePath}: ${(await rpg.getStats()).nodeCount} nodes`)
