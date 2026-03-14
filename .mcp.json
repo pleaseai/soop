@@ -21,7 +21,8 @@
       "command": "bunx",
       "args": [
         "@pleaseai/soop@next",
-        "mcp"
+        "mcp",
+        ".soop/graph.json"
       ],
       "env": {
         "OPENAI_API_KEY": "${OPENAI_API_KEY}",
