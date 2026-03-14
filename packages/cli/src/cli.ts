@@ -303,7 +303,7 @@ program
     const semantic = buildSemanticOptions(options.model, options.llm, options.minBatchTokens, options.maxBatchTokens)
 
     const encoder = await RPGEncoder.fromSaved(options.loadPath, repoPath, { semantic })
-    encoder.rpg?.updateConfig({ rootPath: path.resolve(repoPath) })
+    encoder.rpg?.updateConfig({ rootPath: repoPath })
     const result = await encoder.evolve({ commitRange: options.commits })
 
     await encoder.save(outputPath)
