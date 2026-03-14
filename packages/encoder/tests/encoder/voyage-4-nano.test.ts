@@ -138,8 +138,10 @@ describe('onnxModelId resolution in loadModel', () => {
 
     await embedding.embed('test')
 
-    // Should call from_pretrained with the ONNX model ID, not the original
+    // Should call from_pretrained exactly once with the ONNX model ID, not the original
+    expect(fromPretrainedTokenizer).toHaveBeenCalledTimes(1)
     expect(fromPretrainedTokenizer).toHaveBeenCalledWith('onnx-community/voyage-4-nano-ONNX')
+    expect(fromPretrainedModel).toHaveBeenCalledTimes(1)
     expect(fromPretrainedModel).toHaveBeenCalledWith('onnx-community/voyage-4-nano-ONNX', { dtype: 'fp32' })
   })
 
@@ -163,8 +165,10 @@ describe('onnxModelId resolution in loadModel', () => {
 
     await embedding.embed('test')
 
-    // Should call from_pretrained with the original model ID (no ONNX override)
+    // Should call from_pretrained exactly once with the original model ID (no ONNX override)
+    expect(fromPretrainedTokenizer).toHaveBeenCalledTimes(1)
     expect(fromPretrainedTokenizer).toHaveBeenCalledWith('MongoDB/mdbr-leaf-ir')
+    expect(fromPretrainedModel).toHaveBeenCalledTimes(1)
     expect(fromPretrainedModel).toHaveBeenCalledWith('MongoDB/mdbr-leaf-ir', { dtype: 'fp32' })
   })
 })
