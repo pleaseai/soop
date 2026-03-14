@@ -303,6 +303,7 @@ program
     const semantic = buildSemanticOptions(options.model, options.llm, options.minBatchTokens, options.maxBatchTokens)
 
     const encoder = await RPGEncoder.fromSaved(options.loadPath, repoPath, { semantic })
+    encoder.rpg?.updateConfig({ rootPath: repoPath })
     const result = await encoder.evolve({ commitRange: options.commits })
 
     await encoder.save(outputPath)
@@ -316,11 +317,20 @@ program
       const embeddingManager = await createEmbeddingManager(options.embedModel)
 
       if (result.embeddingChanges && existsSync(options.embedOutput)) {
-        // Incremental: update only changed nodes
+        // Incremental: update only changed nodes (if model matches)
         const existingJsonl = await readFile(options.embedOutput, 'utf-8')
         const existing = parseEmbeddingsJsonl(existingJsonl)
-        const updated = await embeddingManager.applyChanges(existing, rpg, result.embeddingChanges, embedSha)
-        await writeEmbeddingsFile(updated, options.embedOutput)
+        const currentModel = options.embedModel ?? 'voyage-ai/voyage-code-3'
+        const existingModel = `${existing.config.provider}/${existing.config.model}`
+        if (existingModel.toLowerCase() !== currentModel.toLowerCase()) {
+          log.warn(`Embedding model changed (${existingModel} → ${currentModel}) — full re-index required`)
+          const embeddings = await embeddingManager.indexAll(rpg, embedSha)
+          await writeEmbeddingsFile(embeddings, options.embedOutput)
+        }
+        else {
+          const updated = await embeddingManager.applyChanges(existing, rpg, result.embeddingChanges, embedSha)
+          await writeEmbeddingsFile(updated, options.embedOutput)
+        }
       }
       else {
         // Full generation: no existing embeddings or no change tracking
