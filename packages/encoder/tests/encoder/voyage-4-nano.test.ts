@@ -111,10 +111,6 @@ describe('voyage-4-nano constructor', () => {
     expect(embedding.getQueryPrefix()).toBeUndefined()
   })
 
-  it('should return original model id (not onnxModelId) from getModel()', () => {
-    const embedding = new HuggingFaceEmbedding({ model: 'voyageai/voyage-4-nano' })
-    expect(embedding.getModel()).toBe('voyageai/voyage-4-nano')
-  })
 })
 
 // ============================================================================
@@ -145,6 +141,31 @@ describe('onnxModelId resolution in loadModel', () => {
     // Should call from_pretrained with the ONNX model ID, not the original
     expect(fromPretrainedTokenizer).toHaveBeenCalledWith('onnx-community/voyage-4-nano-ONNX')
     expect(fromPretrainedModel).toHaveBeenCalledWith('onnx-community/voyage-4-nano-ONNX', { dtype: 'fp32' })
+  })
+
+  it('should load from original model id when onnxModelId is not set', async () => {
+    const embedding = new HuggingFaceEmbedding({ model: 'MongoDB/mdbr-leaf-ir' })
+
+    const fromPretrainedTokenizer = vi.fn().mockResolvedValue(
+      vi.fn().mockResolvedValue({ attention_mask: makeTensor([[1]]) }),
+    )
+    const fromPretrainedModel = vi.fn().mockResolvedValue(
+      vi.fn().mockResolvedValue({ sentence_embedding: makeTensor([[0.1, 0.2]]) }),
+    )
+
+    const fakeModule = {
+      env: {},
+      AutoTokenizer: { from_pretrained: fromPretrainedTokenizer },
+      AutoModel: { from_pretrained: fromPretrainedModel },
+    }
+    vi.spyOn(embedding as unknown as { getTransformersModule: () => Promise<unknown> }, 'getTransformersModule')
+      .mockResolvedValue(fakeModule)
+
+    await embedding.embed('test')
+
+    // Should call from_pretrained with the original model ID (no ONNX override)
+    expect(fromPretrainedTokenizer).toHaveBeenCalledWith('MongoDB/mdbr-leaf-ir')
+    expect(fromPretrainedModel).toHaveBeenCalledWith('MongoDB/mdbr-leaf-ir', { dtype: 'fp32' })
   })
 })
 
@@ -244,7 +265,7 @@ describe('mean pooling via spied model', () => {
       .mockResolvedValue(fakeModule)
 
     await expect(embedding.embed('test')).rejects.toThrow(
-      'Failed to load HuggingFace model voyageai/voyage-4-nano: Download failed',
+      'Failed to load HuggingFace model voyageai/voyage-4-nano (onnx: onnx-community/voyage-4-nano-ONNX): Download failed',
     )
   })
 })

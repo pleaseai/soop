@@ -534,11 +534,12 @@ export class HuggingFaceEmbedding extends Embedding {
   }
 
   private async loadModel(): Promise<void> {
+    const modelId = this.config.model ?? 'MongoDB/mdbr-leaf-ir'
+    const modelInfo = HUGGINGFACE_MODELS[modelId]
+    const loadModelId = modelInfo?.onnxModelId ?? modelId
+
     try {
       const transformers = await this.getTransformersModule()
-      const modelId = this.config.model ?? 'MongoDB/mdbr-leaf-ir'
-      const modelInfo = HUGGINGFACE_MODELS[modelId]
-      const loadModelId = modelInfo?.onnxModelId ?? modelId
 
       log.info(`Loading model: ${modelId} (dtype: ${this.config.dtype}${loadModelId !== modelId ? `, onnx: ${loadModelId}` : ''})`)
 
@@ -558,7 +559,7 @@ export class HuggingFaceEmbedding extends Embedding {
       this.modelLoading = null
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       const err = new Error(
-        `Failed to load HuggingFace model ${this.config.model}: ${errorMessage}`,
+        `Failed to load HuggingFace model ${this.config.model}${loadModelId !== modelId ? ` (onnx: ${loadModelId})` : ''}: ${errorMessage}`,
       )
       ;(err as Error & { cause?: unknown }).cause = error
       throw err
