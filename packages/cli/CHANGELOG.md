@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.9](https://github.com/pleaseai/soop/compare/soop-cli-v0.1.8...soop-cli-v0.1.9) (2026-03-14)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-encoder bumped to 0.1.9
+    * @pleaseai/soop-tools bumped to 0.1.9
+
 ## [0.1.8](https://github.com/pleaseai/soop/compare/soop-cli-v0.1.7...soop-cli-v0.1.8) (2026-03-12)
 
 

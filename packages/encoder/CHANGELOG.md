@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/pleaseai/soop/compare/soop-encoder-v0.1.8...soop-encoder-v0.1.9) (2026-03-14)
+
+
+### Bug Fixes
+
+* **encoder:** resolve voyage-4-nano ONNX model not found in CI ([#217](https://github.com/pleaseai/soop/issues/217)) ([02b5dcd](https://github.com/pleaseai/soop/commit/02b5dcd0acc13b823b63cbda26bcd2aaf66c2154))
+
 ## [0.1.8](https://github.com/pleaseai/soop/compare/soop-encoder-v0.1.7...soop-encoder-v0.1.8) (2026-03-12)
 
 
