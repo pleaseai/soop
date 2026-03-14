@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.11...soop-mcp-v0.1.12) (2026-03-14)
+
+
+### Features
+
+* **cli:** integrate soop-mcp into soop mcp subcommand ([#228](https://github.com/pleaseai/soop/issues/228)) ([8dd7426](https://github.com/pleaseai/soop/commit/8dd74266ce1ca0065a5da91719e1dcb79903f897))
+
 ## [0.1.11](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.10...soop-mcp-v0.1.11) (2026-03-14)
 
 

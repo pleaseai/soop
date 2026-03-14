@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.25-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.24-alpha.1...soop-v0.1.25-alpha.1) (2026-03-14)
+
+
+### Features
+
+* **cli:** integrate soop-mcp into soop mcp subcommand ([#228](https://github.com/pleaseai/soop/issues/228)) ([8dd7426](https://github.com/pleaseai/soop/commit/8dd74266ce1ca0065a5da91719e1dcb79903f897))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @pleaseai/soop-cli bumped to 0.1.11
+    * @pleaseai/soop-mcp bumped to 0.1.12
+
 ## [0.1.24-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.23-alpha.1...soop-v0.1.24-alpha.1) (2026-03-14)
 
 
