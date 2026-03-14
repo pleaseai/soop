@@ -127,7 +127,9 @@ describe('LocalTextSearchStore', () => {
     // doc1 should score higher for "jwt" (rare) than for "auth" (common)
     expect(jwtResults).toHaveLength(1)
     expect(authResults).toHaveLength(3)
-    expect(jwtResults[0].score).toBeGreaterThan(authResults[0].score)
+    const doc1Auth = authResults.find(r => r.id === 'doc1')
+    expect(doc1Auth).toBeDefined()
+    expect(jwtResults[0].score).toBeGreaterThan(doc1Auth!.score)
   })
 
   it('BM25 length normalization: shorter docs score higher for same term frequency', async () => {

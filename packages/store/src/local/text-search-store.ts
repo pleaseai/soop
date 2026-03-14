@@ -56,7 +56,8 @@ export class LocalTextSearchStore implements TextSearchStore {
         ? Object.entries(doc.fields).filter(([k]) => fieldFilter.includes(k))
         : Object.entries(doc.fields)
       const tokens = fieldEntries.flatMap(([, v]) => tokenize(v))
-      corpus.push({ id, doc, tokens })
+      if (tokens.length > 0)
+        corpus.push({ id, doc, tokens })
     }
 
     const N = corpus.length
