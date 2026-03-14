@@ -227,7 +227,7 @@ export function serializeEmbeddings(data: SerializedEmbeddings): string {
 export function serializeEmbeddingsJsonl(data: SerializedEmbeddings): string {
   const { embeddings, ...meta } = data
   const lines: string[] = [JSON.stringify(meta)]
-  const sorted = [...embeddings].sort((a, b) => a.id.localeCompare(b.id))
+  const sorted = embeddings.toSorted((a, b) => a.id.localeCompare(b.id))
   for (const entry of sorted) {
     lines.push(JSON.stringify(entry))
   }

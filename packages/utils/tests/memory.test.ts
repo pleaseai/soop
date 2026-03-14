@@ -146,7 +146,7 @@ describe('Memory', () => {
         .addUser('last-user')
 
       const msgs = mem.toMessages()
-      const last = msgs[msgs.length - 1]
+      const last = msgs.at(-1)
       expect(last).toEqual({ role: 'user', content: 'last-user' })
     })
 
@@ -160,7 +160,7 @@ describe('Memory', () => {
 
       // Last msg is assistant — no "last user" special treatment
       const msgs = mem.toMessages()
-      expect(msgs[msgs.length - 1].role).toBe('assistant')
+      expect(msgs.at(-1).role).toBe('assistant')
     })
 
     it('should handle contextWindow=2 correctly', () => {

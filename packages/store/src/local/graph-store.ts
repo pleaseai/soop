@@ -286,7 +286,7 @@ export class LocalGraphStore implements GraphStore {
   }
 
   async export(): Promise<SerializedGraph> {
-    const nodes = [...this.nodes.entries()].map(([id, attrs]) => ({ id, attrs }))
+    const nodes = Array.from(this.nodes.entries(), ([id, attrs]) => ({ id, attrs }))
     const edges = this.edges.map(e => ({ source: e.source, target: e.target, attrs: e.attrs }))
     return { nodes, edges }
   }
@@ -313,7 +313,7 @@ export class LocalGraphStore implements GraphStore {
     if (!this.filePath)
       return
     const data: PersistedData = {
-      nodes: [...this.nodes.entries()].map(([id, attrs]) => ({ id, attrs })),
+      nodes: Array.from(this.nodes.entries(), ([id, attrs]) => ({ id, attrs })),
       edges: this.edges,
     }
     writeFileSync(this.filePath, JSON.stringify(data), 'utf8')

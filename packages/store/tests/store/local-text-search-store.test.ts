@@ -114,4 +114,32 @@ describe('LocalTextSearchStore', () => {
     const results = await store.search('authentication')
     expect(results).toHaveLength(0)
   })
+
+  it('BM25 IDF: rare terms boost score over common terms', async () => {
+    // "auth" appears in all 3 docs, "jwt" only in doc1
+    await store.index('doc1', { feature_desc: 'auth jwt token validation' })
+    await store.index('doc2', { feature_desc: 'auth session management' })
+    await store.index('doc3', { feature_desc: 'auth password hashing' })
+
+    const jwtResults = await store.search('jwt')
+    const authResults = await store.search('auth')
+
+    // doc1 should score higher for "jwt" (rare) than for "auth" (common)
+    expect(jwtResults).toHaveLength(1)
+    expect(authResults).toHaveLength(3)
+    const doc1Auth = authResults.find(r => r.id === 'doc1')
+    expect(doc1Auth).toBeDefined()
+    expect(jwtResults[0].score).toBeGreaterThan(doc1Auth!.score)
+  })
+
+  it('BM25 length normalization: shorter docs score higher for same term frequency', async () => {
+    // Both docs contain "auth" once, but doc1 is shorter
+    await store.index('short', { feature_desc: 'auth service' })
+    await store.index('long', { feature_desc: 'auth service with many extra words for padding the document length' })
+
+    const results = await store.search('auth')
+    expect(results).toHaveLength(2)
+    expect(results[0].id).toBe('short')
+    expect(results[0].score).toBeGreaterThan(results[1].score)
+  })
 })

@@ -278,7 +278,7 @@ export class SQLiteGraphStore implements GraphStore {
 
     // Collect edges between discovered nodes
     const nodeIds = new Set([startId, ...traversalRows.map(r => r.node_id)])
-    const placeholders = [...nodeIds].map(() => '?').join(',')
+    const placeholders = Array.from(nodeIds, () => '?').join(',')
     const edgeTypeClause = edgeType ? `AND type = '${edgeType}'` : ''
     const edgeRows = this.db
       .prepare(

@@ -68,7 +68,7 @@ export class Memory {
     if (this._history.length === 0)
       return undefined
     if (!role)
-      return this._history[this._history.length - 1]
+      return this._history.at(-1)
     for (let i = this._history.length - 1; i >= 0; i--) {
       if (this._history[i]!.role === role)
         return this._history[i]
@@ -122,7 +122,7 @@ export class Memory {
     const hasSystem = firstMsg.role === 'system'
     const contextLimit = 2 * this.contextWindow
 
-    const lastMsg = messages[messages.length - 1]!
+    const lastMsg = messages.at(-1)!
     const lastIsUser = lastMsg.role === 'user'
 
     const startIndex = hasSystem ? 1 : 0

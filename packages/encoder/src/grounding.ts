@@ -119,7 +119,7 @@ export class ArtifactGrounder {
       const lcaPaths = computeLCA(dirSet)
       if (lcaPaths.length === 0)
         return dirSet
-      const sorted = lcaPaths.length > 1 ? [...lcaPaths].sort((a, b) => a.localeCompare(b)) : lcaPaths
+      const sorted = lcaPaths.length > 1 ? lcaPaths.toSorted((a, b) => a.localeCompare(b)) : lcaPaths
       const isMulti = sorted.length > 1
 
       await this.rpg.updateNode(nodeId, {

@@ -160,7 +160,7 @@ export function registerSyncCommand(program: Command): void {
                 const nodes = await localRpg.getNodes()
                 const nodeMap = new Map(nodes.map(n => [n.id, n]))
 
-                const docs = Array.from(vectors.entries())
+                const docs = [...vectors.entries()]
                   .filter(([id]) => nodeMap.has(id))
                   .map(([id, embedding]) => {
                     const node = nodeMap.get(id)!

@@ -66,7 +66,7 @@ export class SearchNode {
    */
   async query(options: SearchOptions): Promise<SearchResult> {
     const results = await this.resolveResults(options)
-    const uniqueNodes = Array.from(new Map(results.map(n => [n.id, n])).values())
+    const uniqueNodes = [...new Map(results.map(n => [n.id, n])).values()]
 
     return {
       nodes: uniqueNodes,

@@ -42,5 +42,5 @@ export { javascriptConfig, typescriptConfig } from './typescript'
  * Type guard: check if a language string is a supported AST language.
  */
 export function isSupportedLanguage(language: string): language is SupportedLanguage {
-  return Object.prototype.hasOwnProperty.call(LANGUAGE_CONFIGS, language)
+  return Object.hasOwn(LANGUAGE_CONFIGS, language)
 }

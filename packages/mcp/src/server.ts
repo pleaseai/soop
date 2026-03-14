@@ -417,7 +417,7 @@ async function initFromPrecomputedEmbeddings(
   const nodes = await rpg.getNodes()
   const nodeMap = new Map(nodes.map(n => [n.id, n]))
 
-  const docs = Array.from(vectors.entries())
+  const docs = [...vectors.entries()]
     .filter(([id]) => nodeMap.has(id))
     .map(([id, vector]) => {
       const node = nodeMap.get(id)!

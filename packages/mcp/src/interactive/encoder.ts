@@ -763,7 +763,7 @@ export class InteractiveEncoder {
     // Validate all entity IDs exist in pending routing before mutating state
     const notFound: string[] = []
     for (const { entityId } of decisions) {
-      if (!this.state.pendingRouting.find(p => p.entityId === entityId)) {
+      if (!this.state.pendingRouting.some(p => p.entityId === entityId)) {
         notFound.push(entityId)
       }
     }
