@@ -407,7 +407,7 @@ export class LLMClient {
         }
 
         // Structured output failed (non-'stop' finishReason from provider).
-        const lastStep = result.steps?.[result.steps.length - 1]
+        const lastStep = result.steps.at(-1)
         const finishReason = lastStep?.finishReason ?? 'unknown'
         log.debug(`Structured output unavailable (finishReason: ${finishReason}), trying text fallback`)
         rawText = result.text

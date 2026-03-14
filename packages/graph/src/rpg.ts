@@ -459,18 +459,14 @@ export class RepositoryPlanningGraph {
     const result: SerializedRPG = {
       version: '1.0.0',
       config: this.config,
-      nodes: [...nodes].sort((a, b) => a.id.localeCompare(b.id)),
-      edges: [...regularEdges].sort(
-        (a, b) => a.source.localeCompare(b.source) || a.target.localeCompare(b.target),
-      ),
+      nodes: nodes.toSorted((a, b) => a.id.localeCompare(b.id)),
+      edges: regularEdges.toSorted((a, b) => a.source.localeCompare(b.source) || a.target.localeCompare(b.target)),
     }
     if (dataFlowEdges.length > 0) {
-      result.dataFlowEdges = [...dataFlowEdges].sort(
-        (a, b) =>
-          a.source.localeCompare(b.source)
-          || a.target.localeCompare(b.target)
-          || a.dataId.localeCompare(b.dataId),
-      )
+      result.dataFlowEdges = dataFlowEdges.toSorted((a, b) =>
+        a.source.localeCompare(b.source)
+        || a.target.localeCompare(b.target)
+        || a.dataId.localeCompare(b.dataId))
     }
     return result
   }

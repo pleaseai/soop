@@ -158,7 +158,7 @@ async function generatePackageJson(target: Target): Promise<void> {
     os: [target.os],
     cpu: [target.cpu],
     bin: {
-      'soop': binaryName('soop', target.os),
+      soop: binaryName('soop', target.os),
     },
     files: [
       binaryName('soop', target.os),

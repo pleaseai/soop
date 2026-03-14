@@ -90,24 +90,20 @@ export class InteractiveState {
       .map(e => e.id)
       .sort((a, b) => a.localeCompare(b))
 
-    const lifted = [...this.liftedFeatures.entries()]
-      .sort(([idA], [idB]) => idA.localeCompare(idB))
-      .map(([entityId, features]) => ({
-        entityId,
-        features: [...features].sort((a, b) => a.localeCompare(b)),
-      }))
+    const lifted = this.liftedFeatures.entries().toSorted(([idA], [idB]) => idA.localeCompare(idB)).map(([entityId, features]) => ({
+      entityId,
+      features: features.toSorted((a, b) => a.localeCompare(b)),
+    }))
 
-    const routing = this.pendingRouting
-      .slice()
-      .sort((a, b) => {
-        const byEntity = a.entityId.localeCompare(b.entityId)
-        if (byEntity !== 0)
-          return byEntity
-        return a.currentPath.localeCompare(b.currentPath)
-      })
+    const routing = this.pendingRouting.toSorted((a, b) => {
+      const byEntity = a.entityId.localeCompare(b.entityId)
+      if (byEntity !== 0)
+        return byEntity
+      return a.currentPath.localeCompare(b.currentPath)
+    })
       .map(r => ({
         entityId: r.entityId,
-        features: [...r.features].sort((a, b) => a.localeCompare(b)),
+        features: r.features.toSorted((a, b) => a.localeCompare(b)),
         currentPath: r.currentPath,
         reason: r.reason,
       }))

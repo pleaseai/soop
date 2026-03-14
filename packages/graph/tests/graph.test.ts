@@ -286,7 +286,7 @@ describe('repositoryPlanningGraph', () => {
 
     const serialized = await rpg.serialize()
     const ids = (serialized.nodes as Array<{ id: string }>).map(n => n.id)
-    expect(ids).toEqual([...ids].sort((a, b) => a.localeCompare(b)))
+    expect(ids).toEqual(ids.toSorted((a, b) => a.localeCompare(b)))
   })
 
   it('serialize sorts edges by source then target', async () => {
@@ -304,7 +304,7 @@ describe('repositoryPlanningGraph', () => {
     const pairs = (serialized.edges as Array<{ source: string, target: string }>).map(
       e => `${e.source}→${e.target}`,
     )
-    expect(pairs).toEqual([...pairs].sort((x, y) => x.localeCompare(y)))
+    expect(pairs).toEqual(pairs.toSorted((x, y) => x.localeCompare(y)))
   })
 
   it('serializes and deserializes', async () => {

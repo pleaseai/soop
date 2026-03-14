@@ -53,7 +53,7 @@ describe('float16 codec', () => {
 
   it('produces correct byte size', () => {
     const dim = 1024
-    const vector = Array.from({ length: dim }, () => Math.random())
+    const vector = Array.from({ length: dim }).fill(Math.random())
     const encoded = float32ToBase64Float16(vector)
 
     // Base64 of 2048 bytes should be ~2732 chars
@@ -221,7 +221,7 @@ describe('JSONL serialization', () => {
 describe('size estimation', () => {
   it('1000 nodes × 1024d ≈ 2.7MB base64', () => {
     const dim = 1024
-    const singleVector = Array.from({ length: dim }, () => Math.random())
+    const singleVector = Array.from({ length: dim }).fill(Math.random())
     const encoded = float32ToBase64Float16(singleVector)
 
     // Each vector base64 string length
@@ -251,7 +251,7 @@ describe('size estimation', () => {
       commit: 'abc123',
       embeddings: Array.from({ length: 100 }, (_, i) => ({
         id: `node-${i}`,
-        vector: float32ToBase64Float16(Array.from({ length: dim }, () => Math.random())),
+        vector: float32ToBase64Float16(Array.from({ length: dim }).fill(Math.random())),
       })),
     }
 

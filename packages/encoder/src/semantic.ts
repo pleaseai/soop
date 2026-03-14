@@ -832,11 +832,11 @@ export class SemanticExtractor {
     }
 
     if (batches.length > 1) {
-      const lastBatchTokens = batchTokenCounts[batchTokenCounts.length - 1]!
+      const lastBatchTokens = batchTokenCounts.at(-1)!
       const prevBatchTokens = batchTokenCounts[batchTokenCounts.length - 2]!
 
       if (lastBatchTokens < minBatchTokens && prevBatchTokens + lastBatchTokens <= maxBatchTokens) {
-        const lastBatch = batches[batches.length - 1]!
+        const lastBatch = batches.at(-1)!
         const previousBatch = batches[batches.length - 2]!
         previousBatch.push(...lastBatch)
         batchTokenCounts[batchTokenCounts.length - 2]! += lastBatchTokens
@@ -899,11 +899,11 @@ export class SemanticExtractor {
     }
 
     if (batches.length > 1) {
-      const lastBatchTokens = batchTokenCounts[batchTokenCounts.length - 1]!
+      const lastBatchTokens = batchTokenCounts.at(-1)!
       const prevBatchTokens = batchTokenCounts[batchTokenCounts.length - 2]!
 
       if (lastBatchTokens < minBatchTokens && prevBatchTokens + lastBatchTokens <= maxBatchTokens) {
-        const lastBatch = batches[batches.length - 1]!
+        const lastBatch = batches.at(-1)!
         const previousBatch = batches[batches.length - 2]!
         previousBatch.push(...lastBatch)
         batchTokenCounts[batchTokenCounts.length - 2]! += lastBatchTokens
@@ -1069,7 +1069,7 @@ export class SemanticExtractor {
 
     // Merge last batch into previous if it is too small (mirrors min-batch logic)
     if (batches.length > 1) {
-      const last = batches[batches.length - 1]!
+      const last = batches.at(-1)!
       const lastTokens = last.reduce((s, f) => s + this.estimateFileSummaryTokens(f), 0)
       const prev = batches[batches.length - 2]!
       const prevTokens = prev.reduce((s, f) => s + this.estimateFileSummaryTokens(f), 0)
@@ -1230,7 +1230,7 @@ Follow the same naming rules: verb + object format, lowercase, no implementation
       verbCounts.set(verb, (verbCounts.get(verb) ?? 0) + 1)
     }
 
-    const primaryVerb = [...verbCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'provide'
+    const primaryVerb = verbCounts.entries().toSorted((a, b) => b[1] - a[1])[0]?.[0] ?? 'provide'
 
     const humanName = this.humanizeName(fileName)
     const description = `${primaryVerb} ${humanName} functionality`
@@ -1445,7 +1445,7 @@ If the entity has only one responsibility, leave subFeatures as an empty array.`
    */
   private generateFileDescription(filePath: string): string {
     const parts = filePath.split('/')
-    const fileName = (parts[parts.length - 1] ?? '').replace(/\.[^.]+$/, '')
+    const fileName = (parts.at(-1) ?? '').replace(/\.[^.]+$/, '')
     const dirName = parts.length > 1 ? (parts[parts.length - 2] ?? '') : ''
 
     const humanName = this.humanizeName(fileName)

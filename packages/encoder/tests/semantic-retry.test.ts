@@ -262,7 +262,7 @@ describe('SemanticExtractor multi-iteration extraction', () => {
       await extractor.extract(input)
 
       const warnings = extractor.getWarnings()
-      const latestWarning = warnings[warnings.length - 1]
+      const latestWarning = warnings.at(-1)
 
       expect(latestWarning).toContain('3 attempts')
       expect(latestWarning).toContain('criticalFunction')
