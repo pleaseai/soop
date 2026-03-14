@@ -341,7 +341,11 @@ program
   .action(async (filePath: string) => {
     const encoder = await RPGEncoder.fromSaved(filePath)
     await encoder.save(filePath)
-    const commit = encoder.rpg!.getConfig().github?.commit
+    const commit = encoder.rpg?.getConfig().github?.commit
+    if (!commit) {
+      log.error('Failed to stamp: could not determine HEAD commit SHA')
+      process.exit(1)
+    }
     console.log(commit)
   })
 

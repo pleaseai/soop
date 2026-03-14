@@ -106,13 +106,13 @@ soop init --ci --hooks --encode
 
 # Or step by step:
 soop init                      # Create .soop/ structure
-soop encode . -o .soop/graph.json --stamp  # Initial encode
+soop encode . -o .soop/graph.json  # Initial encode (auto-stamps HEAD SHA)
 soop sync                      # Copy to local + evolve
 ```
 
 ### Commit tracking
 
-The `--stamp` flag on `encode`/`evolve` records the HEAD SHA in `config.github.commit`. The CI workflow uses `soop last-commit` to determine the commit range for incremental evolve.
+`encoder.save()` automatically records the HEAD SHA in `config.github.commit`. The CI workflow uses `soop last-commit` to determine the commit range for incremental evolve.
 
 ## Architecture
 

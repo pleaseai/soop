@@ -566,8 +566,14 @@ export class RPGEncoder {
         },
       })
     }
-    catch {
-      // Non-git directory — skip stamp
+    catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      if (msg.includes('not a git repository') || msg.includes('ENOENT')) {
+        log.debug('Not a git directory — skipping commit stamp')
+      }
+      else {
+        log.warn(`Failed to stamp HEAD commit: ${msg}`)
+      }
     }
     await writeFile(savePath, await this._rpg.toJSON())
     log.info(`Saved RPG to ${savePath}`)
@@ -1699,7 +1705,10 @@ export class RPGEncoder {
     }
     else {
       rpg = rpgOrOptions as RepositoryPlanningGraph
-      options = maybeOptions!
+      if (!maybeOptions) {
+        throw new Error('evolve(rpg, options) requires options with commitRange. Use evolve({ commitRange }) with fromSaved() instead.')
+      }
+      options = maybeOptions
       this._rpg = rpg
     }
 
