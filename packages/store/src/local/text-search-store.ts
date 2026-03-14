@@ -64,6 +64,8 @@ export class LocalTextSearchStore implements TextSearchStore {
       return []
 
     const avgdl = corpus.reduce((sum, d) => sum + d.tokens.length, 0) / N
+    if (avgdl === 0)
+      return []
 
     // Compute document frequency for each query term (prefix matching)
     const df = new Map<string, number>()
@@ -88,7 +90,7 @@ export class LocalTextSearchStore implements TextSearchStore {
         const tf = entry.tokens.filter(t => t.startsWith(term)).length
         if (tf === 0)
           continue
-        const n = df.get(term)!
+        const n = df.get(term) ?? 0
         const idf = Math.log((N - n + 0.5) / (n + 0.5) + 1)
         score += idf * (tf * (K1 + 1)) / (tf + K1 * (1 - B + B * dl / avgdl))
       }
