@@ -441,7 +441,7 @@ If `better-sqlite3` native bindings are compiled for a different Node.js version
 - Switching branches or committing may produce non-blocking warnings: `eval: [[: not found` and `soop sync failed (exit 1)` — these come from `.husky/_/` scripts and can be ignored; the git operation completes successfully
 
 ### Submodule dirty state
-- `tests/fixtures/nextjs`, `tests/fixtures/superjson`, and `vendor/RPG-ZeroRepo` submodules frequently appear as `modified` in `git status` — do not stage or commit them unless intentionally updating a submodule
+- `tests/fixtures/superjson` and `vendor/RPG-ZeroRepo` submodules frequently appear as `modified` in `git status` — do not stage or commit them unless intentionally updating a submodule
 
 ### Linter auto-formatting
 - Always run `bun run lint:fix` after editing test files — the local formatter and CI linter may disagree on arrow-parens, brace-style, and comma-dangle
