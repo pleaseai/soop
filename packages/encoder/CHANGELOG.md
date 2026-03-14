@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/pleaseai/soop/compare/soop-encoder-v0.1.9...soop-encoder-v0.1.10) (2026-03-14)
+
+
+### Bug Fixes
+
+* **encoder:** convert BigInt attention_mask from ONNX int64 tensors to number ([#220](https://github.com/pleaseai/soop/issues/220)) ([747c10e](https://github.com/pleaseai/soop/commit/747c10e6537c47ca2ce9c91f4073c939a51f0119))
+
 ## [0.1.9](https://github.com/pleaseai/soop/compare/soop-encoder-v0.1.8...soop-encoder-v0.1.9) (2026-03-14)
 
 
