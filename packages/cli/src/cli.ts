@@ -2,13 +2,14 @@
 import type { SemanticOptions } from '@pleaseai/soop-encoder/semantic'
 import type { SerializedEmbeddings } from '@pleaseai/soop-graph/embeddings'
 
+import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { RPGEncoder } from '@pleaseai/soop-encoder'
 import { AISDKEmbedding, HuggingFaceEmbedding } from '@pleaseai/soop-encoder/embedding'
 import { EmbeddingManager } from '@pleaseai/soop-encoder/embedding-manager'
 import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
-import { serializeEmbeddingsJsonl } from '@pleaseai/soop-graph/embeddings'
+import { parseEmbeddingsJsonl, serializeEmbeddingsJsonl } from '@pleaseai/soop-graph/embeddings'
 import { ExploreRPG, FetchNode, SearchNode } from '@pleaseai/soop-tools'
 import { getHeadCommitSha } from '@pleaseai/soop-utils/git-helpers'
 import { parseModelString } from '@pleaseai/soop-utils/llm'
@@ -52,9 +53,8 @@ program
   .option('--no-gitignore', 'Disable .gitignore filtering (include all files)')
   .option('-m, --model <provider/model>', 'LLM provider/model (e.g., codex/gpt-5.3-codex, claude-code/haiku, openai/gpt-5.2, google)')
   .option('--no-llm', 'Disable LLM (use heuristic extraction)')
-  .option('--stamp', 'Stamp config.github.commit with HEAD SHA after encoding')
-  .option('--embed', 'Generate embeddings file after encoding')
-  .option('--embed-model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local HuggingFace models (e.g., transformers/voyageai/voyage-4-nano)')
+  .option('-s, --search <strategy>', 'Search strategy: text (BM25, free), vector (embedding), hybrid (both)', 'text')
+  .option('--embed-model <provider/model>', 'Embedding model for vector/hybrid search (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local models')
   .option('--embed-output <path>', 'Embeddings output file path', '.soop/embeddings.jsonl')
   .option('--verbose', 'Show detailed progress')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
@@ -71,8 +71,7 @@ program
         gitignore?: boolean
         model?: string
         llm?: boolean
-        stamp?: boolean
-        embed?: boolean
+        search: string
         embedModel?: string
         embedOutput: string
         verbose?: boolean
@@ -83,6 +82,8 @@ program
       if (options.verbose) {
         setLogLevel(LogLevels.debug)
       }
+
+      validateSearchStrategy(options.search)
 
       const semantic = buildSemanticOptions(options.model, options.llm, options.minBatchTokens, options.maxBatchTokens)
 
@@ -106,18 +107,11 @@ program
 
       const result = await encoder.encode()
 
-      const headSha = options.stamp
-        ? stampRpgWithHead(result.rpg, repoPath)
-        : undefined
-      if (options.stamp && headSha) {
-        log.info(`Stamped commit: ${headSha}`)
-      }
+      await encoder.save(options.output)
 
-      await writeFile(options.output, await result.rpg.toJSON())
-
-      // Generate embeddings if requested
-      if (options.embed) {
-        const embedSha = headSha ?? getHeadCommitSha(path.resolve(repoPath))
+      // Generate embeddings for vector/hybrid search
+      if (options.search === 'vector' || options.search === 'hybrid') {
+        const embedSha = getHeadCommitSha(path.resolve(repoPath))
         const embeddings = await generateEmbeddings(
           result.rpg,
           embedSha,
@@ -282,32 +276,72 @@ program
 // Evolve command
 program
   .command('evolve')
-  .description('Update RPG with new commits')
-  .requiredOption('--graph <file>', 'RPG file path')
+  .description('Incrementally update RPG with new commits')
+  .argument('<path>', 'Repository path')
+  .requiredOption('-l, --load-path <file>', 'RPG file to update')
+  .option('-o, --output <file>', 'Output file path (defaults to load-path)')
   .option('-c, --commits <range>', 'Commit range', 'HEAD~1..HEAD')
   .option('-m, --model <provider/model>', 'LLM provider/model (e.g., codex/gpt-5.3-codex, claude-code/haiku, openai/gpt-5.2, google)')
   .option('--no-llm', 'Disable LLM (use heuristic extraction)')
-  .option('--stamp', 'Stamp config.github.commit with HEAD SHA')
+  .option('-s, --search <strategy>', 'Search strategy: text (BM25, free), vector (embedding), hybrid (both)', 'text')
+  .option('--embed-model <provider/model>', 'Embedding model for vector/hybrid search')
+  .option('--embed-output <path>', 'Embeddings output file path', '.soop/embeddings.jsonl')
+  .option('--verbose', 'Show detailed progress')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
   .option('--max-batch-tokens <tokens>', 'Maximum tokens per batch (default: 50000)')
-  .action(async (options: { graph: string, commits: string, model?: string, llm?: boolean, stamp?: boolean, minBatchTokens?: string, maxBatchTokens?: string }) => {
-    log.info(`Evolving RPG with commits: ${options.commits}`)
+  .action(async (repoPath: string, options: { loadPath: string, output?: string, commits: string, model?: string, llm?: boolean, search: string, embedModel?: string, embedOutput: string, verbose?: boolean, minBatchTokens?: string, maxBatchTokens?: string }) => {
+    if (options.verbose) {
+      setLogLevel(LogLevels.debug)
+    }
 
-    const json = await readFile(options.graph, 'utf-8')
-    const rpg = await RepositoryPlanningGraph.fromJSON(json)
-    const repoPath = rpg.getConfig().rootPath ?? '.'
+    validateSearchStrategy(options.search)
+
+    const outputPath = options.output ?? options.loadPath
+
+    log.info(`Evolving RPG with commits: ${options.commits}`)
 
     const semantic = buildSemanticOptions(options.model, options.llm, options.minBatchTokens, options.maxBatchTokens)
 
-    const encoder = new RPGEncoder(repoPath, { semantic })
-    const result = await encoder.evolve(rpg, { commitRange: options.commits })
+    const encoder = await RPGEncoder.fromSaved(options.loadPath, repoPath, { semantic })
+    encoder.rpg?.updateConfig({ rootPath: path.resolve(repoPath) })
+    const result = await encoder.evolve({ commitRange: options.commits })
 
-    if (options.stamp) {
-      const headSha = stampRpgWithHead(rpg, repoPath)
-      log.info(`Stamped commit: ${headSha}`)
+    await encoder.save(outputPath)
+
+    // Embedding update for vector/hybrid search
+    if (options.search === 'vector' || options.search === 'hybrid') {
+      const rpg = encoder.rpg
+      if (!rpg) throw new Error('RPG not available after evolve')
+
+      const embedSha = getHeadCommitSha(path.resolve(repoPath))
+      const embeddingManager = await createEmbeddingManager(options.embedModel)
+
+      if (result.embeddingChanges && existsSync(options.embedOutput)) {
+        // Incremental: update only changed nodes (if model matches)
+        const existingJsonl = await readFile(options.embedOutput, 'utf-8')
+        const existing = parseEmbeddingsJsonl(existingJsonl)
+        const parsed = parseEmbedModelString(options.embedModel ?? 'voyage-ai/voyage-code-3')
+        const currentModel = `${parsed.providerName}/${parsed.model}`
+        const existingModel = `${existing.config.provider}/${existing.config.model}`
+        if (existingModel.toLowerCase() !== currentModel.toLowerCase()) {
+          log.warn(`Embedding model changed (${existingModel} → ${currentModel}) — full re-index required`)
+          const embeddings = await embeddingManager.indexAll(rpg, embedSha)
+          await writeEmbeddingsFile(embeddings, options.embedOutput)
+        }
+        else {
+          const updated = await embeddingManager.applyChanges(existing, rpg, result.embeddingChanges, embedSha)
+          await writeEmbeddingsFile(updated, options.embedOutput)
+        }
+      }
+      else {
+        // Full generation: no existing embeddings or no change tracking
+        if (!result.embeddingChanges) {
+          log.warn('Evolve did not produce embeddingChanges — falling back to full embedding generation')
+        }
+        const embeddings = await embeddingManager.indexAll(rpg, embedSha)
+        await writeEmbeddingsFile(embeddings, options.embedOutput)
+      }
     }
-
-    await writeFile(options.graph, await rpg.toJSON())
 
     console.log('\nEvolution complete:')
     console.log(`  Inserted: ${result.inserted}`)
@@ -349,12 +383,14 @@ program
   .description('Stamp config.github.commit with current HEAD SHA')
   .argument('<file>', 'RPG file path')
   .action(async (filePath: string) => {
-    const json = await readFile(filePath, 'utf-8')
-    const rpg = await RepositoryPlanningGraph.fromJSON(json)
-    const repoPath = rpg.getConfig().rootPath ?? '.'
-    const headSha = stampRpgWithHead(rpg, repoPath)
-    await writeFile(filePath, await rpg.toJSON())
-    console.log(headSha)
+    const encoder = await RPGEncoder.fromSaved(filePath)
+    await encoder.save(filePath)
+    const commit = encoder.rpg?.getConfig().github?.commit
+    if (!commit) {
+      log.error('Failed to stamp: could not determine HEAD commit SHA')
+      process.exit(1)
+    }
+    console.log(commit)
   })
 
 // Last-commit command
@@ -373,51 +409,13 @@ program
     console.log(commit)
   })
 
-// Embed command (standalone)
-program
-  .command('embed')
-  .description('Generate embeddings file from an RPG')
-  .requiredOption('--graph <file>', 'RPG file path')
-  .option('--model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local models (e.g., transformers/voyageai/voyage-4-nano)')
-  .option('-o, --output <file>', 'Output file path', '.soop/embeddings.jsonl')
-  .option('--stamp', 'Stamp embeddings commit with HEAD SHA')
-  .action(
-    async (options: {
-      graph: string
-      model?: string
-      output: string
-      stamp?: boolean
-    }) => {
-      const json = await readFile(options.graph, 'utf-8')
-      const rpg = await RepositoryPlanningGraph.fromJSON(json)
-      const repoPath = rpg.getConfig().rootPath ?? '.'
+const VALID_SEARCH_STRATEGIES = ['text', 'vector', 'hybrid'] as const
 
-      const commitSha = options.stamp
-        ? getHeadCommitSha(path.resolve(repoPath))
-        : (rpg.getConfig().github?.commit ?? getHeadCommitSha(path.resolve(repoPath)))
-
-      const embeddings = await generateEmbeddings(rpg, commitSha, options.model)
-      await writeEmbeddingsFile(embeddings, options.output)
-    },
-  )
-
-/**
- * Stamp RPG config with the current HEAD commit SHA.
- * Returns the stamped SHA.
- */
-function stampRpgWithHead(rpg: RepositoryPlanningGraph, repoPath: string): string {
-  const absRepoPath = path.resolve(repoPath)
-  const headSha = getHeadCommitSha(absRepoPath)
-  const currentConfig = rpg.getConfig()
-  rpg.updateConfig({
-    github: {
-      owner: currentConfig.github?.owner ?? '',
-      repo: currentConfig.github?.repo ?? currentConfig.name,
-      commit: headSha,
-      pathPrefix: currentConfig.github?.pathPrefix,
-    },
-  })
-  return headSha
+function validateSearchStrategy(strategy: string): void {
+  if (!VALID_SEARCH_STRATEGIES.includes(strategy as typeof VALID_SEARCH_STRATEGIES[number])) {
+    log.error(`Invalid search strategy "${strategy}". Must be one of: ${VALID_SEARCH_STRATEGIES.join(', ')}`)
+    process.exit(1)
+  }
 }
 
 /**
@@ -462,28 +460,22 @@ function buildSemanticOptions(
 const GIT_LFS_THRESHOLD = 10 * 1024 * 1024
 
 /**
- * Generate embeddings for an RPG using the specified model.
+ * Create an EmbeddingManager from a model string.
  * Supports API-based providers (voyage-ai/, openai/) and local transformers (transformers/).
  */
-async function generateEmbeddings(
-  rpg: RepositoryPlanningGraph,
-  commit: string,
+async function createEmbeddingManager(
   embedModelStr: string = 'voyage-ai/voyage-code-3',
-): Promise<SerializedEmbeddings> {
+): Promise<EmbeddingManager> {
   const [providerPart] = embedModelStr.split('/')
 
   if (providerPart === 'transformers') {
-    // Local HuggingFace model via @huggingface/transformers (ONNX)
     const modelId = embedModelStr.slice('transformers/'.length)
     const embedding = new HuggingFaceEmbedding({ model: modelId })
-
-    const manager = new EmbeddingManager(embedding, {
+    return new EmbeddingManager(embedding, {
       provider: 'transformers',
       model: modelId,
       dimension: embedding.getDimension(),
     })
-
-    return manager.indexAll(rpg, commit)
   }
 
   const { createOpenAI } = await import('@ai-sdk/openai')
@@ -500,13 +492,23 @@ async function generateEmbeddings(
     providerName: parsed.providerName,
   })
 
-  const manager = new EmbeddingManager(embedding, {
+  return new EmbeddingManager(embedding, {
     provider: parsed.providerName,
     model: parsed.model,
     dimension: parsed.dimension,
     space: parsed.space,
   })
+}
 
+/**
+ * Generate embeddings for all nodes in an RPG.
+ */
+async function generateEmbeddings(
+  rpg: RepositoryPlanningGraph,
+  commit: string,
+  embedModelStr?: string,
+): Promise<SerializedEmbeddings> {
+  const manager = await createEmbeddingManager(embedModelStr)
   return manager.indexAll(rpg, commit)
 }
 

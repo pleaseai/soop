@@ -249,7 +249,7 @@ export async function executeEncode(input: EncodeInput) {
 
     let rpgPath: string | undefined
     if (input.outputPath) {
-      await writeFile(input.outputPath, await result.rpg.toJSON())
+      await encoder.save(input.outputPath)
       rpgPath = input.outputPath
     }
 

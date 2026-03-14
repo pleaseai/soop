@@ -9,10 +9,11 @@ import type { FileFeatureGroup } from './reorganization'
 import type { EntityInput, SemanticFeature, SemanticOptions } from './semantic'
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
-import { readdir, readFile, realpath, stat } from 'node:fs/promises'
+import { readdir, readFile, realpath, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { ASTParser } from '@pleaseai/soop-ast'
 import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
+import { getHeadCommitSha } from '@pleaseai/soop-utils/git-helpers'
 import { resolveGitBinary } from '@pleaseai/soop-utils/git-path'
 import { LLMClient } from '@pleaseai/soop-utils/llm'
 import { createLogger } from '@pleaseai/soop-utils/logger'
@@ -516,6 +517,82 @@ export class RPGEncoder {
   private readonly cache: SemanticCache
   private cacheHits = 0
   private cacheMisses = 0
+  private _rpg: RepositoryPlanningGraph | null = null
+
+  /** Access the RPG instance (set after encode(), evolve(), or fromSaved()) */
+  get rpg(): RepositoryPlanningGraph | null {
+    return this._rpg
+  }
+
+  /**
+   * Load RPGEncoder from a saved RPG JSON file.
+   *
+   * Mirrors the reference RPGEncoder.from_saved() pattern:
+   *   const encoder = await RPGEncoder.fromSaved("rpg.json", "/path/to/repo")
+   *   const result = await encoder.evolve({ commitRange: "HEAD~1..HEAD" })
+   *   await encoder.save("rpg.json")
+   */
+  static async fromSaved(
+    savePath: string,
+    repoPath?: string,
+    options?: Partial<Omit<EncoderOptions, 'repoPath'>>,
+  ): Promise<RPGEncoder> {
+    let json: string
+    try {
+      json = await readFile(savePath, 'utf-8')
+    }
+    catch (error) {
+      throw new Error(`Could not read RPG file "${savePath}": ${error instanceof Error ? error.message : error}`)
+    }
+    let rpg: RepositoryPlanningGraph
+    try {
+      rpg = await RepositoryPlanningGraph.fromJSON(json)
+    }
+    catch (error) {
+      throw new Error(`Could not parse RPG file "${savePath}": ${error instanceof Error ? error.message : error}`)
+    }
+    const savedRootPath = rpg.getConfig().rootPath
+    const resolvedPath = repoPath ?? (savedRootPath
+      ? (path.isAbsolute(savedRootPath) ? savedRootPath : path.resolve(path.dirname(savePath), savedRootPath))
+      : '.')
+    const encoder = new RPGEncoder(resolvedPath, options)
+    encoder._rpg = rpg
+    log.info(`Loaded RPG from ${savePath}: ${(await rpg.getStats()).nodeCount} nodes`)
+    return encoder
+  }
+
+  /**
+   * Save the current RPG to a JSON file.
+   * Automatically stamps the HEAD commit SHA into config.github.commit.
+   */
+  async save(savePath: string): Promise<void> {
+    if (!this._rpg) {
+      throw new Error('No RPG to save. Call encode() first.')
+    }
+    try {
+      const headSha = getHeadCommitSha(path.resolve(this.repoPath))
+      const cfg = this._rpg.getConfig()
+      this._rpg.updateConfig({
+        github: {
+          owner: cfg.github?.owner ?? '',
+          repo: cfg.github?.repo ?? cfg.name,
+          commit: headSha,
+          pathPrefix: cfg.github?.pathPrefix,
+        },
+      })
+    }
+    catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      if (msg.includes('not a git repository') || msg.includes('ENOENT')) {
+        log.debug('Not a git directory — skipping commit stamp')
+      }
+      else {
+        throw new Error(`Failed to stamp HEAD commit: ${msg}`)
+      }
+    }
+    await writeFile(savePath, await this._rpg.toJSON())
+    log.info(`Saved RPG to ${savePath}`)
+  }
 
   constructor(repoPath: string, options?: Partial<Omit<EncoderOptions, 'repoPath'>>) {
     this.repoPath = repoPath
@@ -1289,6 +1366,8 @@ export class RPGEncoder {
       log.info(`LLM usage: ${totalRequests} requests, ${totalInput.toLocaleString()} input + ${totalOutput.toLocaleString()} output = ${totalTokens.toLocaleString()} total tokens${costStr}`)
     }
 
+    this._rpg = rpg
+
     return {
       rpg,
       filesProcessed: files.length,
@@ -1621,13 +1700,33 @@ export class RPGEncoder {
   /**
    * Incrementally update RPG with commit-level changes.
    *
-   * Delegates to RPGEvolver which implements the Evolution pipeline
-   * from RPG-Encoder section 3 (Appendix A.2): Delete -> Modify -> Insert scheduling.
+   * Supports two calling patterns:
+   *   encoder.evolve({ commitRange })           — uses this._rpg (from encode() or fromSaved())
+   *   encoder.evolve(rpg, { commitRange })      — backward-compatible, passes RPG explicitly
    */
   async evolve(
-    rpg: RepositoryPlanningGraph,
-    options: { commitRange: string },
+    rpgOrOptions: RepositoryPlanningGraph | { commitRange: string },
+    maybeOptions?: { commitRange: string },
   ): Promise<EvolutionResult> {
+    let rpg: RepositoryPlanningGraph
+    let options: { commitRange: string }
+
+    if ('commitRange' in rpgOrOptions) {
+      if (!this._rpg) {
+        throw new Error('No RPG loaded. Call encode() or use fromSaved() first.')
+      }
+      rpg = this._rpg
+      options = rpgOrOptions
+    }
+    else {
+      rpg = rpgOrOptions as RepositoryPlanningGraph
+      if (!maybeOptions) {
+        throw new Error('evolve(rpg, options) requires options with commitRange. Use evolve({ commitRange }) with fromSaved() instead.')
+      }
+      options = maybeOptions
+      this._rpg = rpg
+    }
+
     const evolver = new RPGEvolver(rpg, {
       commitRange: options.commitRange,
       repoPath: this.repoPath,
