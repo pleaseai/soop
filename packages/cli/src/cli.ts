@@ -52,8 +52,8 @@ program
   .option('--no-gitignore', 'Disable .gitignore filtering (include all files)')
   .option('-m, --model <provider/model>', 'LLM provider/model (e.g., codex/gpt-5.3-codex, claude-code/haiku, openai/gpt-5.2, google)')
   .option('--no-llm', 'Disable LLM (use heuristic extraction)')
-  .option('--embed', 'Generate embeddings file after encoding')
-  .option('--embed-model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local HuggingFace models (e.g., transformers/voyageai/voyage-4-nano)')
+  .option('-s, --search <strategy>', 'Search strategy: text (BM25, free), vector (embedding), hybrid (both)', 'text')
+  .option('--embed-model <provider/model>', 'Embedding model for vector/hybrid search (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local models')
   .option('--embed-output <path>', 'Embeddings output file path', '.soop/embeddings.jsonl')
   .option('--verbose', 'Show detailed progress')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
@@ -70,7 +70,7 @@ program
         gitignore?: boolean
         model?: string
         llm?: boolean
-        embed?: boolean
+        search: string
         embedModel?: string
         embedOutput: string
         verbose?: boolean
@@ -106,8 +106,8 @@ program
 
       await encoder.save(options.output)
 
-      // Generate embeddings if requested
-      if (options.embed) {
+      // Generate embeddings for vector/hybrid search
+      if (options.search === 'vector' || options.search === 'hybrid') {
         const embedSha = getHeadCommitSha(path.resolve(repoPath))
         const embeddings = await generateEmbeddings(
           result.rpg,
@@ -280,10 +280,13 @@ program
   .option('-c, --commits <range>', 'Commit range', 'HEAD~1..HEAD')
   .option('-m, --model <provider/model>', 'LLM provider/model (e.g., codex/gpt-5.3-codex, claude-code/haiku, openai/gpt-5.2, google)')
   .option('--no-llm', 'Disable LLM (use heuristic extraction)')
+  .option('-s, --search <strategy>', 'Search strategy: text (BM25, free), vector (embedding), hybrid (both)', 'text')
+  .option('--embed-model <provider/model>', 'Embedding model for vector/hybrid search')
+  .option('--embed-output <path>', 'Embeddings output file path', '.soop/embeddings.jsonl')
   .option('--verbose', 'Show detailed progress')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
   .option('--max-batch-tokens <tokens>', 'Maximum tokens per batch (default: 50000)')
-  .action(async (repoPath: string, options: { loadPath: string, output?: string, commits: string, model?: string, llm?: boolean, verbose?: boolean, minBatchTokens?: string, maxBatchTokens?: string }) => {
+  .action(async (repoPath: string, options: { loadPath: string, output?: string, commits: string, model?: string, llm?: boolean, search: string, embedModel?: string, embedOutput: string, verbose?: boolean, minBatchTokens?: string, maxBatchTokens?: string }) => {
     if (options.verbose) {
       setLogLevel(LogLevels.debug)
     }
@@ -298,6 +301,17 @@ program
     const result = await encoder.evolve({ commitRange: options.commits })
 
     await encoder.save(outputPath)
+
+    // Generate embeddings for vector/hybrid search
+    if (options.search === 'vector' || options.search === 'hybrid') {
+      const embedSha = getHeadCommitSha(path.resolve(repoPath))
+      const embeddings = await generateEmbeddings(
+        encoder.rpg!,
+        embedSha,
+        options.embedModel,
+      )
+      await writeEmbeddingsFile(embeddings, options.embedOutput)
+    }
 
     console.log('\nEvolution complete:')
     console.log(`  Inserted: ${result.inserted}`)
@@ -364,30 +378,6 @@ program
     }
     console.log(commit)
   })
-
-// Embed command (standalone)
-program
-  .command('embed')
-  .description('Generate embeddings file from an RPG')
-  .requiredOption('--graph <file>', 'RPG file path')
-  .option('--model <provider/model>', 'Embedding provider/model (default: voyage-ai/voyage-code-3). Use transformers/<model-id> for local models (e.g., transformers/voyageai/voyage-4-nano)')
-  .option('-o, --output <file>', 'Output file path', '.soop/embeddings.jsonl')
-  .action(
-    async (options: {
-      graph: string
-      model?: string
-      output: string
-    }) => {
-      const json = await readFile(options.graph, 'utf-8')
-      const rpg = await RepositoryPlanningGraph.fromJSON(json)
-      const repoPath = rpg.getConfig().rootPath ?? '.'
-
-      const commitSha = rpg.getConfig().github?.commit ?? getHeadCommitSha(path.resolve(repoPath))
-
-      const embeddings = await generateEmbeddings(rpg, commitSha, options.model)
-      await writeEmbeddingsFile(embeddings, options.output)
-    },
-  )
 
 /**
  * Build SemanticOptions from CLI flags
