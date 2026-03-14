@@ -79,6 +79,11 @@ describe('voyage-4-nano model registry', () => {
     const models = HuggingFaceEmbedding.getSupportedModels()
     expect(models['voyageai/voyage-4-nano']!.queryPrefix).toBeUndefined()
   })
+
+  it('should have onnxModelId pointing to onnx-community conversion', () => {
+    const models = HuggingFaceEmbedding.getSupportedModels()
+    expect(models['voyageai/voyage-4-nano']!.onnxModelId).toBe('onnx-community/voyage-4-nano-ONNX')
+  })
 })
 
 // ============================================================================
@@ -104,6 +109,67 @@ describe('voyage-4-nano constructor', () => {
   it('should have no query prefix', () => {
     const embedding = new HuggingFaceEmbedding({ model: 'voyageai/voyage-4-nano' })
     expect(embedding.getQueryPrefix()).toBeUndefined()
+  })
+
+})
+
+// ============================================================================
+// 2.5. ONNX model resolution
+// ============================================================================
+
+describe('onnxModelId resolution in loadModel', () => {
+  it('should load from onnxModelId instead of original model id', async () => {
+    const embedding = new HuggingFaceEmbedding({ model: 'voyageai/voyage-4-nano' })
+
+    const fromPretrainedTokenizer = vi.fn().mockResolvedValue(
+      vi.fn().mockResolvedValue({ attention_mask: makeTensor([[1]]) }),
+    )
+    const fromPretrainedModel = vi.fn().mockResolvedValue(
+      vi.fn().mockResolvedValue({ last_hidden_state: makeTensor([[[0.6, 0.8]]]) }),
+    )
+
+    const fakeModule = {
+      env: {},
+      AutoTokenizer: { from_pretrained: fromPretrainedTokenizer },
+      AutoModel: { from_pretrained: fromPretrainedModel },
+    }
+    vi.spyOn(embedding as unknown as { getTransformersModule: () => Promise<unknown> }, 'getTransformersModule')
+      .mockResolvedValue(fakeModule)
+
+    await embedding.embed('test')
+
+    // Should call from_pretrained exactly once with the ONNX model ID, not the original
+    expect(fromPretrainedTokenizer).toHaveBeenCalledTimes(1)
+    expect(fromPretrainedTokenizer).toHaveBeenCalledWith('onnx-community/voyage-4-nano-ONNX')
+    expect(fromPretrainedModel).toHaveBeenCalledTimes(1)
+    expect(fromPretrainedModel).toHaveBeenCalledWith('onnx-community/voyage-4-nano-ONNX', { dtype: 'fp32' })
+  })
+
+  it('should load from original model id when onnxModelId is not set', async () => {
+    const embedding = new HuggingFaceEmbedding({ model: 'MongoDB/mdbr-leaf-ir' })
+
+    const fromPretrainedTokenizer = vi.fn().mockResolvedValue(
+      vi.fn().mockResolvedValue({ attention_mask: makeTensor([[1]]) }),
+    )
+    const fromPretrainedModel = vi.fn().mockResolvedValue(
+      vi.fn().mockResolvedValue({ sentence_embedding: makeTensor([[0.1, 0.2]]) }),
+    )
+
+    const fakeModule = {
+      env: {},
+      AutoTokenizer: { from_pretrained: fromPretrainedTokenizer },
+      AutoModel: { from_pretrained: fromPretrainedModel },
+    }
+    vi.spyOn(embedding as unknown as { getTransformersModule: () => Promise<unknown> }, 'getTransformersModule')
+      .mockResolvedValue(fakeModule)
+
+    await embedding.embed('test')
+
+    // Should call from_pretrained exactly once with the original model ID (no ONNX override)
+    expect(fromPretrainedTokenizer).toHaveBeenCalledTimes(1)
+    expect(fromPretrainedTokenizer).toHaveBeenCalledWith('MongoDB/mdbr-leaf-ir')
+    expect(fromPretrainedModel).toHaveBeenCalledTimes(1)
+    expect(fromPretrainedModel).toHaveBeenCalledWith('MongoDB/mdbr-leaf-ir', { dtype: 'fp32' })
   })
 })
 
@@ -203,7 +269,7 @@ describe('mean pooling via spied model', () => {
       .mockResolvedValue(fakeModule)
 
     await expect(embedding.embed('test')).rejects.toThrow(
-      'Failed to load HuggingFace model voyageai/voyage-4-nano: Download failed',
+      'Failed to load HuggingFace model voyageai/voyage-4-nano (onnx: onnx-community/voyage-4-nano-ONNX): Download failed',
     )
   })
 })
