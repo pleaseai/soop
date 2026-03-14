@@ -232,6 +232,10 @@ export class RepositoryPlanningGraph {
     return edge
   }
 
+  async removeEdge(source: string, target: string, type: string): Promise<void> {
+    await this.context.graph.removeEdge(source, target, type)
+  }
+
   async getEdges(): Promise<Edge[]> {
     const results = await this.context.graph.getEdges()
     return results.map(r => attrsToEdge(r.source, r.target, r.attrs))

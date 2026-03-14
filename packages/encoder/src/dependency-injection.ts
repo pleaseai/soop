@@ -70,6 +70,13 @@ export async function injectDependencies(
     }
   }
 
+  // Clear existing dependency edges before full rebuild to avoid UNIQUE constraint violations.
+  // This is safe because injectDependencies always performs a complete rebuild from AST analysis.
+  const existingDepEdges = await rpg.getDependencyEdges()
+  for (const edge of existingDepEdges) {
+    await rpg.removeEdge(edge.source, edge.target, edge.type)
+  }
+
   const knownFiles = new Set(filePathToNodeId.keys())
   const createdEdges = new Set<string>()
 

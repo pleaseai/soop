@@ -253,13 +253,13 @@ export async function processModification(
   newEntity: ChangedEntity,
   ctx: OperationContext,
   driftThreshold: number = DEFAULT_DRIFT_THRESHOLD,
-): Promise<{ rerouted: boolean, prunedNodes: number, newAreaCreated: boolean }> {
+): Promise<{ rerouted: boolean, prunedNodes: number, newAreaCreated: boolean, removedId?: string, addedId?: string, modifiedId?: string }> {
   // Find the existing node (may have line-number-based ID from initial encode)
   const existingNodeId = await findMatchingNode(rpg, oldEntity)
   if (!existingNodeId) {
     // Node not in graph — treat as insertion
     const insertResult = await insertNode(rpg, newEntity, ctx)
-    return { rerouted: false, prunedNodes: 0, newAreaCreated: insertResult.newAreaCreated }
+    return { rerouted: false, prunedNodes: 0, newAreaCreated: insertResult.newAreaCreated, addedId: newEntity.id }
   }
 
   // 1. Re-extract semantic feature for new version
@@ -293,7 +293,7 @@ export async function processModification(
       )
       throw error
     }
-    return { rerouted: true, prunedNodes, newAreaCreated: rerouteNewAreaCreated }
+    return { rerouted: true, prunedNodes, newAreaCreated: rerouteNewAreaCreated, removedId: existingNodeId, addedId: newEntity.id }
   }
 
   // 4. In-place update (no re-routing needed)
@@ -308,7 +308,7 @@ export async function processModification(
     },
   })
 
-  return { rerouted: false, prunedNodes: 0, newAreaCreated: false }
+  return { rerouted: false, prunedNodes: 0, newAreaCreated: false, modifiedId: existingNodeId }
 }
 
 /**
