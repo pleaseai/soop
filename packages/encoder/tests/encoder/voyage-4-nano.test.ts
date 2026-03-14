@@ -28,7 +28,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 // real model weights. This lets us control what the tokenizer and model return.
 // ============================================================================
 
-function makeTokenizer(attentionMask: number[][]): object {
+function makeTokenizer(attentionMask: (number | bigint)[][]): object {
   return vi.fn().mockResolvedValue({ attention_mask: makeTensor(attentionMask) })
 }
 
@@ -110,7 +110,6 @@ describe('voyage-4-nano constructor', () => {
     const embedding = new HuggingFaceEmbedding({ model: 'voyageai/voyage-4-nano' })
     expect(embedding.getQueryPrefix()).toBeUndefined()
   })
-
 })
 
 // ============================================================================
@@ -259,6 +258,24 @@ describe('mean pooling via spied model', () => {
     )
   })
 
+  it('should handle BigInt attention_mask from ONNX int64 tensors', async () => {
+    // ONNX runtime returns attention_mask as BigInt64Array, which .tolist() converts to bigint[]
+    const attentionMask = [[1n, 1n, 0n]]
+    const hiddenStates = [[[1, 0], [0, 1], [99, 99]]]
+    stubTransformers(
+      embedding,
+      makeTokenizer(attentionMask),
+      makeModel({ last_hidden_state: makeTensor(hiddenStates) }),
+    )
+
+    const result = await embedding.embed('test')
+
+    const expected = 1 / Math.sqrt(2)
+    expect(result.vector[0]).toBeCloseTo(expected, 5)
+    expect(result.vector[1]).toBeCloseTo(expected, 5)
+    expect(result.dimension).toBe(2)
+  })
+
   it('should propagate model load failure', async () => {
     const fakeModule = {
       env: {},
@@ -353,6 +370,26 @@ describe('batch mean pooling via spied model', () => {
     const batch = await embedding2.embedBatch(['same text'])
 
     expect(batch[0]!.vector).toEqual(single.vector)
+  })
+
+  it('should handle BigInt attention_mask in batch mode', async () => {
+    const hiddenStates = [
+      [[1, 0], [0, 1]],
+      [[0, 1], [1, 0]],
+    ]
+    stubTransformers(
+      embedding,
+      makeTokenizer([[1n, 1n], [1n, 1n]]),
+      makeModel({ last_hidden_state: makeTensor(hiddenStates) }),
+    )
+
+    const results = await embedding.embedBatch(['text1', 'text2'])
+
+    expect(results).toHaveLength(2)
+    for (const result of results) {
+      expect(l2norm(result.vector)).toBeCloseTo(1.0, 5)
+      expect(result.dimension).toBe(2)
+    }
   })
 
   it('should throw when last_hidden_state missing in batch', async () => {
