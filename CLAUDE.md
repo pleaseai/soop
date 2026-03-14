@@ -120,7 +120,7 @@ The project uses **Bun workspaces** with a private monorepo root (`version: 0.0.
 
 ```
 packages/
-├── soop/      # Published: @pleaseai/soop (umbrella package, bin/soop, bin/soop-mcp)
+├── soop/      # Published: @pleaseai/soop (umbrella package, bin/soop)
 ├── utils/     # Layer 0: AST parser, LLM interface, git helpers, logger (independent)
 ├── store/     # Layer 0: Storage interfaces & implementations (independent)
 ├── graph/     # Layer 1: RPG data structures (→ store)
@@ -302,8 +302,8 @@ Or with the installed package:
 {
   "mcpServers": {
     "soop": {
-      "command": "soop-mcp",
-      "args": ["/path/to/graph-file.json"]
+      "command": "soop",
+      "args": ["mcp", "/path/to/graph-file.json"]
     }
   }
 }
@@ -318,7 +318,7 @@ All git commit messages, code comments, GitHub issues, pull request titles/descr
 - **Bun workspaces**: Monorepo with private root (`version: 0.0.0`) and `packages/soop` as the published umbrella package; all `@pleaseai/soop-*` workspace packages are `private: true`
 - **Vitest over Bun Test**: Jest compatibility for planned MCP server development
 - **LanceDB over ChromaDB**: No external server required, Bun-native, disk-based persistence — available as an optional high-performance vector store via `@pleaseai/soop-store/lancedb`; `LocalVectorStore` (zero-dependency JSON store) is the current default everywhere, with LanceDB as an opt-in upgrade
-- **All workspace packages bundled inline**: `@pleaseai/soop-*` are all `private: true` and not published to npm; tsdown `noExternal` bundles them into the CLI/MCP/library outputs so `npm install -g @pleaseai/soop` works without 404 errors
+- **All workspace packages bundled inline**: `@pleaseai/soop-*` are all `private: true` and not published to npm; tsdown `noExternal` bundles them into the CLI/library outputs so `npm install -g @pleaseai/soop` works without 404 errors
 - **Paper-based implementation**: Original implementation based on research papers, not forked from Microsoft code
 - **Dual GraphStore backends**: SQLiteGraphStore (better-sqlite3) and SurrealGraphStore (native graph relations) in `@pleaseai/soop-store` for evaluation
 

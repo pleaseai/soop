@@ -173,8 +173,70 @@ export async function loadRPG(filePath: string): Promise<RepositoryPlanningGraph
   }
 }
 
+export interface StartMcpServerOptions {
+  rpgFile?: string
+  noSearch?: boolean
+  interactive?: boolean
+  rootPath?: string
+}
+
 /**
- * Main entry point for the MCP server
+ * Start the MCP server with parsed options.
+ * Called by the `soop mcp` subcommand or directly from `main()`.
+ */
+export async function startMcpServer(options: StartMcpServerOptions = {}): Promise<void> {
+  const { rpgFile, noSearch, interactive, rootPath } = options
+
+  let rpg: RepositoryPlanningGraph | null = null
+  let semanticSearch: SemanticSearch | null = null
+
+  if (rpgFile) {
+    try {
+      log.info(`Loading RPG from: ${rpgFile}`)
+      rpg = await loadRPG(rpgFile)
+      log.success(`RPG loaded: ${rpg.getConfig().name}`)
+    }
+    catch (error) {
+      log.fatal(`Failed to load RPG: ${error instanceof Error ? error.message : String(error)}`)
+      process.exit(1)
+    }
+
+    // Initialize semantic search unless disabled
+    if (!noSearch) {
+      try {
+        semanticSearch = await initSemanticSearch(rpg, rpgFile)
+      }
+      catch (error) {
+        log.error(
+          `Semantic search initialization failed, continuing without it: ${error instanceof Error ? error.message : String(error)}`,
+        )
+      }
+    }
+    else {
+      log.info('Semantic search disabled (--no-search)')
+    }
+  }
+  else {
+    log.info('No RPG file path provided. Server will start without a pre-loaded RPG.')
+    log.info('Usage: soop mcp <rpg-file.json> [--root-path <dir>] [--interactive] [--no-search]')
+    log.info(
+      'Note: rpg_encode tool will still work, but other tools require an RPG to be loaded.',
+    )
+  }
+
+  if (rootPath) {
+    log.info(`Source root path: ${rootPath}`)
+  }
+
+  const server = createMcpServer({ rpg, semanticSearch, rootPath, interactive })
+  const transport = new StdioServerTransport()
+
+  await server.connect(transport)
+  log.ready('RPG MCP server started')
+}
+
+/**
+ * Main entry point for the MCP server (argv parsing wrapper).
  */
 export async function main(): Promise<void> {
   const args = process.argv.slice(2)
@@ -195,53 +257,12 @@ export async function main(): Promise<void> {
     && (rootPathIdx === -1 || i !== rootPathIdx + 1),
   )
 
-  let rpg: RepositoryPlanningGraph | null = null
-  let semanticSearch: SemanticSearch | null = null
-
-  const rpgPath = filteredArgs[0]
-  if (rpgPath) {
-    try {
-      log.info(`Loading RPG from: ${rpgPath}`)
-      rpg = await loadRPG(rpgPath)
-      log.success(`RPG loaded: ${rpg.getConfig().name}`)
-    }
-    catch (error) {
-      log.fatal(`Failed to load RPG: ${error instanceof Error ? error.message : String(error)}`)
-      process.exit(1)
-    }
-
-    // Initialize semantic search unless disabled
-    if (!noSearch) {
-      try {
-        semanticSearch = await initSemanticSearch(rpg, rpgPath)
-      }
-      catch (error) {
-        log.error(
-          `Semantic search initialization failed, continuing without it: ${error instanceof Error ? error.message : String(error)}`,
-        )
-      }
-    }
-    else {
-      log.info('Semantic search disabled (--no-search)')
-    }
-  }
-  else {
-    log.info('No RPG file path provided. Server will start without a pre-loaded RPG.')
-    log.info('Usage: bun run src/mcp/server.ts <rpg-file.json> [--root-path <dir>] [--interactive] [--no-search]')
-    log.info(
-      'Note: rpg_encode tool will still work, but other tools require an RPG to be loaded.',
-    )
-  }
-
-  if (rootPath) {
-    log.info(`Source root path: ${rootPath}`)
-  }
-
-  const server = createMcpServer({ rpg, semanticSearch, rootPath, interactive })
-  const transport = new StdioServerTransport()
-
-  await server.connect(transport)
-  log.ready('RPG MCP server started')
+  await startMcpServer({
+    rpgFile: filteredArgs[0],
+    noSearch,
+    interactive,
+    rootPath,
+  })
 }
 
 /**

@@ -2,7 +2,7 @@
 /**
  * Build script for cross-platform binary distribution.
  *
- * Compiles `soop` and `soop-mcp` standalone Bun executables for 7 platform targets,
+ * Compiles `soop` standalone Bun executable for 7 platform targets,
  * then generates the npm/soop-<target>/ package directories with package.json manifests.
  *
  * Usage: bun run scripts/generate-packages.ts
@@ -159,11 +159,9 @@ async function generatePackageJson(target: Target): Promise<void> {
     cpu: [target.cpu],
     bin: {
       'soop': binaryName('soop', target.os),
-      'soop-mcp': binaryName('soop-mcp', target.os),
     },
     files: [
       binaryName('soop', target.os),
-      binaryName('soop-mcp', target.os),
     ],
     license: 'MIT',
     repository: {
@@ -219,7 +217,6 @@ for (const target of BUILD_TARGETS) {
   const pkgDir = join(ROOT, 'npm', `soop-${target.packageSuffix}`)
 
   const repoBin = binaryName('soop', target.os)
-  const mcpBin = binaryName('soop-mcp', target.os)
 
   console.log(`\n[${target.packageSuffix}] target=${target.bunTarget}`)
 
@@ -227,12 +224,6 @@ for (const target of BUILD_TARGETS) {
     await buildBinary(
       join(ROOT, 'packages', 'cli', 'src', 'cli.ts'),
       join(pkgDir, repoBin),
-      target.bunTarget,
-    )
-
-    await buildBinary(
-      join(ROOT, 'packages', 'mcp', 'src', 'server.ts'),
-      join(pkgDir, mcpBin),
       target.bunTarget,
     )
 

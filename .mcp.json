@@ -16,6 +16,18 @@
         "SONARQUBE_ORG": "pleaseai",
         "SONARQUBE_TOKEN": "${SONARQUBE_TOKEN}"
       }
+    },
+    "soop": {
+      "command": "bunx",
+      "args": [
+        "@pleaseai/soop@next",
+        "mcp"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${OPENAI_API_KEY}",
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
+        "GOOGLE_GENERATIVE_AI_API_KEY": "${GOOGLE_GENERATIVE_AI_API_KEY}"
+      }
     }
   }
 }

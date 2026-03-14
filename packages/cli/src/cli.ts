@@ -19,6 +19,7 @@ import { config } from 'dotenv'
 
 import pkg from '../package.json'
 import { registerInitCommand } from './commands/init'
+import { registerMcpCommand } from './commands/mcp'
 import { registerSyncCommand } from './commands/sync'
 
 const log = createLogger('CLI')
@@ -32,6 +33,7 @@ program
 
 // Register subcommands
 registerInitCommand(program)
+registerMcpCommand(program)
 registerSyncCommand(program)
 
 // Encode command

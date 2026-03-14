@@ -45,10 +45,11 @@
     },
     "packages/cli": {
       "name": "@pleaseai/soop-cli",
-      "version": "0.1.8",
+      "version": "0.1.10",
       "dependencies": {
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
+        "@pleaseai/soop-mcp": "workspace:*",
         "@pleaseai/soop-store": "workspace:*",
         "@pleaseai/soop-tools": "workspace:*",
         "@pleaseai/soop-utils": "workspace:*",
@@ -59,7 +60,7 @@
     },
     "packages/encoder": {
       "name": "@pleaseai/soop-encoder",
-      "version": "0.1.8",
+      "version": "0.1.10",
       "dependencies": {
         "@ai-sdk/openai": "^3.0.41",
         "@huggingface/transformers": "^3.8.1",
@@ -90,7 +91,7 @@
     },
     "packages/mcp": {
       "name": "@pleaseai/soop-mcp",
-      "version": "0.1.9",
+      "version": "0.1.11",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.27.1",
         "@pleaseai/soop-ast": "workspace:*",
@@ -127,7 +128,7 @@
     },
     "packages/soop": {
       "name": "@pleaseai/soop",
-      "version": "0.1.22-alpha.0",
+      "version": "0.1.24-alpha.1",
       "bin": {
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
@@ -188,7 +189,7 @@
     },
     "packages/tools": {
       "name": "@pleaseai/soop-tools",
-      "version": "0.1.8",
+      "version": "0.1.10",
       "dependencies": {
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
