@@ -478,6 +478,11 @@ export class HuggingFaceEmbedding extends Embedding {
     return { ...HUGGINGFACE_MODELS }
   }
 
+  /** Convert bigint values from ONNX int64 tensors to numbers */
+  private toNumberArray(arr: Array<number | bigint>): number[] {
+    return arr.map(v => typeof v === 'bigint' ? Number(v) : v)
+  }
+
   /**
    * Apply mean pooling over last_hidden_state using attention mask, then L2-normalize.
    * Used for Voyage-style models that output raw token embeddings.
@@ -603,7 +608,7 @@ export class HuggingFaceEmbedding extends Embedding {
           throw new Error('Model did not return last_hidden_state for mean_pooling strategy')
         }
         const hiddenStates = (outputs.last_hidden_state.tolist() as number[][][])[0]!
-        const mask = (inputs.attention_mask.tolist() as number[][])[0]!
+        const mask = this.toNumberArray((inputs.attention_mask.tolist() as Array<number | bigint>[])[0]!)
         embedding = this.meanPoolSingle(hiddenStates, mask)
       }
       else {
@@ -656,7 +661,7 @@ export class HuggingFaceEmbedding extends Embedding {
           throw new Error('Model did not return last_hidden_state for mean_pooling strategy')
         }
         const allHidden = outputs.last_hidden_state.tolist() as number[][][]
-        const allMasks = inputs.attention_mask.tolist() as number[][]
+        const allMasks = (inputs.attention_mask.tolist() as Array<number | bigint>[]).map(m => this.toNumberArray(m))
         embeddings = allHidden.map((hidden, i) => this.meanPoolSingle(hidden, allMasks[i]!))
       }
       else {
