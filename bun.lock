@@ -45,7 +45,7 @@
     },
     "packages/cli": {
       "name": "@pleaseai/soop-cli",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "dependencies": {
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
@@ -91,7 +91,7 @@
     },
     "packages/mcp": {
       "name": "@pleaseai/soop-mcp",
-      "version": "0.1.11",
+      "version": "0.1.12",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.27.1",
         "@pleaseai/soop-ast": "workspace:*",
@@ -128,7 +128,7 @@
     },
     "packages/soop": {
       "name": "@pleaseai/soop",
-      "version": "0.1.24-alpha.1",
+      "version": "0.1.25-alpha.1",
       "bin": {
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
@@ -160,19 +160,19 @@
     },
     "packages/soop-native": {
       "name": "@pleaseai/soop-native",
-      "version": "0.1.20",
+      "version": "0.1.21",
       "bin": {
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
       },
       "optionalDependencies": {
-        "@pleaseai/soop-darwin-arm64": "0.1.20",
-        "@pleaseai/soop-darwin-x64": "0.1.20",
-        "@pleaseai/soop-linux-arm64-glibc": "0.1.20",
-        "@pleaseai/soop-linux-arm64-musl": "0.1.20",
-        "@pleaseai/soop-linux-x64-glibc": "0.1.20",
-        "@pleaseai/soop-linux-x64-musl": "0.1.20",
-        "@pleaseai/soop-win32-x64": "0.1.20",
+        "@pleaseai/soop-darwin-arm64": "0.1.21",
+        "@pleaseai/soop-darwin-x64": "0.1.21",
+        "@pleaseai/soop-linux-arm64-glibc": "0.1.21",
+        "@pleaseai/soop-linux-arm64-musl": "0.1.21",
+        "@pleaseai/soop-linux-x64-glibc": "0.1.21",
+        "@pleaseai/soop-linux-x64-musl": "0.1.21",
+        "@pleaseai/soop-win32-x64": "0.1.21",
       },
     },
     "packages/store": {
