@@ -119,12 +119,13 @@ export class RPGEvolver {
             embeddingChanges.added.push(modResult.addedId)
         }
         else {
-          result.modified++
           if (modResult.modifiedId) {
+            result.modified++
             embeddingChanges.modified.push(modResult.modifiedId)
           }
           else if (modResult.addedId) {
             // Node was not found in graph — treated as insertion by processModification
+            result.inserted++
             embeddingChanges.added.push(modResult.addedId)
           }
         }

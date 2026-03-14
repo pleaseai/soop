@@ -74,10 +74,21 @@ export async function injectDependencies(
   // This is safe because injectDependencies always performs a complete rebuild from AST analysis.
   const existingDepEdges = await rpg.getDependencyEdges()
   if (existingDepEdges.length > 0) {
+    let clearFailures = 0
     for (const edge of existingDepEdges) {
-      await rpg.removeEdge(edge.source, edge.target, edge.type)
+      try {
+        await rpg.removeEdge(edge.source, edge.target, edge.type)
+      }
+      catch {
+        clearFailures++
+      }
     }
-    log.debug(`Cleared ${existingDepEdges.length} existing dependency edges before rebuild`)
+    if (clearFailures > 0) {
+      log.warn(`${clearFailures}/${existingDepEdges.length} dependency edges could not be cleared — rebuild may produce duplicates`)
+    }
+    else {
+      log.debug(`Cleared ${existingDepEdges.length} existing dependency edges before rebuild`)
+    }
   }
 
   const knownFiles = new Set(filePathToNodeId.keys())
