@@ -45,8 +45,8 @@ const config: ExperimentConfig = {
       '.claude/settings.json': JSON.stringify({
         mcpServers: {
           soop: {
-            command: 'soop-mcp',
-            args: ['nextjs-rpg.json', '--no-search'],
+            command: 'soop',
+            args: ['mcp', 'nextjs-rpg.json', '--no-search'],
           },
         },
       }),

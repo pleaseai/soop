@@ -48,25 +48,11 @@ export default defineConfig([
     noExternal: [/^@pleaseai\//],
     inlineOnly: false,
   },
-  // MCP server binary: packages/soop/dist/packages/mcp/src/server.mjs (standalone)
-  // noExternal ensures @pleaseai/* workspace packages are bundled inline (private, not on npm)
-  {
-    entry: { 'packages/mcp/src/server': './packages/mcp/src/server.ts' },
-    format: 'esm',
-    platform: 'node',
-    dts: false,
-    outDir: 'packages/soop/dist',
-    external,
-    noExternal: [/^@pleaseai\//],
-    banner: { js: '#!/usr/bin/env node' },
-    inlineOnly: false,
-  },
-  // Launcher scripts: compiled from scripts/launcher/*.ts → packages/soop-native/dist/launcher-{cli,mcp}.mjs
-  // These are pure Node.js scripts (no native deps) used by bin/soop and bin/soop-mcp shims in soop-native
+  // Launcher script: compiled from scripts/launcher/cli.ts → packages/soop-native/dist/launcher-cli.mjs
+  // Pure Node.js script (no native deps) used by bin/soop shim in soop-native
   {
     entry: {
       'launcher-cli': './scripts/launcher/cli.ts',
-      'launcher-mcp': './scripts/launcher/mcp.ts',
     },
     format: 'esm',
     platform: 'node',

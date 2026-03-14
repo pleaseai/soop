@@ -11,6 +11,7 @@
   "dependencies": {
     "@pleaseai/soop-encoder": "workspace:*",
     "@pleaseai/soop-graph": "workspace:*",
+    "@pleaseai/soop-mcp": "workspace:*",
     "@pleaseai/soop-store": "workspace:*",
     "@pleaseai/soop-tools": "workspace:*",
     "@pleaseai/soop-utils": "workspace:*",

@@ -1,5 +1,8 @@
 #!/usr/bin/env node
-import('../dist/packages/mcp/src/server.mjs').catch((err) => {
-  console.error('Failed to load soop-mcp server:', err.message)
+// DEPRECATED: Use "soop mcp" instead. This shim will be removed in a future version.
+process.stderr.write('[soop-mcp] Deprecated: use "soop mcp" instead.\n')
+process.argv.splice(2, 0, 'mcp')
+import('../dist/packages/cli/src/cli.mjs').catch((err) => {
+  console.error('Failed to load soop CLI:', err.message)
   process.exit(1)
 })

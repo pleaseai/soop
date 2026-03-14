@@ -203,7 +203,7 @@ soop/                              # Private monorepo root (not published)
 │   ├── soop/                      # Published package: @pleaseai/soop
 │   │   ├── src/index.ts           # Main exports (re-exports all workspace packages)
 │   │   ├── bin/soop               # CLI binary
-│   │   ├── bin/soop-mcp           # MCP server binary
+│   │   ├── bin/soop-mcp           # MCP server shim (deprecated, use `soop mcp`)
 │   │   └── package.json
 │   │
 │   ├── utils/    # @pleaseai/soop-utils   — AST parser, LLM, git helpers, logger
