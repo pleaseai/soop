@@ -282,6 +282,45 @@ bun run mcp tests/fixtures/sample-rpg.json
 | `soop_evolve` | Incrementally update the RPG with new commits |
 | `soop_stats` | Get graph statistics (node/edge counts) |
 
+### When to Use soop MCP Tools
+
+Use soop MCP tools **before** reading files with Read/Grep when you need to understand code semantics, architecture, or find related code across the codebase. The RPG graph provides semantic understanding that text search cannot.
+
+**Prefer soop MCP when:**
+- Finding code by behavior/purpose (not filename): `soop_search` with `featureTerms`
+- Understanding what a class/function does and its role: `soop_fetch` with entity ID
+- Exploring dependencies and relationships: `soop_explore`
+- Getting codebase overview/statistics: `soop_stats`
+
+**Prefer Read/Grep/Glob when:**
+- You already know the exact file path
+- Searching for literal strings, variable names, or error messages
+- Reading specific line ranges
+
+### soop MCP Tool Usage
+
+**`soop_search`** — Semantic code search (start here for discovery)
+- Feature search: `featureTerms: ["authentication", "JWT validation"]` — find code by behavior
+- File pattern: `filePattern: "*.test.ts"`, `mode: "snippets"` — find by file pattern
+- Auto mode (default): tries feature search first, falls back to snippets
+- `searchScopes`: restrict to subtree by node ID (e.g., `["packages/encoder"]`)
+- `searchStrategy`: `hybrid` (default), `vector`, `fts`, `string`
+
+**`soop_fetch`** — Get entity details and source code
+- `codeEntities: ["packages/encoder/src/encoder.ts:class:RPGEncoder:510"]` — by node ID from search results
+- `featureEntities: ["domain:encoding"]` — by feature/high-level node ID
+- Returns: node metadata, full source code, feature paths in hierarchy
+
+**`soop_explore`** — Traverse graph relationships
+- Navigate functional edges (parent-child) and dependency edges (imports/calls)
+- Use after `soop_fetch` to understand how entities connect
+
+**`soop_encode`** — Encode a repository into RPG (heavy operation, use sparingly)
+
+**`soop_evolve`** — Incrementally update RPG with new commits
+
+**`soop_stats`** — Quick graph overview (node/edge counts, structure summary)
+
 ### Claude Code Configuration
 
 Add to your Claude Code settings (`.claude/settings.json` or `~/.config/claude/settings.json`):
