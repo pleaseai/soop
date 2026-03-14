@@ -83,6 +83,8 @@ program
         setLogLevel(LogLevels.debug)
       }
 
+      validateSearchStrategy(options.search)
+
       const semantic = buildSemanticOptions(options.model, options.llm, options.minBatchTokens, options.maxBatchTokens)
 
       log.info(`Encoding repository: ${repoPath}`)
@@ -292,6 +294,8 @@ program
       setLogLevel(LogLevels.debug)
     }
 
+    validateSearchStrategy(options.search)
+
     const outputPath = options.output ?? options.loadPath
 
     log.info(`Evolving RPG with commits: ${options.commits}`)
@@ -303,21 +307,27 @@ program
 
     await encoder.save(outputPath)
 
-    // Incremental embedding update for vector/hybrid search
-    if ((options.search === 'vector' || options.search === 'hybrid') && result.embeddingChanges) {
+    // Embedding update for vector/hybrid search
+    if (options.search === 'vector' || options.search === 'hybrid') {
+      const rpg = encoder.rpg
+      if (!rpg) throw new Error('RPG not available after evolve')
+
       const embedSha = getHeadCommitSha(path.resolve(repoPath))
       const embeddingManager = await createEmbeddingManager(options.embedModel)
 
-      if (existsSync(options.embedOutput)) {
+      if (result.embeddingChanges && existsSync(options.embedOutput)) {
         // Incremental: update only changed nodes
         const existingJsonl = await readFile(options.embedOutput, 'utf-8')
         const existing = parseEmbeddingsJsonl(existingJsonl)
-        const updated = await embeddingManager.applyChanges(existing, encoder.rpg!, result.embeddingChanges, embedSha)
+        const updated = await embeddingManager.applyChanges(existing, rpg, result.embeddingChanges, embedSha)
         await writeEmbeddingsFile(updated, options.embedOutput)
       }
       else {
-        // No existing embeddings — full generation
-        const embeddings = await embeddingManager.indexAll(encoder.rpg!, embedSha)
+        // Full generation: no existing embeddings or no change tracking
+        if (!result.embeddingChanges) {
+          log.warn('Evolve did not produce embeddingChanges — falling back to full embedding generation')
+        }
+        const embeddings = await embeddingManager.indexAll(rpg, embedSha)
         await writeEmbeddingsFile(embeddings, options.embedOutput)
       }
     }
@@ -387,6 +397,15 @@ program
     }
     console.log(commit)
   })
+
+const VALID_SEARCH_STRATEGIES = ['text', 'vector', 'hybrid'] as const
+
+function validateSearchStrategy(strategy: string): void {
+  if (!VALID_SEARCH_STRATEGIES.includes(strategy as typeof VALID_SEARCH_STRATEGIES[number])) {
+    log.error(`Invalid search strategy "${strategy}". Must be one of: ${VALID_SEARCH_STRATEGIES.join(', ')}`)
+    process.exit(1)
+  }
+}
 
 /**
  * Build SemanticOptions from CLI flags

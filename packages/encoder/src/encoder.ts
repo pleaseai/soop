@@ -537,8 +537,20 @@ export class RPGEncoder {
     repoPath?: string,
     options?: Partial<Omit<EncoderOptions, 'repoPath'>>,
   ): Promise<RPGEncoder> {
-    const json = await readFile(savePath, 'utf-8')
-    const rpg = await RepositoryPlanningGraph.fromJSON(json)
+    let json: string
+    try {
+      json = await readFile(savePath, 'utf-8')
+    }
+    catch (error) {
+      throw new Error(`Could not read RPG file "${savePath}": ${error instanceof Error ? error.message : error}`)
+    }
+    let rpg: RepositoryPlanningGraph
+    try {
+      rpg = await RepositoryPlanningGraph.fromJSON(json)
+    }
+    catch (error) {
+      throw new Error(`Could not parse RPG file "${savePath}": ${error instanceof Error ? error.message : error}`)
+    }
     const resolvedPath = repoPath ?? rpg.getConfig().rootPath ?? '.'
     const encoder = new RPGEncoder(resolvedPath, options)
     encoder._rpg = rpg
@@ -572,7 +584,7 @@ export class RPGEncoder {
         log.debug('Not a git directory — skipping commit stamp')
       }
       else {
-        log.warn(`Failed to stamp HEAD commit: ${msg}`)
+        throw new Error(`Failed to stamp HEAD commit: ${msg}`)
       }
     }
     await writeFile(savePath, await this._rpg.toJSON())
