@@ -101,13 +101,11 @@ export function registerSyncCommand(program: Command): void {
             log.start(`Evolving local graph: ${commitRange}`)
 
             try {
-              const localJson = await readFile(localGraphPath, 'utf-8')
-              const localRpg = await RepositoryPlanningGraph.fromJSON(localJson)
               const { RPGEncoder } = await import('@pleaseai/soop-encoder')
-              const encoder = new RPGEncoder(repoPath)
-              const result = await encoder.evolve(localRpg, { commitRange })
+              const encoder = await RPGEncoder.fromSaved(localGraphPath, repoPath)
+              const result = await encoder.evolve({ commitRange })
 
-              await writeFile(localGraphPath, await localRpg.toJSON())
+              await encoder.save(localGraphPath)
               log.success(
                 `Local evolve: +${result.inserted} -${result.deleted} ~${result.modified} ⇆${result.rerouted}`,
               )

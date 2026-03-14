@@ -2,7 +2,6 @@ import type { Command } from 'commander'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { getHeadCommitSha } from '@pleaseai/soop-utils/git-helpers'
 import { createLogger } from '@pleaseai/soop-utils/logger'
 
 const log = createLogger('init')
@@ -97,20 +96,8 @@ export function registerInitCommand(program: Command): void {
             const encoder = new RPGEncoder(absPath)
             const result = await encoder.encode()
 
-            // Stamp with HEAD
-            const headSha = getHeadCommitSha(absPath)
-            const currentConfig = result.rpg.getConfig()
-            result.rpg.updateConfig({
-              github: {
-                owner: currentConfig.github?.owner ?? '',
-                repo: currentConfig.github?.repo ?? currentConfig.name,
-                commit: headSha,
-                pathPrefix: currentConfig.github?.pathPrefix,
-              },
-            })
-
             const outputPath = path.join(repoDir, 'graph.json')
-            await writeFile(outputPath, await result.rpg.toJSON())
+            await encoder.save(outputPath)
             log.success(`Encoded ${result.filesProcessed} files → .soop/graph.json`)
           }
 
