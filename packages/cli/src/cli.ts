@@ -311,7 +311,8 @@ program
     // Embedding update for vector/hybrid search
     if (options.search === 'vector' || options.search === 'hybrid') {
       const rpg = encoder.rpg
-      if (!rpg) throw new Error('RPG not available after evolve')
+      if (!rpg)
+        throw new Error('RPG not available after evolve')
 
       const embedSha = getHeadCommitSha(path.resolve(repoPath))
       const embeddingManager = await createEmbeddingManager(options.embedModel)

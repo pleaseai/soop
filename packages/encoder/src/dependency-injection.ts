@@ -72,17 +72,24 @@ export async function injectDependencies(
 
   // Clear existing dependency edges before full rebuild to avoid UNIQUE constraint violations.
   // This is safe because injectDependencies always performs a complete rebuild from AST analysis.
+  // Use best-effort clearing: attempt all deletions so the graph isn't left half-cleared
+  // if a single edge removal fails (callers catch and continue after exceptions).
   const existingDepEdges = await rpg.getDependencyEdges()
   if (existingDepEdges.length > 0) {
+    let clearFailures = 0
     for (const edge of existingDepEdges) {
       try {
         await rpg.removeEdge(edge.source, edge.target, edge.type)
       }
       catch (err) {
-        throw new Error(`Failed to clear dependency edge ${edge.source} -> ${edge.target} (${edge.type}): ${String(err)}`)
+        clearFailures++
+        log.warn(`Failed to clear dependency edge ${edge.source} -> ${edge.target} (${edge.type}): ${String(err)}`)
       }
     }
-    log.debug(`Cleared ${existingDepEdges.length} existing dependency edges before rebuild`)
+    if (clearFailures > 0) {
+      log.warn(`Failed to clear ${clearFailures}/${existingDepEdges.length} dependency edges; proceeding with rebuild`)
+    }
+    log.debug(`Cleared ${existingDepEdges.length - clearFailures} existing dependency edges before rebuild`)
   }
 
   const knownFiles = new Set(filePathToNodeId.keys())
