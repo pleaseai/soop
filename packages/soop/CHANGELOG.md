@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.28-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.27-alpha.1...soop-v0.1.28-alpha.1) (2026-03-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @pleaseai/soop-cli bumped to 0.2.2
+    * @pleaseai/soop-mcp bumped to 0.4.0
+
 ## [0.1.27-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.26-alpha.1...soop-v0.1.27-alpha.1) (2026-03-16)
 
 
