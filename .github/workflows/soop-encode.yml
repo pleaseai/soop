@@ -59,28 +59,21 @@ jobs:
       - name: Encode or evolve RPG
         env:
           GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
-          VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
         run: |
-          if [ -n "$VOYAGE_API_KEY" ]; then
-            SEARCH_FLAG="-s hybrid --embed-model voyage-ai/voyage-4"
-          else
-            SEARCH_FLAG="-s hybrid --embed-model transformers/voyageai/voyage-4-nano"
-          fi
-
           if [ ! -f ".soop/graph.json" ]; then
             echo "No existing graph — running full encode"
             mkdir -p .soop
-            soop encode . -o .soop/graph.json -m google/gemini-3.1-flash-lite-preview $SEARCH_FLAG
+            soop encode . -o .soop/graph.json -m google/gemini-3.1-flash-lite-preview
           else
             LAST_COMMIT=$(soop last-commit .soop/graph.json 2>/dev/null || echo "")
             if [ -z "$LAST_COMMIT" ]; then
               echo "No commit stamp — running full encode"
-              soop encode . -o .soop/graph.json -m google/gemini-3.1-flash-lite-preview $SEARCH_FLAG
+              soop encode . -o .soop/graph.json -m google/gemini-3.1-flash-lite-preview
             else
               echo "Evolving from $LAST_COMMIT..HEAD"
-              soop evolve . -l .soop/graph.json -c "$LAST_COMMIT..HEAD" -m google/gemini-3.1-flash-lite-preview $SEARCH_FLAG || {
+              soop evolve . -l .soop/graph.json -c "$LAST_COMMIT..HEAD" -m google/gemini-3.1-flash-lite-preview || {
                 echo "Evolve failed, falling back to full encode"
-                soop encode . -o .soop/graph.json -m google/gemini-3.1-flash-lite-preview $SEARCH_FLAG
+                soop encode . -o .soop/graph.json -m google/gemini-3.1-flash-lite-preview
               }
             fi
           fi
