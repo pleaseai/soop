@@ -6,7 +6,7 @@
     "github": {
       "owner": "",
       "repo": ".",
-      "commit": "b43f9a011c05050d17c1073e92f089b83a765d95"
+      "commit": "61bdc480191f9da1ef688219a822764a4e1047c4"
     }
   },
   "nodes": [
@@ -1466,7 +1466,7 @@
         "path": "packages/cli/src/cli.ts",
         "qualifiedName": "packages/cli/src/cli.ts",
         "startLine": 1,
-        "endLine": 589
+        "endLine": 606
       }
     },
     {
@@ -1903,7 +1903,7 @@
         "path": "packages/cli/src/commands/sync.ts",
         "qualifiedName": "packages/cli/src/commands/sync.ts",
         "startLine": 1,
-        "endLine": 224
+        "endLine": 259
       }
     },
     {
@@ -1916,15 +1916,14 @@
           "sync",
           "repository",
           "canonical",
-          "incremental",
-          "git"
+          "incremental"
         ],
         "subFeatures": [
           "validate canonical graph existence",
           "initialize local directory structure",
           "retrieve repository git metadata",
-          "load canonical planning graph",
-          "determine incremental evolution requirements"
+          "load canonical graph data",
+          "synchronize canonical to local state"
         ]
       },
       "metadata": {
@@ -1932,7 +1931,7 @@
         "path": "packages/cli/src/commands/sync.ts",
         "qualifiedName": "registerSyncCommand",
         "startLine": 21,
-        "endLine": 223
+        "endLine": 258
       }
     },
     {
@@ -2011,6 +2010,35 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/cli/tests/cli-stamp.test.ts"
+      }
+    },
+    {
+      "id": "packages/cli/tests/cli-stamp.test.ts:file:packages/cli/tests/cli-stamp.test.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "verify repository commit stamping logic",
+        "keywords": [
+          "test",
+          "repository",
+          "commit",
+          "stamp",
+          "metadata",
+          "configuration"
+        ],
+        "subFeatures": [
+          "initialize temporary test environment",
+          "create repository planning graph",
+          "update repository configuration commit",
+          "persist graph metadata",
+          "cleanup temporary test files"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/cli/tests/cli-stamp.test.ts",
+        "qualifiedName": "packages/cli/tests/cli-stamp.test.ts",
+        "startLine": 1,
+        "endLine": 77
       }
     },
     {
@@ -4867,18 +4895,18 @@
       "feature": {
         "description": "coordinate repository planning graph lifecycle",
         "keywords": [
-          "rpg",
-          "encoder",
           "repository",
           "planning",
           "graph",
-          "serialization"
+          "encoder",
+          "serialization",
+          "evolution"
         ],
         "subFeatures": [
-          "load graph from file",
-          "save graph to file",
+          "load graph from storage",
+          "save graph to storage",
           "evolve repository planning graph",
-          "initialize encoder configuration"
+          "initialize repository encoder"
         ]
       },
       "metadata": {
@@ -4886,7 +4914,7 @@
         "path": "packages/encoder/src/encoder.ts",
         "qualifiedName": "RPGEncoder",
         "startLine": 511,
-        "endLine": 1739
+        "endLine": 1762
       }
     },
     {
@@ -4933,7 +4961,7 @@
         "path": "packages/encoder/src/encoder.ts",
         "qualifiedName": "packages/encoder/src/encoder.ts",
         "startLine": 1,
-        "endLine": 1740
+        "endLine": 1763
       }
     },
     {
@@ -5810,17 +5838,17 @@
         "keywords": [
           "rpg",
           "encoder",
+          "load",
           "repository",
           "planning",
-          "graph",
-          "load"
+          "graph"
         ],
         "subFeatures": [
-          "read saved file content",
-          "parse planning graph data",
-          "resolve repository root path",
-          "instantiate encoder instance",
-          "log loading statistics"
+          "load graph data",
+          "load optional metadata",
+          "parse planning graph",
+          "resolve repository path",
+          "instantiate encoder instance"
         ]
       },
       "metadata": {
@@ -5828,7 +5856,7 @@
         "path": "packages/encoder/src/encoder.ts",
         "qualifiedName": "RPGEncoder.fromSaved",
         "startLine": 535,
-        "endLine": 562
+        "endLine": 580
       }
     },
     {
@@ -5856,27 +5884,27 @@
       "id": "packages/encoder/src/encoder.ts:method:RPGEncoder.save",
       "type": "low_level",
       "feature": {
-        "description": "save rpg data to file",
+        "description": "save rpg data to disk",
         "keywords": [
           "rpg",
           "persistence",
           "serialization",
           "git",
-          "commit"
+          "metadata"
         ],
         "subFeatures": [
-          "validate rpg existence",
-          "stamp repository commit metadata",
-          "serialize rpg configuration",
-          "write data to disk"
+          "stamp repository commit information",
+          "serialize rpg graph data",
+          "serialize rpg metadata",
+          "write files to storage"
         ]
       },
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/encoder.ts",
         "qualifiedName": "RPGEncoder.save",
-        "startLine": 568,
-        "endLine": 595
+        "startLine": 587,
+        "endLine": 618
       }
     },
     {
@@ -12956,6 +12984,134 @@
       }
     },
     {
+      "id": "packages/graph/src/index.ts:file:packages/graph/src/index.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "coordinate repository planning graph domain model",
+        "keywords": [
+          "graph",
+          "rpg",
+          "node",
+          "edge",
+          "schema",
+          "adapter"
+        ],
+        "subFeatures": [
+          "convert domain attributes to graph entities",
+          "define graph node and edge schemas",
+          "serialize and deserialize graph metadata",
+          "transform data for python compatibility",
+          "compute graph node hierarchy levels",
+          "manage repository planning graph lifecycle"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/graph/src/index.ts",
+        "qualifiedName": "packages/graph/src/index.ts",
+        "startLine": 1,
+        "endLine": 78
+      }
+    },
+    {
+      "id": "packages/graph/src/meta.ts:file:packages/graph/src/meta.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "coordinate rpg metadata schema",
+        "keywords": [
+          "metadata",
+          "schema",
+          "serialization",
+          "deserialization",
+          "path",
+          "rpg"
+        ],
+        "subFeatures": [
+          "compute metadata file path",
+          "serialize configuration to metadata",
+          "validate metadata structure"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/graph/src/meta.ts",
+        "qualifiedName": "packages/graph/src/meta.ts",
+        "startLine": 1,
+        "endLine": 36
+      }
+    },
+    {
+      "id": "packages/graph/src/meta.ts:function:deserializeMeta",
+      "type": "low_level",
+      "feature": {
+        "description": "deserialize metadata object",
+        "keywords": [
+          "metadata",
+          "deserialization",
+          "validation",
+          "schema"
+        ],
+        "subFeatures": [
+          "validate metadata structure"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/meta.ts",
+        "qualifiedName": "deserializeMeta",
+        "startLine": 33,
+        "endLine": 35
+      }
+    },
+    {
+      "id": "packages/graph/src/meta.ts:function:metaPathFor",
+      "type": "low_level",
+      "feature": {
+        "description": "generate metadata file path",
+        "keywords": [
+          "path",
+          "metadata",
+          "file",
+          "naming"
+        ],
+        "subFeatures": [
+          "derive metadata filename from source"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/meta.ts",
+        "qualifiedName": "metaPathFor",
+        "startLine": 18,
+        "endLine": 23
+      }
+    },
+    {
+      "id": "packages/graph/src/meta.ts:function:serializeMeta",
+      "type": "low_level",
+      "feature": {
+        "description": "serialize configuration metadata",
+        "keywords": [
+          "metadata",
+          "serialization",
+          "configuration",
+          "path",
+          "versioning"
+        ],
+        "subFeatures": [
+          "resolve root path",
+          "map github configuration"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/meta.ts",
+        "qualifiedName": "serializeMeta",
+        "startLine": 25,
+        "endLine": 31
+      }
+    },
+    {
       "id": "packages/graph/src/node.ts:file",
       "type": "low_level",
       "feature": {
@@ -13060,6 +13216,312 @@
       }
     },
     {
+      "id": "packages/graph/src/python-format.ts:file:packages/graph/src/python-format.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "define python compatible graph schemas",
+        "keywords": [
+          "schema",
+          "serialization",
+          "graph",
+          "python",
+          "validation"
+        ],
+        "subFeatures": [
+          "validate node structure",
+          "validate edge structure",
+          "validate repository graph structure"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "packages/graph/src/python-format.ts",
+        "startLine": 1,
+        "endLine": 366
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:computeNodeLevels",
+      "type": "low_level",
+      "feature": {
+        "description": "calculate hierarchical levels graph nodes",
+        "keywords": [
+          "graph",
+          "hierarchy",
+          "node",
+          "level",
+          "traversal"
+        ],
+        "subFeatures": [
+          "identify root nodes",
+          "traverse graph structure",
+          "assign levels to reachable nodes",
+          "assign default levels to orphaned nodes"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "computeNodeLevels",
+        "startLine": 86,
+        "endLine": 132
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:deriveNodeName",
+      "type": "low_level",
+      "feature": {
+        "description": "extract display name from node identifier",
+        "keywords": [
+          "node",
+          "identifier",
+          "naming",
+          "graph",
+          "parsing"
+        ],
+        "subFeatures": [
+          "parse domain node name",
+          "parse entity node name",
+          "parse file path node name",
+          "fallback to identifier segment"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "deriveNodeName",
+        "startLine": 136,
+        "endLine": 162
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:entityTypeToTypeName",
+      "type": "low_level",
+      "feature": {
+        "description": "map entity type to type name",
+        "keywords": [
+          "mapping",
+          "entity",
+          "type",
+          "normalization"
+        ],
+        "subFeatures": [
+          "validate entity type input"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "entityTypeToTypeName",
+        "startLine": 166,
+        "endLine": 177
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:fromPythonDataFlow",
+      "type": "low_level",
+      "feature": {
+        "description": "convert python data flow to edge",
+        "keywords": [
+          "data flow",
+          "graph edge",
+          "transformation",
+          "data mapping"
+        ],
+        "subFeatures": [
+          "validate input data structure",
+          "extract edge connection properties",
+          "extract data flow metadata",
+          "create data flow edge"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "fromPythonDataFlow",
+        "startLine": 348,
+        "endLine": 365
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:fromPythonEdge",
+      "type": "low_level",
+      "feature": {
+        "description": "convert python edge to graph edge",
+        "keywords": [
+          "graph",
+          "edge",
+          "python",
+          "transformation",
+          "dependency"
+        ],
+        "subFeatures": [
+          "create functional edge for composition",
+          "create dependency edge for relationships",
+          "map python relation to dependency type"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "fromPythonEdge",
+        "startLine": 311,
+        "endLine": 334
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:fromPythonNode",
+      "type": "low_level",
+      "feature": {
+        "description": "convert python node to generic graph node",
+        "keywords": [
+          "transformation",
+          "graph",
+          "node",
+          "python",
+          "mapping"
+        ],
+        "subFeatures": [
+          "identify node hierarchy level",
+          "create high level graph node",
+          "create low level graph node",
+          "map entity type metadata"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "fromPythonNode",
+        "startLine": 274,
+        "endLine": 309
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:levelToNodeType",
+      "type": "low_level",
+      "feature": {
+        "description": "map hierarchy level to node type",
+        "keywords": [
+          "node",
+          "type",
+          "hierarchy",
+          "mapping",
+          "level"
+        ],
+        "subFeatures": []
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "levelToNodeType",
+        "startLine": 80,
+        "endLine": 82
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:toPythonDataFlow",
+      "type": "low_level",
+      "feature": {
+        "description": "convert data flow edge to python format",
+        "keywords": [
+          "data flow",
+          "python",
+          "serialization",
+          "graph",
+          "edge"
+        ],
+        "subFeatures": [
+          "validate data flow edge",
+          "extract edge connection details",
+          "map edge transformation properties"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "toPythonDataFlow",
+        "startLine": 336,
+        "endLine": 346
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:toPythonEdge",
+      "type": "low_level",
+      "feature": {
+        "description": "convert graph edge to python representation",
+        "keywords": [
+          "graph",
+          "python",
+          "transformation",
+          "edge",
+          "mapping"
+        ],
+        "subFeatures": [
+          "map functional edge to composition",
+          "map dependency edge to relationship",
+          "map default edge to composition"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "toPythonEdge",
+        "startLine": 232,
+        "endLine": 270
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:toPythonNode",
+      "type": "low_level",
+      "feature": {
+        "description": "convert graph node to python representation",
+        "keywords": [
+          "transformation",
+          "graph",
+          "python",
+          "node",
+          "metadata"
+        ],
+        "subFeatures": [
+          "derive node name",
+          "determine node type",
+          "extract node metadata",
+          "resolve file system path"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "toPythonNode",
+        "startLine": 194,
+        "endLine": 230
+      }
+    },
+    {
+      "id": "packages/graph/src/python-format.ts:function:typeNameToEntityType",
+      "type": "low_level",
+      "feature": {
+        "description": "map type name to entity type",
+        "keywords": [
+          "mapping",
+          "entity",
+          "type",
+          "classification"
+        ],
+        "subFeatures": [
+          "validate input type name"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "packages/graph/src/python-format.ts",
+        "qualifiedName": "typeNameToEntityType",
+        "startLine": 179,
+        "endLine": 190
+      }
+    },
+    {
       "id": "packages/graph/src/rpg.ts:class:RepositoryPlanningGraph:97",
       "type": "low_level",
       "feature": {
@@ -13083,8 +13545,8 @@
         "entityType": "class",
         "path": "packages/graph/src/rpg.ts",
         "qualifiedName": "RepositoryPlanningGraph",
-        "startLine": 97,
-        "endLine": 613
+        "startLine": 93,
+        "endLine": 757
       }
     },
     {
@@ -13110,16 +13572,17 @@
         "description": "coordinate repository planning graph",
         "keywords": [
           "graph",
+          "rpg",
           "repository",
           "planning",
           "nodes",
           "edges",
-          "persistence"
+          "serialization"
         ],
         "subFeatures": [
-          "calculate graph statistics",
-          "serialize graph data",
-          "configure repository metadata",
+          "compute graph statistics",
+          "serialize graph metadata",
+          "transform python graph data",
           "create graph nodes",
           "create graph edges"
         ]
@@ -13129,7 +13592,7 @@
         "path": "packages/graph/src/rpg.ts",
         "qualifiedName": "packages/graph/src/rpg.ts",
         "startLine": 1,
-        "endLine": 614
+        "endLine": 758
       }
     },
     {
@@ -13362,34 +13825,6 @@
         "path": "packages/graph/src/rpg.ts",
         "startLine": 110,
         "endLine": 120
-      }
-    },
-    {
-      "id": "packages/graph/src/rpg.ts:method:deserialize:483",
-      "type": "low_level",
-      "feature": {
-        "description": "reconstruct repository planning graph from data",
-        "keywords": [
-          "deserialization",
-          "graph",
-          "reconstruction",
-          "nodes",
-          "edges"
-        ],
-        "subFeatures": [
-          "validate input data structure",
-          "initialize graph instance",
-          "import graph nodes",
-          "import graph edges",
-          "import data flow edges",
-          "transform legacy data formats"
-        ]
-      },
-      "metadata": {
-        "entityType": "method",
-        "path": "packages/graph/src/rpg.ts",
-        "startLine": 483,
-        "endLine": 539
       }
     },
     {
@@ -13867,6 +14302,88 @@
       }
     },
     {
+      "id": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph._deserializeLegacy",
+      "type": "low_level",
+      "feature": {
+        "description": "deserialize legacy graph data",
+        "keywords": [
+          "deserialization",
+          "legacy",
+          "graph",
+          "migration",
+          "configuration"
+        ],
+        "subFeatures": [
+          "initialize graph configuration",
+          "import graph nodes",
+          "import graph edges",
+          "migrate data flow edges"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/graph/src/rpg.ts",
+        "qualifiedName": "RepositoryPlanningGraph._deserializeLegacy",
+        "startLine": 596,
+        "endLine": 667
+      }
+    },
+    {
+      "id": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.deserialize",
+      "type": "low_level",
+      "feature": {
+        "description": "reconstruct repository planning graph from data",
+        "keywords": [
+          "deserialization",
+          "graph",
+          "repository",
+          "import",
+          "schema"
+        ],
+        "subFeatures": [
+          "validate input data structure",
+          "initialize graph configuration",
+          "import graph nodes",
+          "import graph edges",
+          "import data flow connections",
+          "migrate legacy graph format"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/graph/src/rpg.ts",
+        "qualifiedName": "RepositoryPlanningGraph.deserialize",
+        "startLine": 531,
+        "endLine": 591
+      }
+    },
+    {
+      "id": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.fromJSONWithMeta",
+      "type": "low_level",
+      "feature": {
+        "description": "initialize planning graph from data",
+        "keywords": [
+          "graph",
+          "repository",
+          "metadata",
+          "deserialization",
+          "configuration"
+        ],
+        "subFeatures": [
+          "deserialize graph structure",
+          "apply metadata configuration",
+          "update repository settings"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/graph/src/rpg.ts",
+        "qualifiedName": "RepositoryPlanningGraph.fromJSONWithMeta",
+        "startLine": 676,
+        "endLine": 691
+      }
+    },
+    {
       "id": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.removeEdge",
       "type": "low_level",
       "feature": {
@@ -13891,26 +14408,74 @@
       "id": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.serialize",
       "type": "low_level",
       "feature": {
-        "description": "serialize planning graph data",
+        "description": "serialize repository planning graph",
         "keywords": [
           "serialization",
           "graph",
+          "repository",
           "planning",
           "export"
         ],
         "subFeatures": [
-          "retrieve graph nodes",
-          "retrieve graph edges",
-          "categorize data flow edges",
-          "sort graph components"
+          "compute node hierarchy levels",
+          "identify root repository node",
+          "transform nodes to external format",
+          "transform edges to external format",
+          "transform data flow to external format"
         ]
       },
       "metadata": {
         "entityType": "method",
         "path": "packages/graph/src/rpg.ts",
         "qualifiedName": "RepositoryPlanningGraph.serialize",
-        "startLine": 451,
-        "endLine": 472
+        "startLine": 452,
+        "endLine": 512
+      }
+    },
+    {
+      "id": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.serializeMeta",
+      "type": "low_level",
+      "feature": {
+        "description": "serialize repository planning graph metadata",
+        "keywords": [
+          "serialize",
+          "metadata",
+          "graph",
+          "configuration"
+        ],
+        "subFeatures": []
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/graph/src/rpg.ts",
+        "qualifiedName": "RepositoryPlanningGraph.serializeMeta",
+        "startLine": 514,
+        "endLine": 516
+      }
+    },
+    {
+      "id": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.toJSONWithMeta",
+      "type": "low_level",
+      "feature": {
+        "description": "serialize graph data",
+        "keywords": [
+          "serialization",
+          "graph",
+          "metadata",
+          "export"
+        ],
+        "subFeatures": [
+          "serialize graph metadata",
+          "format graph data",
+          "format metadata"
+        ]
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/graph/src/rpg.ts",
+        "qualifiedName": "RepositoryPlanningGraph.toJSONWithMeta",
+        "startLine": 523,
+        "endLine": 529
       }
     },
     {
@@ -14125,7 +14690,7 @@
         "path": "packages/graph/tests/graph.test.ts",
         "qualifiedName": "packages/graph/tests/graph.test.ts",
         "startLine": 1,
-        "endLine": 643
+        "endLine": 631
       }
     },
     {
@@ -14146,6 +14711,35 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/graph/tests/rpg-config.test.ts"
+      }
+    },
+    {
+      "id": "packages/graph/tests/rpg-config.test.ts:file:packages/graph/tests/rpg-config.test.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "validate repository planning graph configuration updates",
+        "keywords": [
+          "repository",
+          "planning",
+          "graph",
+          "configuration",
+          "testing"
+        ],
+        "subFeatures": [
+          "update repository name",
+          "update root path",
+          "update repository description",
+          "update github integration settings",
+          "preserve existing configuration fields",
+          "verify configuration persistence"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/graph/tests/rpg-config.test.ts",
+        "qualifiedName": "packages/graph/tests/rpg-config.test.ts",
+        "startLine": 1,
+        "endLine": 70
       }
     },
     {
@@ -14373,7 +14967,7 @@
         "path": "packages/mcp/src/interactive/encoder.ts",
         "qualifiedName": "InteractiveEncoder",
         "startLine": 53,
-        "endLine": 909
+        "endLine": 912
       }
     },
     {
@@ -14420,7 +15014,7 @@
         "path": "packages/mcp/src/interactive/encoder.ts",
         "qualifiedName": "packages/mcp/src/interactive/encoder.ts",
         "startLine": 1,
-        "endLine": 926
+        "endLine": 929
       }
     },
     {
@@ -14928,25 +15522,27 @@
       "id": "packages/mcp/src/interactive/encoder.ts:method:persistGraph:897",
       "type": "low_level",
       "feature": {
-        "description": "persist graph state",
+        "description": "persist graph data",
         "keywords": [
           "persistence",
           "graph",
           "storage",
-          "serialization"
+          "serialization",
+          "repository"
         ],
         "subFeatures": [
           "validate persistence requirements",
           "prepare storage directory",
-          "serialize graph data",
-          "write graph to disk"
+          "serialize graph state",
+          "write graph metadata"
         ]
       },
       "metadata": {
         "entityType": "method",
         "path": "packages/mcp/src/interactive/encoder.ts",
+        "qualifiedName": "InteractiveEncoder.persistGraph",
         "startLine": 897,
-        "endLine": 908
+        "endLine": 911
       }
     },
     {
@@ -15651,7 +16247,7 @@
         "path": "packages/mcp/src/server.ts",
         "qualifiedName": "packages/mcp/src/server.ts",
         "startLine": 1,
-        "endLine": 453
+        "endLine": 474
       }
     },
     {
@@ -15790,7 +16386,7 @@
       }
     },
     {
-      "id": "packages/mcp/src/server.ts:function:loadRPG:166",
+      "id": "packages/mcp/src/server.ts:function:loadRPG",
       "type": "low_level",
       "feature": {
         "description": "load repository planning graph",
@@ -15798,20 +16394,21 @@
           "repository",
           "planning",
           "graph",
-          "load",
-          "file"
+          "file",
+          "metadata"
         ],
         "subFeatures": [
-          "read file content",
-          "deserialize graph data",
-          "validate file path"
+          "read graph file",
+          "read optional metadata file",
+          "construct graph from data"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/mcp/src/server.ts",
+        "qualifiedName": "loadRPG",
         "startLine": 166,
-        "endLine": 174
+        "endLine": 195
       }
     },
     {
@@ -15932,7 +16529,7 @@
         "path": "packages/mcp/src/tools.ts",
         "qualifiedName": "packages/mcp/src/tools.ts",
         "startLine": 1,
-        "endLine": 335
+        "endLine": 338
       }
     },
     {
@@ -15962,7 +16559,7 @@
       }
     },
     {
-      "id": "packages/mcp/src/tools.ts:function:executeEvolve:272",
+      "id": "packages/mcp/src/tools.ts:function:executeEvolve",
       "type": "low_level",
       "feature": {
         "description": "evolve repository planning graph",
@@ -15971,20 +16568,22 @@
           "evolution",
           "repository",
           "planning",
-          "automation"
+          "graph"
         ],
         "subFeatures": [
           "validate repository configuration",
-          "verify filesystem paths",
+          "verify file system paths",
           "initialize evolution engine",
-          "export evolution results"
+          "export evolution results",
+          "persist graph metadata"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/mcp/src/tools.ts",
+        "qualifiedName": "executeEvolve",
         "startLine": 272,
-        "endLine": 317
+        "endLine": 320
       }
     },
     {
@@ -23037,6 +23636,11 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/cli/tests/cli-stamp.test.ts:file:packages/cli/tests/cli-stamp.test.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/encoder/src/cache.ts:file",
       "type": "functional"
     },
@@ -23457,7 +24061,92 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/index.ts:file:packages/graph/src/index.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/meta.ts:file:packages/graph/src/meta.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/meta.ts:function:deserializeMeta",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/meta.ts:function:metaPathFor",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/meta.ts:function:serializeMeta",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/graph/src/node.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:file:packages/graph/src/python-format.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:computeNodeLevels",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:deriveNodeName",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:entityTypeToTypeName",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:fromPythonDataFlow",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:fromPythonEdge",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:fromPythonNode",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:levelToNodeType",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:toPythonDataFlow",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:toPythonEdge",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:toPythonNode",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/python-format.ts:function:typeNameToEntityType",
       "type": "functional"
     },
     {
@@ -23472,12 +24161,37 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph._deserializeLegacy",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.deserialize",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.fromJSONWithMeta",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.removeEdge",
       "type": "functional"
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.serialize",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.serializeMeta",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.toJSONWithMeta",
       "type": "functional"
     },
     {
@@ -23503,6 +24217,11 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/graph/tests/rpg-config.test.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/tests/rpg-config.test.ts:file:packages/graph/tests/rpg-config.test.ts",
       "type": "functional"
     },
     {
@@ -23592,6 +24311,11 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/server.ts:function:loadRPG",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/mcp/src/server.ts:function:main",
       "type": "functional"
     },
@@ -23613,6 +24337,11 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/mcp/src/tools.ts:function:executeEncode",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/mcp/src/tools.ts:function:executeEvolve",
       "type": "functional"
     },
     {
@@ -27940,6 +28669,12 @@
       "type": "functional"
     },
     {
+      "source": "packages/graph/src/meta.ts:file:packages/graph/src/meta.ts",
+      "target": "packages/graph/src/rpg.ts:file:packages/graph/src/rpg.ts",
+      "type": "dependency",
+      "dependencyType": "import"
+    },
+    {
       "source": "packages/graph/src/node.ts:file",
       "target": "packages/graph/src/node.ts:function:createHighLevelNode:115",
       "type": "functional"
@@ -28030,11 +28765,6 @@
     {
       "source": "packages/graph/src/rpg.ts:file",
       "target": "packages/graph/src/rpg.ts:method:create:110",
-      "type": "functional"
-    },
-    {
-      "source": "packages/graph/src/rpg.ts:file",
-      "target": "packages/graph/src/rpg.ts:method:deserialize:483",
       "type": "functional"
     },
     {
@@ -28502,11 +29232,6 @@
     },
     {
       "source": "packages/mcp/src/server.ts:file",
-      "target": "packages/mcp/src/server.ts:function:loadRPG:166",
-      "type": "functional"
-    },
-    {
-      "source": "packages/mcp/src/server.ts:file",
       "target": "packages/mcp/src/server.ts:function:wrapHandler:120",
       "type": "functional"
     },
@@ -28521,11 +29246,6 @@
       "target": "packages/mcp/src/errors.ts:file",
       "type": "dependency",
       "dependencyType": "import"
-    },
-    {
-      "source": "packages/mcp/src/tools.ts:file",
-      "target": "packages/mcp/src/tools.ts:function:executeEvolve:272",
-      "type": "functional"
     },
     {
       "source": "packages/mcp/src/tools.ts:file",
