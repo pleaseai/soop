@@ -164,23 +164,34 @@ function formatError(error: unknown): {
  * Load RPG from file path (reads companion .meta.json if present)
  */
 export async function loadRPG(filePath: string): Promise<RepositoryPlanningGraph> {
+  let graphJson: string
   try {
-    const graphJson = await readFile(filePath, 'utf-8')
-    let metaJson: string | undefined
-    try {
-      const { metaPathFor } = await import('@pleaseai/soop-graph/meta')
-      metaJson = await readFile(metaPathFor(filePath), 'utf-8')
-    }
-    catch {
-      // meta file is optional
-    }
-    return metaJson
-      ? await RepositoryPlanningGraph.fromJSONWithMeta(graphJson, metaJson)
-      : await RepositoryPlanningGraph.fromJSON(graphJson)
+    graphJson = await readFile(filePath, 'utf-8')
   }
-  catch {
-    throw invalidPathError(filePath)
+  catch (error) {
+    const code = (error as NodeJS.ErrnoException).code
+    if (code === 'ENOENT' || code === 'EACCES') {
+      throw invalidPathError(filePath)
+    }
+    throw error
   }
+
+  let metaJson: string | undefined
+  try {
+    const { metaPathFor } = await import('@pleaseai/soop-graph/meta')
+    metaJson = await readFile(metaPathFor(filePath), 'utf-8')
+  }
+  catch (metaError) {
+    const code = (metaError as NodeJS.ErrnoException).code
+    if (code !== 'ENOENT') {
+      log.warn(`Could not read meta file for ${filePath}: ${metaError instanceof Error ? metaError.message : String(metaError)}`)
+    }
+    // meta file is optional
+  }
+
+  return metaJson
+    ? await RepositoryPlanningGraph.fromJSONWithMeta(graphJson, metaJson)
+    : await RepositoryPlanningGraph.fromJSON(graphJson)
 }
 
 export interface StartMcpServerOptions {

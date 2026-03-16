@@ -65,7 +65,8 @@ export function registerSyncCommand(program: Command): void {
           const meta = deserializeMeta(JSON.parse(metaJson))
           canonicalCommit = meta.github?.commit
         }
-        catch {
+        catch (metaReadError) {
+          log.debug(`Could not read canonical meta file, falling back to graph: ${metaReadError instanceof Error ? metaReadError.message : String(metaReadError)}`)
           // Fallback: load from graph (backward compat)
           const canonicalRpg = await RepositoryPlanningGraph.fromJSON(canonicalJson)
           canonicalCommit = canonicalRpg.getConfig().github?.commit
@@ -91,6 +92,14 @@ export function registerSyncCommand(program: Command): void {
           || (canonicalCommit && localState.baseCommit !== canonicalCommit)
         if (needsCopy) {
           await copyFile(canonicalPath, localGraphPath)
+          try {
+            const canonicalMetaPath = metaPathFor(canonicalPath)
+            if (existsSync(canonicalMetaPath))
+              await copyFile(canonicalMetaPath, metaPathFor(localGraphPath))
+          }
+          catch (metaError) {
+            log.debug(`Could not copy canonical meta file: ${metaError instanceof Error ? metaError.message : String(metaError)}`)
+          }
           log.info('Copied canonical graph → local')
         }
 
@@ -125,6 +134,14 @@ export function registerSyncCommand(program: Command): void {
               log.warn('Falling back to canonical graph copy. Local branch changes are NOT reflected in the local graph.')
               try {
                 await copyFile(canonicalPath, localGraphPath)
+                try {
+                  const canonicalMetaPath = metaPathFor(canonicalPath)
+                  if (existsSync(canonicalMetaPath))
+                    await copyFile(canonicalMetaPath, metaPathFor(localGraphPath))
+                }
+                catch (metaError) {
+                  log.debug(`Could not copy canonical meta file: ${metaError instanceof Error ? metaError.message : String(metaError)}`)
+                }
               }
               catch (copyError) {
                 log.error('Failed to copy canonical graph as fallback', copyError)
@@ -139,6 +156,14 @@ export function registerSyncCommand(program: Command): void {
         else if (!needsEvolve && !needsCopy) {
           // On default branch and not yet copied
           await copyFile(canonicalPath, localGraphPath)
+          try {
+            const canonicalMetaPath = metaPathFor(canonicalPath)
+            if (existsSync(canonicalMetaPath))
+              await copyFile(canonicalMetaPath, metaPathFor(localGraphPath))
+          }
+          catch (metaError) {
+            log.debug(`Could not copy canonical meta file: ${metaError instanceof Error ? metaError.message : String(metaError)}`)
+          }
           log.info('On default branch — synced canonical graph to local')
         }
 

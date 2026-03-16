@@ -10,9 +10,11 @@ import {
   createDataFlowEdge,
   createDependencyEdge,
   createFunctionalEdge,
+  DataFlowEdgeSchema,
   isDataFlowEdge,
   isDependencyEdge,
   isFunctionalEdge,
+  LegacyDataFlowEdgeSchema,
 } from './edge'
 import { serializeMeta } from './meta'
 import {
@@ -517,9 +519,20 @@ export class RepositoryPlanningGraph {
   }
 
   static async deserialize(
-    data: PythonRPG,
+    data: PythonRPG | Record<string, unknown>,
     context?: ContextStore,
   ): Promise<RepositoryPlanningGraph> {
+    // Detect legacy v1.0.0 format: has `version` and `config` fields instead of `repo_name`
+    if (
+      typeof data === 'object'
+      && data !== null
+      && 'version' in data
+      && 'config' in data
+      && !('repo_name' in data)
+    ) {
+      return RepositoryPlanningGraph._deserializeLegacy(data as Record<string, unknown>, context)
+    }
+
     const parsed = PythonRPGSchema.parse(data)
     const config: RPGConfig = {
       name: parsed.repo_name,
@@ -561,6 +574,82 @@ export class RepositoryPlanningGraph {
       }
       catch (error) {
         log.warn(`Skipping invalid data_flow during deserialization: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
+
+    return rpg
+  }
+
+  /**
+   * Deserialize legacy v1.0.0 format: { version, config, nodes, edges, dataFlowEdges? }
+   */
+  private static async _deserializeLegacy(
+    data: Record<string, unknown>,
+    context?: ContextStore,
+  ): Promise<RepositoryPlanningGraph> {
+    const legacyConfig = data.config as RPGConfig
+    const config: RPGConfig = {
+      name: legacyConfig?.name ?? 'unknown',
+      rootPath: legacyConfig?.rootPath,
+      description: legacyConfig?.description,
+      github: legacyConfig?.github,
+    }
+    const rpg = await RepositoryPlanningGraph.create(config, context)
+    const nodes = Array.isArray(data.nodes) ? data.nodes : []
+    const edges = Array.isArray(data.edges) ? data.edges : []
+    const dataFlowEdges = Array.isArray(data.dataFlowEdges) ? data.dataFlowEdges : []
+
+    for (const nodeData of nodes) {
+      try {
+        await rpg.addNode(nodeData as Node)
+      }
+      catch (error) {
+        const id = (nodeData as any)?.id ?? 'unknown'
+        log.warn(`Skipping invalid legacy node "${id}" during deserialization: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
+
+    for (const edgeData of edges) {
+      try {
+        await rpg.addEdge(edgeData as Edge)
+      }
+      catch (error) {
+        const src = (edgeData as any)?.source ?? 'unknown'
+        const dst = (edgeData as any)?.target ?? 'unknown'
+        log.warn(`Skipping invalid legacy edge "${src}→${dst}" during deserialization: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
+
+    for (const dfEdge of dataFlowEdges) {
+      const newResult = DataFlowEdgeSchema.safeParse(dfEdge)
+      if (newResult.success) {
+        try {
+          await rpg.addEdge(newResult.data)
+        }
+        catch (error) {
+          log.warn(`Skipping invalid legacy data_flow during deserialization: ${error instanceof Error ? error.message : String(error)}`)
+        }
+        continue
+      }
+      const legacyResult = LegacyDataFlowEdgeSchema.safeParse(dfEdge)
+      if (legacyResult.success) {
+        try {
+          const legacy = legacyResult.data
+          const edge = createDataFlowEdge({
+            source: legacy.from,
+            target: legacy.to,
+            dataId: legacy.dataId,
+            dataType: legacy.dataType,
+            transformation: legacy.transformation,
+          })
+          await rpg.addEdge(edge)
+        }
+        catch (error) {
+          log.warn(`Skipping invalid legacy data_flow during deserialization: ${error instanceof Error ? error.message : String(error)}`)
+        }
+      }
+      else {
+        log.warn(`Skipping invalid legacy dataFlowEdge during deserialization`)
       }
     }
 

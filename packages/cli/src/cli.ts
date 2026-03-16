@@ -408,11 +408,17 @@ program
       const meta = deserializeMeta(JSON.parse(metaJson))
       commit = meta.github?.commit
     }
-    catch {
+    catch (metaError) {
+      log.debug(`Could not read meta file, falling back to graph: ${metaError instanceof Error ? metaError.message : String(metaError)}`)
       // Fallback: try loading from graph (for backward compat)
-      const json = await readFile(filePath, 'utf-8')
-      const rpg = await RepositoryPlanningGraph.fromJSON(json)
-      commit = rpg.getConfig().github?.commit
+      try {
+        const json = await readFile(filePath, 'utf-8')
+        const rpg = await RepositoryPlanningGraph.fromJSON(json)
+        commit = rpg.getConfig().github?.commit
+      }
+      catch (graphError) {
+        log.debug(`Could not load commit from graph: ${graphError instanceof Error ? graphError.message : String(graphError)}`)
+      }
     }
     if (!commit) {
       log.error('No commit stamp found')

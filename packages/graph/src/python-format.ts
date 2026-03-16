@@ -56,8 +56,8 @@ export const PythonRPGSchema = z.object({
   data_flow: z.array(z.unknown()),
   excluded_files: z.array(z.string()),
   repo_node_id: z.string().nullable(),
-  nodes: z.array(z.unknown()),
-  edges: z.array(z.unknown()),
+  nodes: z.array(PythonNodeSchema),
+  edges: z.array(PythonEdgeSchema),
   _dep_to_rpg_map: z.record(z.string(), z.array(z.string())),
   dep_graph: z.unknown().nullable(),
 })
@@ -221,7 +221,7 @@ export function toPythonNode(node: Node, level: number): PythonNode {
     node_type: levelToNodeType(level),
     level,
     meta: {
-      type_name: entityTypeToTypeName(node.metadata?.entityType),
+      type_name: entityTypeToTypeName(node.metadata?.entityType) ?? 'file',
       path: node.metadata?.path ?? null,
       description: node.feature.description,
       content: node.sourceCode ?? '',

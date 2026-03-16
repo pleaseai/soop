@@ -552,7 +552,11 @@ export class RPGEncoder {
     try {
       metaJson = await readFile(metaPath, 'utf-8')
     }
-    catch {
+    catch (metaError) {
+      const code = (metaError as NodeJS.ErrnoException).code
+      if (code !== 'ENOENT') {
+        log.warn(`Could not read meta file at "${metaPath}": ${metaError instanceof Error ? metaError.message : String(metaError)}`)
+      }
       // meta file is optional
     }
 
