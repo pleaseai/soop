@@ -31,4 +31,4 @@ See [config.yml](config.yml) for workspace settings.
 
 - `/please:new-track` — Create feature specification and architecture plan
 - `/please:implement` — TDD implementation from plan file
-- `/please:finalize` — Finalize PR, move track to completed
+- `/please:finalize` — Finalize PR, move track to completed, update tech debt

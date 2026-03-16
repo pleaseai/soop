@@ -9,8 +9,8 @@
 ## Code Style
 
 - **TypeScript** with strict type checking (`tsc --noEmit`)
-- **ESLint** with `@antfu/eslint-config` for consistent formatting
-- **Zod** for runtime schema validation of graph data
+- **ESLint 10** with `@antfu/eslint-config` for consistent formatting
+- **Zod 4** for runtime schema validation of graph data
 - Prefer workspace package imports (`@pleaseai/soop-*`) over relative cross-package paths
 - Within-package imports use relative paths
 
@@ -23,7 +23,7 @@
 
 ## Testing
 
-- **Vitest** as test framework (Jest-compatible)
+- **Vitest 4.x** as test framework (Jest-compatible)
 - Unit tests: `*.test.ts` in `packages/*/tests/`
 - Integration tests: `*.integration.test.ts`
 - Guard git-history-dependent tests with `it.skipIf`
