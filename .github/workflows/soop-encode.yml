@@ -16,6 +16,7 @@ on:
       - '!**/dist/**'
       - '!**/build/**'
       - '!.soop/graph.json'
+      - '!.soop/graph.meta.json'
       - '!.soop/embeddings.json'
 
 concurrency:
