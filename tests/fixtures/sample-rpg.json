@@ -1,123 +1,126 @@
 {
-  "version": "1.0.0",
-  "config": {
-    "name": "sample-project",
-    "rootPath": "/tmp/sample-project",
-    "description": "A sample project for testing MCP tools"
-  },
+  "repo_name": "sample-project",
+  "repo_info": "A sample project for testing MCP tools",
+  "data_flow": [],
+  "excluded_files": [],
+  "repo_node_id": "root",
   "nodes": [
     {
       "id": "root",
-      "type": "high_level",
-      "feature": {
+      "name": "sample-project",
+      "node_type": "repo",
+      "level": 0,
+      "meta": {
+        "type_name": "directory",
+        "path": "/",
         "description": "Sample project root",
-        "keywords": ["project", "root", "sample"]
-      },
-      "directoryPath": "/"
+        "content": ""
+      }
     },
     {
       "id": "utils",
-      "type": "high_level",
-      "feature": {
+      "name": "utils",
+      "node_type": "functional_area",
+      "level": 1,
+      "meta": {
+        "type_name": "directory",
+        "path": "/utils",
         "description": "Utility functions module",
-        "keywords": ["utils", "helpers", "utilities"]
-      },
-      "directoryPath": "/utils"
+        "content": ""
+      }
     },
     {
       "id": "utils/math.ts",
-      "type": "low_level",
-      "feature": {
-        "description": "Mathematical utility functions",
-        "keywords": ["math", "calculation", "numbers"],
-        "subFeatures": ["add numbers", "multiply numbers"]
-      },
-      "metadata": {
-        "entityType": "file",
+      "name": "math.ts",
+      "node_type": "category",
+      "level": 2,
+      "meta": {
+        "type_name": "file",
         "path": "utils/math.ts",
-        "language": "typescript"
-      },
-      "sourceCode": "export function add(a: number, b: number): number {\n  return a + b;\n}\n\nexport function multiply(a: number, b: number): number {\n  return a * b;\n}"
+        "description": "Mathematical utility functions",
+        "content": "export function add(a: number, b: number): number {\n  return a + b;\n}\n\nexport function multiply(a: number, b: number): number {\n  return a * b;\n}"
+      }
     },
     {
       "id": "utils/string.ts",
-      "type": "low_level",
-      "feature": {
-        "description": "String manipulation utilities",
-        "keywords": ["string", "text", "format"]
-      },
-      "metadata": {
-        "entityType": "file",
+      "name": "string.ts",
+      "node_type": "category",
+      "level": 2,
+      "meta": {
+        "type_name": "file",
         "path": "utils/string.ts",
-        "language": "typescript"
-      },
-      "sourceCode": "export function capitalize(str: string): string {\n  return str.charAt(0).toUpperCase() + str.slice(1);\n}"
+        "description": "String manipulation utilities",
+        "content": "export function capitalize(str: string): string {\n  return str.charAt(0).toUpperCase() + str.slice(1);\n}"
+      }
     },
     {
       "id": "services",
-      "type": "high_level",
-      "feature": {
+      "name": "services",
+      "node_type": "functional_area",
+      "level": 1,
+      "meta": {
+        "type_name": "directory",
+        "path": "/services",
         "description": "Business logic services",
-        "keywords": ["services", "business", "logic"]
-      },
-      "directoryPath": "/services"
+        "content": ""
+      }
     },
     {
       "id": "services/calculator.ts",
-      "type": "low_level",
-      "feature": {
-        "description": "Calculator service using math utilities",
-        "keywords": ["calculator", "compute", "math"]
-      },
-      "metadata": {
-        "entityType": "file",
+      "name": "calculator.ts",
+      "node_type": "category",
+      "level": 2,
+      "meta": {
+        "type_name": "file",
         "path": "services/calculator.ts",
-        "language": "typescript"
+        "description": "Calculator service using math utilities",
+        "content": ""
       }
     }
   ],
   "edges": [
     {
-      "source": "root",
-      "target": "utils",
-      "type": "functional",
-      "level": 1,
-      "siblingOrder": 0
+      "src": "root",
+      "dst": "services",
+      "relation": "composes",
+      "meta": null
     },
     {
-      "source": "root",
-      "target": "services",
-      "type": "functional",
-      "level": 1,
-      "siblingOrder": 1
+      "src": "root",
+      "dst": "utils",
+      "relation": "composes",
+      "meta": null
     },
     {
-      "source": "utils",
-      "target": "utils/math.ts",
-      "type": "functional",
-      "level": 2,
-      "siblingOrder": 0
+      "src": "services",
+      "dst": "services/calculator.ts",
+      "relation": "composes",
+      "meta": null
     },
     {
-      "source": "utils",
-      "target": "utils/string.ts",
-      "type": "functional",
-      "level": 2,
-      "siblingOrder": 1
+      "src": "services/calculator.ts",
+      "dst": "utils/math.ts",
+      "relation": "imports",
+      "meta": {
+        "type_name": "import",
+        "path": null,
+        "description": "",
+        "content": ""
+      }
     },
     {
-      "source": "services",
-      "target": "services/calculator.ts",
-      "type": "functional",
-      "level": 2,
-      "siblingOrder": 0
+      "src": "utils",
+      "dst": "utils/math.ts",
+      "relation": "composes",
+      "meta": null
     },
     {
-      "source": "services/calculator.ts",
-      "target": "utils/math.ts",
-      "type": "dependency",
-      "dependencyType": "import",
-      "isRuntime": false
+      "src": "utils",
+      "dst": "utils/string.ts",
+      "relation": "composes",
+      "meta": null
     }
-  ]
+  ],
+  "_dep_to_rpg_map": {},
+  "dep_graph": null
 }

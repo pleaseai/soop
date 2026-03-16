@@ -1,26 +1,36 @@
 import type { ContextStore } from '@pleaseai/soop-store/context-store'
 import type { DataFlowEdge, DependencyEdge, Edge, EdgeType, FunctionalEdge } from './edge'
+import type { RPGMeta } from './meta'
 import type { HighLevelNode, LowLevelNode, Node, SemanticFeature, StructuralMetadata } from './node'
+import type { PythonRPG } from './python-format'
 import { DefaultContextStore } from '@pleaseai/soop-store/default-context-store'
 import { createLogger } from '@pleaseai/soop-utils/logger'
-import { z } from 'zod/v4'
 import { attrsToEdge, attrsToNode, edgeToAttrs, nodeToAttrs, nodeToSearchFields } from './adapters'
 import {
   createDataFlowEdge,
   createDependencyEdge,
   createFunctionalEdge,
-  DataFlowEdgeSchema,
   isDataFlowEdge,
   isDependencyEdge,
   isFunctionalEdge,
-  LegacyDataFlowEdgeSchema,
 } from './edge'
+import { serializeMeta } from './meta'
 import {
   createHighLevelNode,
   createLowLevelNode,
   isHighLevelNode,
   isLowLevelNode,
 } from './node'
+import {
+  computeNodeLevels,
+  fromPythonDataFlow,
+  fromPythonEdge,
+  fromPythonNode,
+  PythonRPGSchema,
+  toPythonDataFlow,
+  toPythonEdge,
+  toPythonNode,
+} from './python-format'
 
 const log = createLogger('RPG')
 
@@ -63,27 +73,11 @@ export interface RPGConfig {
 }
 
 /**
- * Serialized RPG format for persistence
+ * Serialized RPG format — Python-compatible rpg_encoder.json format.
+ * Re-exported from python-format.ts for convenience.
  */
-export const SerializedRPGSchema = z.object({
-  version: z.string(),
-  config: z.object({
-    name: z.string(),
-    rootPath: z.string().optional(),
-    description: z.string().optional(),
-    github: z.object({
-      owner: z.string(),
-      repo: z.string(),
-      commit: z.string(),
-      pathPrefix: z.string().optional(),
-    }).optional(),
-  }),
-  nodes: z.array(z.unknown()),
-  edges: z.array(z.unknown()),
-  dataFlowEdges: z.array(z.unknown()).optional(),
-})
-
-export type SerializedRPG = z.infer<typeof SerializedRPGSchema>
+export { PythonRPGSchema as SerializedRPGSchema } from './python-format'
+export type { PythonRPG as SerializedRPG } from './python-format'
 
 /**
  * Repository Planning Graph
@@ -453,27 +447,60 @@ export class RepositoryPlanningGraph {
 
   // ==================== Serialization ====================
 
-  async serialize(): Promise<SerializedRPG> {
+  async serialize(): Promise<PythonRPG> {
     const nodes = await this.getNodes()
     const allEdges = await this.getEdges()
 
-    // Separate data flow edges from other edges for backward compat serialization
-    const regularEdges = allEdges.filter(e => e.type !== 'data_flow')
-    const dataFlowEdges = allEdges.filter(isDataFlowEdge)
+    const functionalEdges = allEdges.filter(isFunctionalEdge)
+    const levels = computeNodeLevels(
+      nodes.map(n => n.id),
+      functionalEdges,
+    )
 
-    const result: SerializedRPG = {
-      version: '1.0.0',
-      config: this.config,
-      nodes: nodes.toSorted((a, b) => a.id.localeCompare(b.id)),
-      edges: regularEdges.toSorted((a, b) => a.source.localeCompare(b.source) || a.target.localeCompare(b.target)),
+    // Find root node (level 0, or create virtual)
+    let repoNodeId: string | null = null
+    for (const [id, level] of levels) {
+      if (level === 0) {
+        repoNodeId = id
+        break
+      }
     }
-    if (dataFlowEdges.length > 0) {
-      result.dataFlowEdges = dataFlowEdges.toSorted((a, b) =>
-        a.source.localeCompare(b.source)
-        || a.target.localeCompare(b.target)
-        || a.dataId.localeCompare(b.dataId))
+    if (!repoNodeId) {
+      repoNodeId = `${this.config.name}_L0`
     }
-    return result
+
+    // Convert nodes to Python format
+    const pythonNodes = nodes
+      .map(n => toPythonNode(n, levels.get(n.id) ?? 5))
+      .sort((a, b) => a.id.localeCompare(b.id))
+
+    // Convert edges (excluding data_flow)
+    const regularEdges = allEdges.filter(e => e.type !== 'data_flow')
+    const pythonEdges = regularEdges
+      .map(e => toPythonEdge(e))
+      .sort((a, b) => a.src.localeCompare(b.src) || a.dst.localeCompare(b.dst))
+
+    // Data flow edges
+    const dataFlowEdges = allEdges.filter(isDataFlowEdge)
+    const dataFlow = dataFlowEdges
+      .map(e => toPythonDataFlow(e))
+      .filter(Boolean)
+
+    return {
+      repo_name: this.config.name,
+      repo_info: this.config.description ?? '',
+      data_flow: dataFlow,
+      excluded_files: [],
+      repo_node_id: repoNodeId,
+      nodes: pythonNodes,
+      edges: pythonEdges,
+      _dep_to_rpg_map: {},
+      dep_graph: null,
+    }
+  }
+
+  serializeMeta(): RPGMeta {
+    return serializeMeta(this.config)
   }
 
   async toJSON(): Promise<string> {
@@ -481,58 +508,59 @@ export class RepositoryPlanningGraph {
     return JSON.stringify(data, null, 2)
   }
 
+  async toJSONWithMeta(): Promise<{ graphJson: string, metaJson: string }> {
+    const data = await this.serialize()
+    return {
+      graphJson: JSON.stringify(data, null, 2),
+      metaJson: JSON.stringify(this.serializeMeta(), null, 2),
+    }
+  }
+
   static async deserialize(
-    data: SerializedRPG,
+    data: PythonRPG,
     context?: ContextStore,
   ): Promise<RepositoryPlanningGraph> {
-    const parsed = SerializedRPGSchema.parse(data)
-    const rpg = await RepositoryPlanningGraph.create(parsed.config, context)
+    const parsed = PythonRPGSchema.parse(data)
+    const config: RPGConfig = {
+      name: parsed.repo_name,
+      description: parsed.repo_info || undefined,
+    }
+    const rpg = await RepositoryPlanningGraph.create(config, context)
 
-    // Import nodes and edges
+    // Import nodes
     for (const nodeData of parsed.nodes) {
-      const node = nodeData as Node
       try {
+        const node = fromPythonNode(nodeData as any)
         await rpg.addNode(node)
       }
       catch (error) {
-        log.warn(`Skipping invalid node "${node.id}" during deserialization: ${error instanceof Error ? error.message : String(error)}`)
-      }
-    }
-    for (const edgeData of parsed.edges) {
-      const edge = edgeData as Edge
-      try {
-        await rpg.addEdge(edge)
-      }
-      catch (error) {
-        log.warn(`Skipping invalid edge "${edge.source}→${edge.target}" during deserialization: ${error instanceof Error ? error.message : String(error)}`)
+        const id = (nodeData as any)?.id ?? 'unknown'
+        log.warn(`Skipping invalid node "${id}" during deserialization: ${error instanceof Error ? error.message : String(error)}`)
       }
     }
 
-    // Import data flow edges with individual validation (supports both legacy from/to and new source/target)
-    if (parsed.dataFlowEdges) {
-      for (const dfEdge of parsed.dataFlowEdges) {
-        // Try new format first (source/target with type)
-        const newResult = DataFlowEdgeSchema.safeParse(dfEdge)
-        if (newResult.success) {
-          await rpg.addEdge(newResult.data)
-          continue
-        }
-        // Try legacy format (from/to without type)
-        const legacyResult = LegacyDataFlowEdgeSchema.safeParse(dfEdge)
-        if (legacyResult.success) {
-          const legacy = legacyResult.data
-          const edge = createDataFlowEdge({
-            source: legacy.from,
-            target: legacy.to,
-            dataId: legacy.dataId,
-            dataType: legacy.dataType,
-            transformation: legacy.transformation,
-          })
+    // Import edges
+    for (const edgeData of parsed.edges) {
+      try {
+        const edge = fromPythonEdge(edgeData as any)
+        await rpg.addEdge(edge)
+      }
+      catch (error) {
+        const src = (edgeData as any)?.src ?? 'unknown'
+        const dst = (edgeData as any)?.dst ?? 'unknown'
+        log.warn(`Skipping invalid edge "${src}→${dst}" during deserialization: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
+
+    // Import data flow
+    for (const dfData of parsed.data_flow) {
+      try {
+        const edge = fromPythonDataFlow(dfData)
+        if (edge)
           await rpg.addEdge(edge)
-        }
-        else {
-          log.warn(`Skipping invalid dataFlowEdge during deserialization: new-format error: ${newResult.error.message}; legacy-format error: ${legacyResult.error.message}`)
-        }
+      }
+      catch (error) {
+        log.warn(`Skipping invalid data_flow during deserialization: ${error instanceof Error ? error.message : String(error)}`)
       }
     }
 
@@ -544,6 +572,23 @@ export class RepositoryPlanningGraph {
     context?: ContextStore,
   ): Promise<RepositoryPlanningGraph> {
     return RepositoryPlanningGraph.deserialize(JSON.parse(json), context)
+  }
+
+  static async fromJSONWithMeta(
+    graphJson: string,
+    metaJson?: string,
+    context?: ContextStore,
+  ): Promise<RepositoryPlanningGraph> {
+    const rpg = await RepositoryPlanningGraph.fromJSON(graphJson, context)
+    if (metaJson) {
+      const { deserializeMeta } = await import('./meta')
+      const meta = deserializeMeta(JSON.parse(metaJson))
+      rpg.updateConfig({
+        rootPath: meta.rootPath,
+        github: meta.github,
+      })
+    }
+    return rpg
   }
 
   // ==================== Statistics ====================

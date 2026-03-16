@@ -397,14 +397,25 @@ program
 // Last-commit command
 program
   .command('last-commit')
-  .description('Print the last encoded commit SHA from config.github.commit')
+  .description('Print the last encoded commit SHA from .meta.json')
   .argument('<file>', 'RPG file path')
   .action(async (filePath: string) => {
-    const json = await readFile(filePath, 'utf-8')
-    const rpg = await RepositoryPlanningGraph.fromJSON(json)
-    const commit = rpg.getConfig().github?.commit
+    const { metaPathFor, deserializeMeta } = await import('@pleaseai/soop-graph/meta')
+    const metaFile = metaPathFor(filePath)
+    let commit: string | undefined
+    try {
+      const metaJson = await readFile(metaFile, 'utf-8')
+      const meta = deserializeMeta(JSON.parse(metaJson))
+      commit = meta.github?.commit
+    }
+    catch {
+      // Fallback: try loading from graph (for backward compat)
+      const json = await readFile(filePath, 'utf-8')
+      const rpg = await RepositoryPlanningGraph.fromJSON(json)
+      commit = rpg.getConfig().github?.commit
+    }
     if (!commit) {
-      log.error('No commit stamp found in RPG config')
+      log.error('No commit stamp found')
       process.exit(1)
     }
     console.log(commit)

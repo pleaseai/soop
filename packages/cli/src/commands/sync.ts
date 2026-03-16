@@ -55,11 +55,21 @@ export function registerSyncCommand(program: Command): void {
           process.exit(1)
         }
 
-        // 4. Read canonical graph to get base commit
+        // 4. Read canonical graph + meta to get base commit
         const { RepositoryPlanningGraph } = await import('@pleaseai/soop-graph')
+        const { metaPathFor, deserializeMeta } = await import('@pleaseai/soop-graph/meta')
         const canonicalJson = await readFile(canonicalPath, 'utf-8')
-        const canonicalRpg = await RepositoryPlanningGraph.fromJSON(canonicalJson)
-        const canonicalCommit = canonicalRpg.getConfig().github?.commit
+        let canonicalCommit: string | undefined
+        try {
+          const metaJson = await readFile(metaPathFor(canonicalPath), 'utf-8')
+          const meta = deserializeMeta(JSON.parse(metaJson))
+          canonicalCommit = meta.github?.commit
+        }
+        catch {
+          // Fallback: load from graph (backward compat)
+          const canonicalRpg = await RepositoryPlanningGraph.fromJSON(canonicalJson)
+          canonicalCommit = canonicalRpg.getConfig().github?.commit
+        }
 
         // 5. Determine if we need to evolve
         let localState: LocalState | undefined

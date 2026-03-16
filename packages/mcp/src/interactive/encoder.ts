@@ -903,8 +903,11 @@ export class InteractiveEncoder {
     const outputDir = path.join(this.state.repoPath, '.repo')
     await mkdir(outputDir, { recursive: true })
 
-    const json = await this.state.rpg.toJSON()
-    await writeFile(path.join(outputDir, 'graph.json'), json)
+    const { metaPathFor } = await import('@pleaseai/soop-graph/meta')
+    const graphPath = path.join(outputDir, 'graph.json')
+    const { graphJson, metaJson } = await this.state.rpg.toJSONWithMeta()
+    await writeFile(graphPath, graphJson)
+    await writeFile(metaPathFor(graphPath), metaJson)
   }
 }
 

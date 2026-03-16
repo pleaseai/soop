@@ -161,12 +161,22 @@ function formatError(error: unknown): {
 }
 
 /**
- * Load RPG from file path
+ * Load RPG from file path (reads companion .meta.json if present)
  */
 export async function loadRPG(filePath: string): Promise<RepositoryPlanningGraph> {
   try {
-    const content = await readFile(filePath, 'utf-8')
-    return await RepositoryPlanningGraph.fromJSON(content)
+    const graphJson = await readFile(filePath, 'utf-8')
+    let metaJson: string | undefined
+    try {
+      const { metaPathFor } = await import('@pleaseai/soop-graph/meta')
+      metaJson = await readFile(metaPathFor(filePath), 'utf-8')
+    }
+    catch {
+      // meta file is optional
+    }
+    return metaJson
+      ? await RepositoryPlanningGraph.fromJSONWithMeta(graphJson, metaJson)
+      : await RepositoryPlanningGraph.fromJSON(graphJson)
   }
   catch {
     throw invalidPathError(filePath)

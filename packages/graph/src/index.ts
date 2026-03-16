@@ -26,6 +26,11 @@ export {
 
 export type { BaseEdge, DataFlowEdge, DependencyEdge, Edge, FunctionalEdge } from './edge'
 
+// Meta (companion .meta.json file)
+export { deserializeMeta, metaPathFor, RPGMetaSchema, serializeMeta } from './meta'
+
+export type { RPGMeta } from './meta'
+
 // Node types and utilities
 export {
   BaseNodeSchema,
@@ -50,6 +55,21 @@ export type {
   SemanticFeature,
   StructuralMetadata,
 } from './node'
+
+// Python-compatible format types
+export {
+  computeNodeLevels,
+  fromPythonEdge,
+  fromPythonNode,
+  levelToNodeType,
+  PythonEdgeSchema,
+  PythonNodeSchema,
+  PythonRPGSchema,
+  toPythonEdge,
+  toPythonNode,
+} from './python-format'
+
+export type { PythonEdge, PythonNode, PythonRPG } from './python-format'
 
 // Repository Planning Graph
 export { RepositoryPlanningGraph, SerializedRPGSchema } from './rpg'
