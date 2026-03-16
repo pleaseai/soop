@@ -12,7 +12,7 @@
 | Category | Technology | Version | Notes |
 |----------|-----------|---------|-------|
 | Bundler | tsdown | 0.21 | Rolldown-based, bundles workspace packages inline |
-| Monorepo | Bun workspaces + Turbo | 2.8 | Private root, 12 packages under `packages/` |
+| Monorepo | Bun workspaces + Turbo | 2.8 | Private root, multiple packages under `packages/` |
 | Linter | ESLint | 10 | `@antfu/eslint-config` |
 | Type check | tsc | — | `--noEmit` for validation |
 | Git hooks | Husky | 9 | Pre-commit linting |

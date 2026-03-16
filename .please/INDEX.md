@@ -6,7 +6,6 @@
 
 | Document | Purpose |
 |---|---|
-| [`../ARCHITECTURE.md`](../ARCHITECTURE.md) | Repository-level bird's-eye view |
 | [`../CLAUDE.md`](../CLAUDE.md) | Project-level AI instructions |
 
 ## Directory Map
