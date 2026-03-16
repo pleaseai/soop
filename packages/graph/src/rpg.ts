@@ -494,6 +494,9 @@ export class RepositoryPlanningGraph {
     const dataFlow = dataFlowEdges
       .map(e => toPythonDataFlow(e))
       .filter(Boolean)
+      .sort((a: any, b: any) =>
+        String(a?.source ?? '').localeCompare(String(b?.source ?? ''))
+        || String(a?.target ?? '').localeCompare(String(b?.target ?? '')))
 
     return {
       repo_name: this.config.name,
