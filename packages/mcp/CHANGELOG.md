@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.3.0](https://github.com/pleaseai/soop/compare/soop-mcp-v0.2.0...soop-mcp-v0.3.0) (2026-03-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* **encoder:** evolve CLI interface changed — requires <repo-path> positional arg, --graph option renamed to -l/--load-path, --stamp flag removed (auto-applied in save()).
+
+### Features
+
+* **cli:** integrate soop-mcp into soop mcp subcommand ([#228](https://github.com/pleaseai/soop/issues/228)) ([8dd7426](https://github.com/pleaseai/soop/commit/8dd74266ce1ca0065a5da91719e1dcb79903f897))
+* **encoder:** add git-managed vector embeddings with Float16 codec ([#74](https://github.com/pleaseai/soop/issues/74)) ([d3fdb4d](https://github.com/pleaseai/soop/commit/d3fdb4d0499b1e0aaa17cb94ad1ed6bcc9b4e4c5))
+* **encoder:** support flexible 2-5 level hierarchy and evolution area creation ([#155](https://github.com/pleaseai/soop/issues/155)) ([7e12b26](https://github.com/pleaseai/soop/commit/7e12b268f7cf5357435eddcc443425a08831ee13))
+* **namu,ast:** migrate to WASM tree-sitter and extract @pleaseai/soop-ast package ([#185](https://github.com/pleaseai/soop/issues/185)) ([0b29d7a](https://github.com/pleaseai/soop/commit/0b29d7ad39cb80a16bb7bd8766c83c1ec8f00904))
+* rebrand from rpg to repo please with monorepo restructure ([#117](https://github.com/pleaseai/soop/issues/117)) ([d4b805a](https://github.com/pleaseai/soop/commit/d4b805abc23f20e8ac3fe1b375c105ba7a6c9b33))
+* **store:** add BM25 scoring to LocalTextSearchStore ([#233](https://github.com/pleaseai/soop/issues/233)) ([d04445d](https://github.com/pleaseai/soop/commit/d04445dc81f19e12e7086d6fdb0c6ac48a918195))
+* **store:** add zero-dependency local fallback stores and make native deps optional ([#92](https://github.com/pleaseai/soop/issues/92)) ([edf43fe](https://github.com/pleaseai/soop/commit/edf43fe5e25871723ae1742f795471768560380d))
+
+
+### Bug Fixes
+
+* **build:** resolve Bun compile errors for cross-platform binary distribution ([#114](https://github.com/pleaseai/soop/issues/114)) ([1f9ce01](https://github.com/pleaseai/soop/commit/1f9ce01e67825b2019733f6c28cdfe984a4379d6))
+* **mcp:** replace top-level await with promise chain for cross-compilation ([#173](https://github.com/pleaseai/soop/issues/173)) ([a14303d](https://github.com/pleaseai/soop/commit/a14303d8cf8d3dd1f1887eda1432976440ed59b1))
+* **mcp:** use basename for vector store path to prevent nested directories ([#235](https://github.com/pleaseai/soop/issues/235)) ([84e4d07](https://github.com/pleaseai/soop/commit/84e4d0767732233ab00c4d8cdd81661f15a633e7))
+
+
+### Code Refactoring
+
+* **encoder:** align RPGEncoder API and CLI with reference implementation ([#231](https://github.com/pleaseai/soop/issues/231)) ([9a2a89a](https://github.com/pleaseai/soop/commit/9a2a89a464b265caf951fc54cbe4879d5933d52c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.10
+    * @pleaseai/soop-encoder bumped to 0.3.0
+    * @pleaseai/soop-tools bumped to 0.1.12
+
 ## [0.2.0](https://github.com/pleaseai/soop/compare/soop-mcp-v0.1.12...soop-mcp-v0.2.0) (2026-03-14)
 
 

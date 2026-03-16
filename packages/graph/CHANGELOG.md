@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.9...soop-graph-v0.1.10) (2026-03-16)
+
+
+### Bug Fixes
+
+* **encoder:** resolve dependency rebuild UNIQUE constraint and embedding ID mismatch ([#239](https://github.com/pleaseai/soop/issues/239)) ([b43f9a0](https://github.com/pleaseai/soop/commit/b43f9a011c05050d17c1073e92f089b83a765d95))
+
 ## [0.1.9](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.8...soop-graph-v0.1.9) (2026-03-14)
 
 

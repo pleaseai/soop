@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.1](https://github.com/pleaseai/soop/compare/soop-cli-v0.2.0...soop-cli-v0.2.1) (2026-03-16)
+
+
+### Bug Fixes
+
+* **encoder:** resolve dependency rebuild UNIQUE constraint and embedding ID mismatch ([#239](https://github.com/pleaseai/soop/issues/239)) ([b43f9a0](https://github.com/pleaseai/soop/commit/b43f9a011c05050d17c1073e92f089b83a765d95))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-encoder bumped to 0.3.0
+    * @pleaseai/soop-graph bumped to 0.1.10
+    * @pleaseai/soop-mcp bumped to 0.3.0
+    * @pleaseai/soop-tools bumped to 0.1.12
+    * @pleaseai/soop-zerorepo bumped to 0.1.10
+
 ## [0.2.0](https://github.com/pleaseai/soop/compare/soop-cli-v0.1.11...soop-cli-v0.2.0) (2026-03-14)
 
 
