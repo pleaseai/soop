@@ -6,7 +6,7 @@
     "github": {
       "owner": "",
       "repo": ".",
-      "commit": "29b01fb47898d56031c3d1ba3555baded0794acf"
+      "commit": "b43f9a011c05050d17c1073e92f089b83a765d95"
     }
   },
   "nodes": [
@@ -1466,7 +1466,7 @@
         "path": "packages/cli/src/cli.ts",
         "qualifiedName": "packages/cli/src/cli.ts",
         "startLine": 1,
-        "endLine": 588
+        "endLine": 589
       }
     },
     {
@@ -3530,6 +3530,33 @@
       }
     },
     {
+      "id": "packages/encoder/src/dependency-injection.ts:file:packages/encoder/src/dependency-injection.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "inject dependency edges into repository planning graph",
+        "keywords": [
+          "dependency injection",
+          "ast analysis",
+          "code graph",
+          "static analysis",
+          "module resolution"
+        ],
+        "subFeatures": [
+          "resolve import module paths",
+          "extract import dependency edges",
+          "extract function call edges",
+          "extract class inheritance edges"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/encoder/src/dependency-injection.ts",
+        "qualifiedName": "packages/encoder/src/dependency-injection.ts",
+        "startLine": 1,
+        "endLine": 341
+      }
+    },
+    {
       "id": "packages/encoder/src/dependency-injection.ts:function:addCallEdges:209",
       "type": "low_level",
       "feature": {
@@ -3630,30 +3657,32 @@
       }
     },
     {
-      "id": "packages/encoder/src/dependency-injection.ts:function:injectDependencies:58",
+      "id": "packages/encoder/src/dependency-injection.ts:function:injectDependencies",
       "type": "low_level",
       "feature": {
-        "description": "inject code dependencies into repository graph",
+        "description": "rebuild repository dependency graph",
         "keywords": [
-          "dependency-injection",
-          "repository-graph",
-          "ast-parsing",
-          "symbol-resolution",
-          "inheritance-extraction"
+          "dependency",
+          "injection",
+          "graph",
+          "repository",
+          "ast",
+          "rebuild"
         ],
         "subFeatures": [
-          "map file paths to node identifiers",
-          "parse source code files",
-          "create import dependency edges",
-          "build cross-file symbol table",
-          "extract class inheritance relations"
+          "map file paths to nodes",
+          "remove existing dependency edges",
+          "extract code call relationships",
+          "extract inheritance relationships",
+          "resolve code symbols"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/encoder/src/dependency-injection.ts",
+        "qualifiedName": "injectDependencies",
         "startLine": 58,
-        "endLine": 138
+        "endLine": 161
       }
     },
     {
@@ -6237,8 +6266,9 @@
       "metadata": {
         "entityType": "class",
         "path": "packages/encoder/src/evolution/evolve.ts",
+        "qualifiedName": "RPGEvolver",
         "startLine": 17,
-        "endLine": 222
+        "endLine": 231
       }
     },
     {
@@ -6255,6 +6285,34 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/encoder/src/evolution/evolve.ts"
+      }
+    },
+    {
+      "id": "packages/encoder/src/evolution/evolve.ts:file:packages/encoder/src/evolution/evolve.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "evolve repository planning graph",
+        "keywords": [
+          "evolution",
+          "graph",
+          "repository",
+          "refactoring",
+          "automation"
+        ],
+        "subFeatures": [
+          "initialize evolution components",
+          "parse repository code changes",
+          "extract semantic code information",
+          "route semantic graph updates",
+          "apply graph node modifications"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/encoder/src/evolution/evolve.ts",
+        "qualifiedName": "packages/encoder/src/evolution/evolve.ts",
+        "startLine": 1,
+        "endLine": 232
       }
     },
     {
@@ -6357,8 +6415,9 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/encoder/src/evolution/evolve.ts",
+        "qualifiedName": "RPGEvolver.evolve",
         "startLine": 38,
-        "endLine": 178
+        "endLine": 187
       }
     },
     {
@@ -6418,6 +6477,31 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/encoder/src/evolution/operations.ts"
+      }
+    },
+    {
+      "id": "packages/encoder/src/evolution/operations.ts:file:packages/encoder/src/evolution/operations.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "delete repository graph node",
+        "keywords": [
+          "graph",
+          "evolution",
+          "pruning",
+          "node",
+          "repository"
+        ],
+        "subFeatures": [
+          "remove graph node",
+          "prune empty ancestor nodes"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/encoder/src/evolution/operations.ts",
+        "qualifiedName": "packages/encoder/src/evolution/operations.ts",
+        "startLine": 1,
+        "endLine": 410
       }
     },
     {
@@ -6607,16 +6691,16 @@
         ],
         "subFeatures": [
           "locate existing graph node",
-          "insert new graph node",
-          "extract semantic entity features",
+          "extract entity semantic features",
           "compute semantic drift score",
-          "delete stale graph node",
-          "update existing node metadata"
+          "rebuild graph node on drift",
+          "update existing graph node"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/encoder/src/evolution/operations.ts",
+        "qualifiedName": "processModification",
         "startLine": 250,
         "endLine": 312
       }
@@ -13000,7 +13084,7 @@
         "path": "packages/graph/src/rpg.ts",
         "qualifiedName": "RepositoryPlanningGraph",
         "startLine": 97,
-        "endLine": 608
+        "endLine": 613
       }
     },
     {
@@ -13045,7 +13129,7 @@
         "path": "packages/graph/src/rpg.ts",
         "qualifiedName": "packages/graph/src/rpg.ts",
         "startLine": 1,
-        "endLine": 609
+        "endLine": 614
       }
     },
     {
@@ -13780,6 +13864,27 @@
         "path": "packages/graph/src/rpg.ts",
         "startLine": 171,
         "endLine": 177
+      }
+    },
+    {
+      "id": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.removeEdge",
+      "type": "low_level",
+      "feature": {
+        "description": "remove graph edge",
+        "keywords": [
+          "graph",
+          "edge",
+          "repository",
+          "planning"
+        ],
+        "subFeatures": []
+      },
+      "metadata": {
+        "entityType": "method",
+        "path": "packages/graph/src/rpg.ts",
+        "qualifiedName": "RepositoryPlanningGraph.removeEdge",
+        "startLine": 236,
+        "endLine": 238
       }
     },
     {
@@ -22957,6 +23062,16 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/dependency-injection.ts:file:packages/encoder/src/dependency-injection.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/dependency-injection.ts:function:injectDependencies",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/encoder/src/embedding-manager.ts:file",
       "type": "functional"
     },
@@ -23007,12 +23122,22 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/evolution/evolve.ts:file:packages/encoder/src/evolution/evolve.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/encoder/src/evolution/index.ts:file",
       "type": "functional"
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/encoder/src/evolution/operations.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/encoder/src/evolution/operations.ts:file:packages/encoder/src/evolution/operations.ts",
       "type": "functional"
     },
     {
@@ -23343,6 +23468,11 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/graph/src/rpg.ts:file:packages/graph/src/rpg.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/graph/src/rpg.ts:method:RepositoryPlanningGraph.removeEdge",
       "type": "functional"
     },
     {
@@ -24961,11 +25091,6 @@
     },
     {
       "source": "packages/encoder/src/dependency-injection.ts:file",
-      "target": "packages/encoder/src/dependency-injection.ts:function:injectDependencies:58",
-      "type": "functional"
-    },
-    {
-      "source": "packages/encoder/src/dependency-injection.ts:file",
       "target": "packages/encoder/src/dependency-injection.ts:function:resolveCallTarget:169",
       "type": "functional"
     },
@@ -25776,6 +25901,18 @@
       "symbol": "createLogger"
     },
     {
+      "source": "packages/encoder/src/evolution/evolve.ts:file:packages/encoder/src/evolution/evolve.ts",
+      "target": "packages/encoder/src/dependency-injection.ts:file:packages/encoder/src/dependency-injection.ts",
+      "type": "dependency",
+      "dependencyType": "import"
+    },
+    {
+      "source": "packages/encoder/src/evolution/evolve.ts:file:packages/encoder/src/evolution/evolve.ts",
+      "target": "packages/encoder/src/semantic.ts:file:packages/encoder/src/semantic.ts",
+      "type": "dependency",
+      "dependencyType": "import"
+    },
+    {
       "source": "packages/encoder/src/evolution/operations.ts:file",
       "target": "packages/ast/src/parser.ts:file",
       "type": "dependency",
@@ -25893,6 +26030,12 @@
       "dependencyType": "call",
       "line": 13,
       "symbol": "createLogger"
+    },
+    {
+      "source": "packages/encoder/src/evolution/operations.ts:file:packages/encoder/src/evolution/operations.ts",
+      "target": "packages/encoder/src/semantic.ts:file:packages/encoder/src/semantic.ts",
+      "type": "dependency",
+      "dependencyType": "import"
     },
     {
       "source": "packages/encoder/src/evolution/prompts.ts:file",
