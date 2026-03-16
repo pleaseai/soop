@@ -11,7 +11,9 @@
     "./edge": "./src/edge.ts",
     "./rpg": "./src/rpg.ts",
     "./adapters": "./src/adapters.ts",
-    "./embeddings": "./src/embeddings.ts"
+    "./embeddings": "./src/embeddings.ts",
+    "./meta": "./src/meta.ts",
+    "./python-format": "./src/python-format.ts"
   },
   "dependencies": {
     "@pleaseai/soop-store": "workspace:*",

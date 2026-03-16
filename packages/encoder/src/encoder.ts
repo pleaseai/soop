@@ -537,16 +537,34 @@ export class RPGEncoder {
     repoPath?: string,
     options?: Partial<Omit<EncoderOptions, 'repoPath'>>,
   ): Promise<RPGEncoder> {
-    let json: string
+    let graphJson: string
     try {
-      json = await readFile(savePath, 'utf-8')
+      graphJson = await readFile(savePath, 'utf-8')
     }
     catch (error) {
       throw new Error(`Could not read RPG file "${savePath}": ${error instanceof Error ? error.message : error}`)
     }
+
+    // Try to read companion .meta.json
+    const { metaPathFor } = await import('@pleaseai/soop-graph/meta')
+    const metaPath = metaPathFor(savePath)
+    let metaJson: string | undefined
+    try {
+      metaJson = await readFile(metaPath, 'utf-8')
+    }
+    catch (metaError) {
+      const code = (metaError as NodeJS.ErrnoException).code
+      if (code !== 'ENOENT') {
+        log.warn(`Could not read meta file at "${metaPath}": ${metaError instanceof Error ? metaError.message : String(metaError)}`)
+      }
+      // meta file is optional
+    }
+
     let rpg: RepositoryPlanningGraph
     try {
-      rpg = await RepositoryPlanningGraph.fromJSON(json)
+      rpg = metaJson
+        ? await RepositoryPlanningGraph.fromJSONWithMeta(graphJson, metaJson)
+        : await RepositoryPlanningGraph.fromJSON(graphJson)
     }
     catch (error) {
       throw new Error(`Could not parse RPG file "${savePath}": ${error instanceof Error ? error.message : error}`)
@@ -563,7 +581,8 @@ export class RPGEncoder {
 
   /**
    * Save the current RPG to a JSON file.
-   * Automatically stamps the HEAD commit SHA into config.github.commit.
+   * Writes graph.json (Python-compatible) and graph.meta.json (TS metadata).
+   * Automatically stamps the HEAD commit SHA into the meta file.
    */
   async save(savePath: string): Promise<void> {
     if (!this._rpg) {
@@ -590,7 +609,11 @@ export class RPGEncoder {
         throw new Error(`Failed to stamp HEAD commit: ${msg}`)
       }
     }
-    await writeFile(savePath, await this._rpg.toJSON())
+
+    const { metaPathFor } = await import('@pleaseai/soop-graph/meta')
+    const { graphJson, metaJson } = await this._rpg.toJSONWithMeta()
+    await writeFile(savePath, graphJson)
+    await writeFile(metaPathFor(savePath), metaJson)
     log.info(`Saved RPG to ${savePath}`)
   }
 

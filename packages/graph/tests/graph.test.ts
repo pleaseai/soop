@@ -143,7 +143,7 @@ describe('edge', () => {
     expect(edge.targetSymbol).toBe('ParentClass')
   })
 
-  it('symbol and targetSymbol survive serialize→deserialize round-trip', async () => {
+  it('symbol survives serialize→deserialize round-trip via Python format', async () => {
     const rpg = await RepositoryPlanningGraph.create({ name: 'symbol-test' })
 
     await rpg.addLowLevelNode({
@@ -162,8 +162,6 @@ describe('edge', () => {
       target: 'file-b',
       dependencyType: 'call',
       symbol: 'myFunction',
-      targetSymbol: 'renamedFunction',
-      line: 42,
     })
 
     const json = await rpg.toJSON()
@@ -172,8 +170,6 @@ describe('edge', () => {
     const depEdges = await restored.getDependencyEdges()
     expect(depEdges).toHaveLength(1)
     expect(depEdges[0]!.symbol).toBe('myFunction')
-    expect(depEdges[0]!.targetSymbol).toBe('renamedFunction')
-    expect(depEdges[0]!.line).toBe(42)
     expect(depEdges[0]!.dependencyType).toBe('call')
   })
 
@@ -289,7 +285,7 @@ describe('repositoryPlanningGraph', () => {
     expect(ids).toEqual(ids.toSorted((a, b) => a.localeCompare(b)))
   })
 
-  it('serialize sorts edges by source then target', async () => {
+  it('serialize sorts edges by src then dst', async () => {
     const rpg = await RepositoryPlanningGraph.create({ name: 'sort-test' })
 
     await rpg.addHighLevelNode({ id: 'b', feature: { description: 'b' } })
@@ -301,10 +297,10 @@ describe('repositoryPlanningGraph', () => {
     await rpg.addFunctionalEdge({ source: 'a', target: 'b' })
 
     const serialized = await rpg.serialize()
-    const pairs = (serialized.edges as Array<{ source: string, target: string }>).map(
-      e => `${e.source}→${e.target}`,
+    const pairs = (serialized.edges as Array<{ src: string, dst: string }>).map(
+      e => `${e.src}→${e.dst}`,
     )
-    expect(pairs).toEqual(pairs.toSorted((x, y) => x.localeCompare(y)))
+    expect(pairs).toEqual(['a→b', 'a→c', 'b→c'])
   })
 
   it('serializes and deserializes', async () => {
@@ -393,8 +389,8 @@ describe('DataFlowEdge', () => {
     })
 
     const serialized = await rpg.serialize()
-    expect(serialized.dataFlowEdges).toBeDefined()
-    expect(serialized.dataFlowEdges).toHaveLength(1)
+    expect(serialized.data_flow).toBeDefined()
+    expect(serialized.data_flow).toHaveLength(1)
 
     const json = await rpg.toJSON()
     const restored = await RepositoryPlanningGraph.fromJSON(json)
@@ -429,32 +425,25 @@ describe('DataFlowEdge', () => {
     expect(stats.dataFlowEdgeCount).toBe(1)
   })
 
-  it('deserializes legacy from/to format', async () => {
-    const rpg = await RepositoryPlanningGraph.create({ name: 'test-repo' })
-    await rpg.addHighLevelNode({
-      id: 'domain:auth',
-      feature: { description: 'authentication module' },
-    })
-    await rpg.addHighLevelNode({
-      id: 'domain:api',
-      feature: { description: 'API module' },
-    })
-
-    // Simulate legacy JSON with from/to fields
-    const legacyJson = JSON.stringify({
-      version: '1.0.0',
-      config: { name: 'test-repo' },
+  it('deserializes Python format with data_flow', async () => {
+    const pythonJson = JSON.stringify({
+      repo_name: 'test-repo',
+      repo_info: '',
+      data_flow: [
+        { source: 'domain:auth', target: 'domain:api', dataId: 'Token', dataType: 'auth' },
+      ],
+      excluded_files: [],
+      repo_node_id: null,
       nodes: [
-        { id: 'domain:auth', type: 'high_level', feature: { description: 'authentication module' } },
-        { id: 'domain:api', type: 'high_level', feature: { description: 'API module' } },
+        { id: 'domain:auth', name: 'auth', node_type: 'functional_area', level: 1, meta: { type_name: 'directory', path: null, description: 'authentication module', content: '' } },
+        { id: 'domain:api', name: 'api', node_type: 'functional_area', level: 1, meta: { type_name: 'directory', path: null, description: 'API module', content: '' } },
       ],
       edges: [],
-      dataFlowEdges: [
-        { from: 'domain:auth', to: 'domain:api', dataId: 'Token', dataType: 'auth' },
-      ],
+      _dep_to_rpg_map: {},
+      dep_graph: null,
     })
 
-    const restored = await RepositoryPlanningGraph.fromJSON(legacyJson)
+    const restored = await RepositoryPlanningGraph.fromJSON(pythonJson)
     const edges = await restored.getDataFlowEdges()
     expect(edges).toHaveLength(1)
     expect(edges[0].source).toBe('domain:auth')
@@ -462,7 +451,7 @@ describe('DataFlowEdge', () => {
     expect(edges[0].dataId).toBe('Token')
   })
 
-  it('data flow edges are separate from regular edges in serialization', async () => {
+  it('data flow edges are in data_flow array, not edges', async () => {
     const rpg = await RepositoryPlanningGraph.create({ name: 'test-repo' })
     await rpg.addHighLevelNode({
       id: 'domain:a',
@@ -481,11 +470,10 @@ describe('DataFlowEdge', () => {
     })
 
     const serialized = await rpg.serialize()
-    // Regular edges should not include data_flow edges
+    // Regular edges should only have functional/dependency edges
     expect(serialized.edges).toHaveLength(1)
-    expect(serialized.edges.every(e => (e as { type: string }).type !== 'data_flow')).toBe(true)
-    // Data flow edges in separate array
-    expect(serialized.dataFlowEdges).toHaveLength(1)
+    // Data flow edges in data_flow array
+    expect(serialized.data_flow).toHaveLength(1)
   })
 })
 

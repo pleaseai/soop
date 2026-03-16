@@ -44,14 +44,26 @@ describe('RepositoryPlanningGraph.updateConfig', () => {
     expect(cfg.description).toBe('keep this')
   })
 
-  it('should persist commit stamp through serialization', async () => {
+  it('should persist commit stamp through meta serialization', async () => {
     const rpg = await RepositoryPlanningGraph.create({ name: 'test' })
     rpg.updateConfig({
       github: { owner: 'a', repo: 'b', commit: 'sha256hash' },
     })
 
+    const { graphJson, metaJson } = await rpg.toJSONWithMeta()
+    const restored = await RepositoryPlanningGraph.fromJSONWithMeta(graphJson, metaJson)
+    expect(restored.getConfig().github?.commit).toBe('sha256hash')
+  })
+
+  it('should persist repo_name and repo_info through graph serialization', async () => {
+    const rpg = await RepositoryPlanningGraph.create({
+      name: 'my-repo',
+      description: 'A test repository',
+    })
+
     const json = await rpg.toJSON()
     const restored = await RepositoryPlanningGraph.fromJSON(json)
-    expect(restored.getConfig().github?.commit).toBe('sha256hash')
+    expect(restored.getConfig().name).toBe('my-repo')
+    expect(restored.getConfig().description).toBe('A test repository')
   })
 })

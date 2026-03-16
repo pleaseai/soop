@@ -303,7 +303,10 @@ export async function executeEvolve(rpg: RepositoryPlanningGraph | null, input: 
     const result = await evolver.evolve()
 
     if (input.outputPath) {
-      await writeFile(input.outputPath, await rpg.toJSON())
+      const { metaPathFor } = await import('@pleaseai/soop-graph/meta')
+      const { graphJson, metaJson } = await rpg.toJSONWithMeta()
+      await writeFile(input.outputPath, graphJson)
+      await writeFile(metaPathFor(input.outputPath), metaJson)
     }
 
     return result
