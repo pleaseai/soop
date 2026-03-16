@@ -25,7 +25,7 @@ export function metaPathFor(graphPath: string): string {
 export function serializeMeta(config: RPGConfig): RPGMeta {
   return {
     version: '2.0.0',
-    rootPath: config.rootPath,
+    rootPath: config.rootPath ? path.resolve(config.rootPath) : undefined,
     github: config.github,
   }
 }

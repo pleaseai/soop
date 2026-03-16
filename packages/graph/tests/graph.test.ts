@@ -300,7 +300,7 @@ describe('repositoryPlanningGraph', () => {
     const pairs = (serialized.edges as Array<{ src: string, dst: string }>).map(
       e => `${e.src}→${e.dst}`,
     )
-    expect(pairs).toEqual(pairs.toSorted((x, y) => x.localeCompare(y)))
+    expect(pairs).toEqual(['a→b', 'a→c', 'b→c'])
   })
 
   it('serializes and deserializes', async () => {

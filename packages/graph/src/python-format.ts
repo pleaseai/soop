@@ -316,13 +316,15 @@ export function fromPythonEdge(pEdge: PythonEdge): Edge {
     })
   }
 
+  // Prefer original dependencyType from meta.type_name (preserves implement/use on round-trip)
+  const originalType = pEdge.meta?.type_name as 'import' | 'call' | 'inherit' | 'implement' | 'use' | null
   const depTypeMap: Record<string, 'import' | 'call' | 'inherit' | 'implement' | 'use'> = {
     imports: 'import',
     invokes: 'call',
     inherits: 'inherit',
   }
 
-  const dependencyType = depTypeMap[pEdge.relation] ?? 'use'
+  const dependencyType = originalType ?? depTypeMap[pEdge.relation] ?? 'use'
   return createDependencyEdge({
     source: pEdge.src,
     target: pEdge.dst,

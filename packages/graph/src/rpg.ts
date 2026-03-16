@@ -459,12 +459,19 @@ export class RepositoryPlanningGraph {
       functionalEdges,
     )
 
-    // Find root node (level 0, or create virtual)
+    // Find root node: prefer high-level nodes at level 0 to avoid
+    // promoting arbitrary file nodes to repo root in rootless graphs
     let repoNodeId: string | null = null
     for (const [id, level] of levels) {
       if (level === 0) {
-        repoNodeId = id
-        break
+        const node = nodes.find(n => n.id === id)
+        if (node && isHighLevelNode(node)) {
+          repoNodeId = id
+          break
+        }
+        // Remember first level-0 as fallback
+        if (!repoNodeId)
+          repoNodeId = id
       }
     }
     if (!repoNodeId) {
