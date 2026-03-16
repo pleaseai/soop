@@ -1,10 +1,10 @@
 {
-  "packages/soop": "0.1.27-alpha.1",
+  "packages/soop": "0.1.28-alpha.1",
   "packages/soop-native": "0.1.21",
-  "packages/cli": "0.2.1",
+  "packages/cli": "0.2.2",
   "packages/encoder": "0.3.0",
   "packages/graph": "0.1.10",
-  "packages/mcp": "0.3.0",
+  "packages/mcp": "0.4.0",
   "packages/store": "0.1.8",
   "packages/tools": "0.1.12",
   "packages/utils": "0.1.8",

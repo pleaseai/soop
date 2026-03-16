@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.2](https://github.com/pleaseai/soop/compare/soop-cli-v0.2.1...soop-cli-v0.2.2) (2026-03-16)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-mcp bumped to 0.4.0
+
 ## [0.2.1](https://github.com/pleaseai/soop/compare/soop-cli-v0.2.0...soop-cli-v0.2.1) (2026-03-16)
 
 
