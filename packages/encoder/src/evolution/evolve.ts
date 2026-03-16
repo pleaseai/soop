@@ -113,12 +113,21 @@ export class RPGEvolver {
         const modResult = await processModification(this.rpg, mod.old, mod.new, ctx, driftThreshold)
         if (modResult.rerouted) {
           result.rerouted++
-          embeddingChanges.removed.push(mod.old.id)
-          embeddingChanges.added.push(mod.new.id)
+          if (modResult.removedId)
+            embeddingChanges.removed.push(modResult.removedId)
+          if (modResult.addedId)
+            embeddingChanges.added.push(modResult.addedId)
         }
         else {
-          result.modified++
-          embeddingChanges.modified.push(mod.new.id)
+          if (modResult.modifiedId) {
+            result.modified++
+            embeddingChanges.modified.push(modResult.modifiedId)
+          }
+          else if (modResult.addedId) {
+            // Node was not found in graph — treated as insertion by processModification
+            result.inserted++
+            embeddingChanges.added.push(modResult.addedId)
+          }
         }
         result.prunedNodes += modResult.prunedNodes
         if (modResult.newAreaCreated) {
