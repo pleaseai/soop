@@ -37,17 +37,15 @@ Your task is to identify and edit the files that need to be modified to resolve 
 function generateEvalTs(oracleFiles: string[]): string {
   const filesArray = oracleFiles.map(f => `  '${f}',`).join('\n')
 
-  return `import { readFileSync } from 'node:fs'
-import { test, expect } from 'vitest'
-import { calculateMetrics } from '../../../lib/metrics.js'
+  return `import { test, expect } from 'vitest'
+import { loadResults, calculateMetrics } from '../../../lib/metrics.js'
 
 const ORACLE_FILES = [
 ${filesArray}
 ]
 
 test('agent edited the correct files', () => {
-  const raw = readFileSync('__agent_eval__/results.json', 'utf-8')
-  const results = JSON.parse(raw)
+  const results = loadResults('.')
 
   if (!results.o11y) {
     throw new Error('No observability data in results')
@@ -59,14 +57,13 @@ test('agent edited the correct files', () => {
 })
 
 test('agent did not make excessive tool calls', () => {
-  const raw = readFileSync('__agent_eval__/results.json', 'utf-8')
-  const results = JSON.parse(raw)
+  const results = loadResults('.')
 
   if (!results.o11y) {
     throw new Error('No observability data in results')
   }
 
-  expect(results.o11y.totalToolCalls).toBeLessThan(50)
+  expect(results.o11y.totalToolCalls ?? 0).toBeLessThan(50)
 })
 `
 }

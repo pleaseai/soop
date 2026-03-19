@@ -41,8 +41,27 @@ const DEFAULT_DATASET_PATH = resolve(
  * Load the SWE-bench Verified dataset (30-instance subset).
  */
 export function loadDataset(path = DEFAULT_DATASET_PATH): SWEBenchDataset {
-  const raw = readFileSync(path, 'utf-8')
-  return JSON.parse(raw)
+  let raw: string
+  try {
+    raw = readFileSync(path, 'utf-8')
+  }
+  catch (err) {
+    throw new Error(
+      `Could not read SWE-bench dataset from ${path}. `
+      + `Run 'git submodule update --init' if the vendor submodule is missing. `
+      + `Cause: ${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+  try {
+    return JSON.parse(raw)
+  }
+  catch (err) {
+    throw new Error(
+      `Failed to parse SWE-bench dataset at ${path}. `
+      + `The file may be corrupt. `
+      + `Cause: ${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
 }
 
 /**

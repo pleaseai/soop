@@ -6,7 +6,10 @@ import type { Sandbox } from '@vercel/agent-eval'
  */
 export async function setupSoop(sandbox: Sandbox): Promise<void> {
   // Install soop globally in the sandbox
-  await sandbox.runCommand('npm', ['install', '-g', '@pleaseai/soop'])
+  const installResult = await sandbox.runCommand('npm', ['install', '-g', '@pleaseai/soop'])
+  if (installResult.exitCode !== 0) {
+    throw new Error(`Failed to install @pleaseai/soop: ${installResult.stderr}`)
+  }
 
   // Configure Claude Code to use soop MCP server
   const soopMcpConfig = {
@@ -24,8 +27,12 @@ export async function setupSoop(sandbox: Sandbox): Promise<void> {
 
   // Initialize soop and encode the repository
   // Use local embedding model (voyage-4-nano) to avoid needing API keys for embedding
-  await sandbox.runCommand('soop', ['init'])
-  await sandbox.runCommand('soop', [
+  const initResult = await sandbox.runCommand('soop', ['init'])
+  if (initResult.exitCode !== 0) {
+    throw new Error(`soop init failed: ${initResult.stderr}`)
+  }
+
+  const encodeResult = await sandbox.runCommand('soop', [
     'encode',
     '.',
     '-o',
@@ -33,4 +40,7 @@ export async function setupSoop(sandbox: Sandbox): Promise<void> {
     '--embed-model',
     'transformers/voyageai/voyage-4-nano',
   ])
+  if (encodeResult.exitCode !== 0) {
+    throw new Error(`soop encode failed: ${encodeResult.stderr}`)
+  }
 }

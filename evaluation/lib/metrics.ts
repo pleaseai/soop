@@ -26,8 +26,27 @@ export interface AgentEvalResults {
  */
 export function loadResults(basePath = '.'): AgentEvalResults {
   const resultsPath = join(basePath, '__agent_eval__', 'results.json')
-  const raw = readFileSync(resultsPath, 'utf-8')
-  return JSON.parse(raw)
+  let raw: string
+  try {
+    raw = readFileSync(resultsPath, 'utf-8')
+  }
+  catch (err) {
+    throw new Error(
+      `Could not read agent-eval results from ${resultsPath}. `
+      + `Ensure the agent-eval framework completed successfully. `
+      + `Cause: ${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+  try {
+    return JSON.parse(raw)
+  }
+  catch (err) {
+    throw new Error(
+      `Failed to parse agent-eval results at ${resultsPath}. `
+      + `The file may be truncated or malformed. `
+      + `Cause: ${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
 }
 
 /**

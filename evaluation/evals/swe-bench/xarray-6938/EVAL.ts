@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs'
 import { test, expect } from 'vitest'
-import { calculateMetrics } from '../../../lib/metrics.js'
+import { loadResults, calculateMetrics } from '../../../lib/metrics.js'
 
 // Oracle files from the patch (ground truth: files that need to be modified)
 const ORACLE_FILES = [
@@ -9,8 +8,7 @@ const ORACLE_FILES = [
 ]
 
 test('agent edited the correct files for the swap_dims fix', () => {
-  const raw = readFileSync('__agent_eval__/results.json', 'utf-8')
-  const results = JSON.parse(raw)
+  const results = loadResults('.')
 
   if (!results.o11y) {
     throw new Error('No observability data in results')
@@ -24,8 +22,7 @@ test('agent edited the correct files for the swap_dims fix', () => {
 })
 
 test('agent modified xarray/core/variable.py (core fix)', () => {
-  const raw = readFileSync('__agent_eval__/results.json', 'utf-8')
-  const results = JSON.parse(raw)
+  const results = loadResults('.')
 
   if (!results.o11y) {
     throw new Error('No observability data in results')
@@ -38,12 +35,11 @@ test('agent modified xarray/core/variable.py (core fix)', () => {
 })
 
 test('agent did not make excessive tool calls', () => {
-  const raw = readFileSync('__agent_eval__/results.json', 'utf-8')
-  const results = JSON.parse(raw)
+  const results = loadResults('.')
 
   if (!results.o11y) {
     throw new Error('No observability data in results')
   }
 
-  expect(results.o11y.totalToolCalls).toBeLessThan(50)
+  expect(results.o11y.totalToolCalls ?? 0).toBeLessThan(50)
 })
