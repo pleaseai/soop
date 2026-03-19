@@ -51,13 +51,14 @@ export function loadResults(basePath = '.'): AgentEvalResults {
 
 /**
  * Extract oracle (ground truth) file paths from a unified diff patch string.
- * Matches lines like "--- a/path/to/file.py" to get the modified files.
+ * Matches lines like "+++ b/path/to/file.py" to get the modified/added files.
+ * Uses the new side (+++) to correctly capture both modified and added files.
  *
  * Ported from vendor/context-please/evaluation/utils/format.py:extract_oracle_files_from_patch
  */
 export function extractOracleFiles(patch: string): string[] {
   if (!patch) return []
-  const pattern = /^--- a\/(.+)$/gm
+  const pattern = /^\+\+\+ b\/(.+)$/gm
   const files = new Set<string>()
   let match: RegExpExecArray | null
   while ((match = pattern.exec(patch)) !== null) {

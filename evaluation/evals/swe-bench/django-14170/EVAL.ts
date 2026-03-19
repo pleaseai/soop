@@ -42,5 +42,6 @@ test('agent did not make excessive tool calls', () => {
   }
 
   // The Python evaluation showed ~5-8 tool calls is typical
-  expect(results.o11y.totalToolCalls ?? 0).toBeLessThan(50)
+  expect(results.o11y.totalToolCalls).toBeDefined()
+  expect(results.o11y.totalToolCalls).toBeLessThan(50)
 })

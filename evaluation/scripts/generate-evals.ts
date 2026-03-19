@@ -63,7 +63,8 @@ test('agent did not make excessive tool calls', () => {
     throw new Error('No observability data in results')
   }
 
-  expect(results.o11y.totalToolCalls ?? 0).toBeLessThan(50)
+  expect(results.o11y.totalToolCalls).toBeDefined()
+  expect(results.o11y.totalToolCalls).toBeLessThan(50)
 })
 `
 }

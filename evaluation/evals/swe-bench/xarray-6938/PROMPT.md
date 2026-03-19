@@ -5,6 +5,7 @@ Issue: `.swap_dims()` modifies the original object
 The `swap_dims` method is supposed to return a new Dataset/DataArray with swapped dimensions, but it currently modifies the original object as a side effect.
 
 ```python
+import numpy as np
 import xarray as xr
 
 nz = 11

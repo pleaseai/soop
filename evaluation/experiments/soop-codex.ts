@@ -3,7 +3,7 @@ import { setupSoop } from '../lib/setup-soop.js'
 
 export default {
   agent: 'codex',
-  model: 'openai/gpt-5.2-codex',
+  model: 'gpt-5.2-codex',
   sandbox: 'docker',
   timeout: 600,
   runs: 3,
