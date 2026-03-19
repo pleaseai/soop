@@ -29,12 +29,21 @@ Use \`soop_fetch\` to retrieve full source code and feature context for entities
 Use \`soop_explore\` to traverse dependency and functional edges from a known entity.
 `
 
-  await sandbox.writeFiles({
+  // Read existing agent instruction files and append soop hint (don't overwrite repo-specific instructions)
+  const hintFiles: Record<string, string> = {
     '.claude/settings.json': JSON.stringify(soopMcpConfig, null, 2),
-    'CLAUDE.md': soopHint,
-    'GEMINI.md': soopHint,
-    'AGENTS.md': soopHint,
-  })
+  }
+  for (const file of ['CLAUDE.md', 'GEMINI.md', 'AGENTS.md']) {
+    let existing = ''
+    try {
+      existing = await sandbox.readFile(file)
+    }
+    catch {
+      // File doesn't exist yet — start empty
+    }
+    hintFiles[file] = existing ? `${existing}\n\n${soopHint}` : soopHint
+  }
+  await sandbox.writeFiles(hintFiles)
 
   // Initialize soop and encode the repository
   // Use local embedding model (voyage-4-nano) to avoid needing API keys for embedding
