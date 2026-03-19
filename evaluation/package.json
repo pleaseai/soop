@@ -1,0 +1,18 @@
+{
+  "name": "soop-agent-eval",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "agent-eval",
+    "eval:soop": "agent-eval run experiments/soop-claude-code.ts",
+    "eval:baseline": "agent-eval run experiments/baseline-claude-code.ts",
+    "eval:codex": "agent-eval run experiments/soop-codex.ts",
+    "generate": "npx tsx scripts/generate-evals.ts"
+  },
+  "devDependencies": {
+    "@vercel/agent-eval": "^0.9.2",
+    "vitest": "^4.0.18",
+    "typescript": "^5.9.3",
+    "tsx": "^4.19.0"
+  }
+}

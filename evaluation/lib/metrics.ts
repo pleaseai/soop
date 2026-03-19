@@ -1,0 +1,119 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+/**
+ * Transcript summary from agent-eval results.
+ * Written to __agent_eval__/results.json by the framework.
+ */
+export interface TranscriptSummary {
+  totalTurns: number
+  toolCalls: Record<string, number>
+  totalToolCalls: number
+  filesRead: string[]
+  filesModified: string[]
+  shellCommands: { command: string, exitCode?: number, success?: boolean }[]
+  errors: string[]
+  thinkingBlocks: number
+}
+
+export interface AgentEvalResults {
+  o11y: TranscriptSummary | null
+}
+
+/**
+ * Load the agent-eval results from the sandbox.
+ * The framework writes this file before running EVAL.ts.
+ */
+export function loadResults(basePath = '.'): AgentEvalResults {
+  const resultsPath = join(basePath, '__agent_eval__', 'results.json')
+  let raw: string
+  try {
+    raw = readFileSync(resultsPath, 'utf-8')
+  }
+  catch (err) {
+    throw new Error(
+      `Could not read agent-eval results from ${resultsPath}. `
+      + `Ensure the agent-eval framework completed successfully. `
+      + `Cause: ${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+  try {
+    return JSON.parse(raw)
+  }
+  catch (err) {
+    throw new Error(
+      `Failed to parse agent-eval results at ${resultsPath}. `
+      + `The file may be truncated or malformed. `
+      + `Cause: ${err instanceof Error ? err.message : String(err)}`,
+    )
+  }
+}
+
+/**
+ * Extract oracle (ground truth) file paths from a unified diff patch string.
+ * Captures both sides of the diff to include added, modified, and deleted files:
+ * - "--- a/path" for modified and deleted files
+ * - "+++ b/path" for modified and added files
+ * Lines referencing /dev/null (added or deleted sentinel) are excluded.
+ *
+ * Ported from vendor/context-please/evaluation/utils/format.py:extract_oracle_files_from_patch
+ */
+export function extractOracleFiles(patch: string): string[] {
+  if (!patch)
+    return []
+  const oldPattern = /^--- a\/(.+)$/gm
+  const newPattern = /^\+\+\+ b\/(.+)$/gm
+  const files = new Set<string>()
+  let match: RegExpExecArray | null
+  while ((match = oldPattern.exec(patch)) !== null) {
+    files.add(match[1])
+  }
+  while ((match = newPattern.exec(patch)) !== null) {
+    files.add(match[1])
+  }
+  return [...files]
+}
+
+/**
+ * Normalize a file path by stripping leading slashes for consistent comparison.
+ */
+function normalizePath(p: string): string {
+  return p.replace(/^\/+/, '')
+}
+
+/**
+ * Calculate precision, recall, and F1 score for file retrieval.
+ *
+ * Ported from vendor/context-please/evaluation/analyze_and_plot_mcp_efficiency.py
+ *
+ * @param hits - Files the agent modified/found
+ * @param oracles - Ground truth files from the patch
+ */
+export function calculateMetrics(hits: string[], oracles: string[]): {
+  precision: number
+  recall: number
+  f1: number
+} {
+  const normalizedHits = new Set(hits.map(normalizePath))
+  const normalizedOracles = new Set(oracles.map(normalizePath))
+
+  if (normalizedHits.size === 0 && normalizedOracles.size === 0) {
+    return { precision: 1, recall: 1, f1: 1 }
+  }
+
+  const intersection = [...normalizedHits].filter(h => normalizedOracles.has(h))
+
+  const precision = normalizedHits.size > 0
+    ? intersection.length / normalizedHits.size
+    : 0
+
+  const recall = normalizedOracles.size > 0
+    ? intersection.length / normalizedOracles.size
+    : 0
+
+  const f1 = precision + recall > 0
+    ? (2 * precision * recall) / (precision + recall)
+    : 0
+
+  return { precision, recall, f1 }
+}
