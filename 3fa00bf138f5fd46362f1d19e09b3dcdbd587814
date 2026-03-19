@@ -1,0 +1,33 @@
+evaluation/experiments/soop-codex.ts
+  9fd23edb727827ca 6
+evaluation/evals/swe-bench/xarray-6938/EVAL.ts
+  9fd23edb727827ca 44-45
+evaluation/evals/swe-bench/django-14170/EVAL.ts
+  9fd23edb727827ca 45-46
+evaluation/scripts/generate-evals.ts
+  9fd23edb727827ca 66-67
+evaluation/evals/swe-bench/xarray-6938/PROMPT.md
+  9fd23edb727827ca 8
+evaluation/lib/metrics.ts
+  9fd23edb727827ca 54-55,61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "3fa00bf138f5fd46362f1d19e09b3dcdbd587814",
+  "prompts": {
+    "9fd23edb727827ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c21a69d-c4fc-4c6e-b47c-6726872e6387",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 6,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    }
+  }
+}
