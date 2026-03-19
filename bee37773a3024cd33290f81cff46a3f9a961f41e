@@ -1,0 +1,23 @@
+evaluation/lib/setup-soop.ts
+  40b7060a9c852f8b 2,4-6,10,13-16,50-55,68,73,75,80-89
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "bee37773a3024cd33290f81cff46a3f9a961f41e",
+  "prompts": {
+    "40b7060a9c852f8b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81726d42-e7a1-4721-906c-0f3113ba1c3d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 228,
+      "total_deletions": 42,
+      "accepted_lines": 219,
+      "overriden_lines": 0
+    }
+  }
+}
