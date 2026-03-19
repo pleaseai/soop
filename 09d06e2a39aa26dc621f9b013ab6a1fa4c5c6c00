@@ -1,0 +1,57 @@
+evaluation/evals/swe-bench/django-14170/PROMPT.md
+  9fd23edb727827ca 1-26
+evaluation/tsconfig.json
+  9fd23edb727827ca 1-14
+evaluation/scripts/generate-evals.ts
+  9fd23edb727827ca 1-139
+evaluation/evals/swe-bench/django-14170/EVAL.ts
+  9fd23edb727827ca 1-50
+.gitignore
+  9fd23edb727827ca 67-72
+evaluation/experiments/soop-codex.ts
+  9fd23edb727827ca 1-12
+evaluation/lib/swe-bench-loader.ts
+  9fd23edb727827ca 1-74
+evaluation/evals/swe-bench/django-14170/package.json
+  9fd23edb727827ca 1-3
+evaluation/evals/swe-bench/xarray-6938/PROMPT.md
+  9fd23edb727827ca 1-31
+evaluation/.gitignore
+  9fd23edb727827ca 1-5
+evaluation/experiments/soop-claude-code.ts
+  9fd23edb727827ca 1-12
+evaluation/evals/swe-bench/xarray-6938/EVAL.ts
+  9fd23edb727827ca 1-49
+evaluation/lib/metrics.ts
+  9fd23edb727827ca 1-92
+evaluation/evals/swe-bench/xarray-6938/package.json
+  9fd23edb727827ca 1-3
+evaluation/package.json
+  9fd23edb727827ca 1-18
+evaluation/experiments/baseline-claude-code.ts
+  9fd23edb727827ca 1-10
+evaluation/lib/setup-soop.ts
+  9fd23edb727827ca 1-36
+evaluation/.env.example
+  9fd23edb727827ca 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "09d06e2a39aa26dc621f9b013ab6a1fa4c5c6c00",
+  "prompts": {
+    "9fd23edb727827ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2c21a69d-c4fc-4c6e-b47c-6726872e6387",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 591,
+      "total_deletions": 0,
+      "accepted_lines": 591,
+      "overriden_lines": 0
+    }
+  }
+}
