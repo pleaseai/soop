@@ -21,8 +21,19 @@ export async function setupSoop(sandbox: Sandbox): Promise<void> {
     },
   }
 
+  const soopHint = `# soop MCP
+
+A semantic code search server is available via the soop MCP tools.
+Use \`soop_search\` with \`featureTerms\` to find code by behavior or purpose before reading files.
+Use \`soop_fetch\` to retrieve full source code and feature context for entities found by search.
+Use \`soop_explore\` to traverse dependency and functional edges from a known entity.
+`
+
   await sandbox.writeFiles({
     '.claude/settings.json': JSON.stringify(soopMcpConfig, null, 2),
+    'CLAUDE.md': soopHint,
+    'GEMINI.md': soopHint,
+    'AGENTS.md': soopHint,
   })
 
   // Initialize soop and encode the repository

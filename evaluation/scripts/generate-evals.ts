@@ -11,14 +11,14 @@
  *   npx tsx scripts/generate-evals.ts --id django__django-14170  # generate specific instance
  */
 
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs'
+import type { SWEBenchInstance } from '../lib/swe-bench-loader.js'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import {
-  loadDataset,
   getOracleFiles,
   instanceIdToEvalName,
+  loadDataset,
 } from '../lib/swe-bench-loader.js'
-import type { SWEBenchInstance } from '../lib/swe-bench-loader.js'
 
 const EVALS_DIR = resolve(import.meta.dirname ?? '.', '../evals/swe-bench')
 
@@ -70,7 +70,7 @@ test('agent did not make excessive tool calls', () => {
 }
 
 function generatePackageJson(): string {
-  return JSON.stringify({ dependencies: {} }, null, 2) + '\n'
+  return `${JSON.stringify({ dependencies: {} }, null, 2)}\n`
 }
 
 function generateEval(instance: SWEBenchInstance): void {

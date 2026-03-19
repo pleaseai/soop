@@ -2,8 +2,8 @@ import type { ExperimentConfig } from '@vercel/agent-eval'
 import { setupSoop } from '../lib/setup-soop.js'
 
 export default {
-  agent: 'claude-code',
-  model: 'sonnet',
+  agent: 'gemini',
+  model: 'gemini-3-flash-preview',
   sandbox: 'docker',
   timeout: 600,
   runs: 3,

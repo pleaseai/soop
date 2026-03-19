@@ -1,5 +1,5 @@
-import { test, expect } from 'vitest'
-import { loadResults, calculateMetrics } from '../../../lib/metrics.js'
+import { expect, test } from 'vitest'
+import { calculateMetrics, loadResults } from '../../../lib/metrics.js'
 
 // Oracle files from the patch (ground truth: files that need to be modified)
 const ORACLE_FILES = [
