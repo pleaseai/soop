@@ -2,6 +2,7 @@ import type { GoogleLanguageModelOptions } from '@ai-sdk/google'
 import type { ModelMessage } from 'ai'
 import type { ClaudeCodeSettings } from 'ai-sdk-provider-claude-code'
 import type { CodexCliSettings } from 'ai-sdk-provider-codex-cli'
+import type { GeminiProviderOptions } from 'ai-sdk-provider-gemini-cli'
 import type { ZodType } from 'zod/v4'
 import type { Memory } from './memory'
 import { spawn } from 'node:child_process'
@@ -11,6 +12,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { generateText, NoObjectGeneratedError, Output } from 'ai'
 import { createClaudeCode } from 'ai-sdk-provider-claude-code'
 import { createCodexCli } from 'ai-sdk-provider-codex-cli'
+import { createGeminiProvider } from 'ai-sdk-provider-gemini-cli'
 import { createLogger } from './logger'
 
 const log = createLogger('LLMClient')
@@ -18,7 +20,7 @@ const log = createLogger('LLMClient')
 /**
  * LLM provider type
  */
-export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'claude-code' | 'codex'
+export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'claude-code' | 'codex' | 'gemini-cli'
 
 /**
  * LLM client options
@@ -42,6 +44,8 @@ export interface LLMOptions {
   claudeCodeSettings?: ClaudeCodeSettings
   /** Codex CLI provider settings (only used when provider is 'codex') */
   codexSettings?: CodexCliSettings
+  /** Gemini CLI provider settings (only used when provider is 'gemini-cli') */
+  geminiCliSettings?: GeminiProviderOptions
   /** Google provider settings (only used when provider is 'google') */
   googleSettings?: GoogleLanguageModelOptions
 }
@@ -50,6 +54,7 @@ export type { GoogleLanguageModelOptions }
 
 export type { ClaudeCodeSettings }
 export type { CodexCliSettings }
+export type { GeminiProviderOptions }
 
 /**
  * Per-call options that override the LLMClient instance-level settings.
@@ -124,6 +129,7 @@ const DEFAULT_MODELS: Record<LLMProvider, string> = {
   'google': 'gemini-3.1-flash-lite-preview',
   'claude-code': 'sonnet',
   'codex': 'gpt-5.3-codex',
+  'gemini-cli': 'gemini-2.5-flash',
 }
 
 /**
@@ -156,12 +162,16 @@ const MODEL_PRICING: Record<string, { input: number, output: number }> = {
   'gpt-5.3-codex': CODEX_GPT5_PRICING,
   'gpt-5.2-codex': CODEX_GPT5_PRICING,
   'gpt-5.1-codex-max': CODEX_GPT5_PRICING,
+  // Gemini CLI uses OAuth/free-tier credentials.
+  // Pricing reflects equivalent Google API rates for cost estimation.
+  'gemini-2.5-flash': { input: 0.15, output: 0.60 },
+  'gemini-2.5-pro': { input: 1.25, output: 10.00 },
 }
 
 /**
  * Create provider instance
  */
-function createProvider(provider: LLMProvider, apiKey?: string, claudeCodeSettings?: ClaudeCodeSettings, codexSettings?: CodexCliSettings) {
+function createProvider(provider: LLMProvider, apiKey?: string, claudeCodeSettings?: ClaudeCodeSettings, codexSettings?: CodexCliSettings, geminiCliSettings?: GeminiProviderOptions) {
   switch (provider) {
     case 'openai':
       return createOpenAI({
@@ -199,6 +209,8 @@ function createProvider(provider: LLMProvider, apiKey?: string, claudeCodeSettin
     }
     case 'codex':
       return createCodexCli(codexSettings ? { defaultSettings: codexSettings } : undefined)
+    case 'gemini-cli':
+      return createGeminiProvider(geminiCliSettings ?? {})
     default:
       throw new Error(`Unsupported LLM provider: ${String(provider satisfies never)}`)
   }
@@ -271,7 +283,7 @@ function isContextLengthError(error: unknown): boolean {
  * - Functional hierarchy construction
  * - Code generation
  *
- * Supports OpenAI, Anthropic, Google, Claude Code, and Codex CLI providers with unified interface.
+ * Supports OpenAI, Anthropic, Google, Claude Code, Codex CLI, and Gemini CLI providers with unified interface.
  *
  * @example
  * ```typescript
@@ -289,6 +301,9 @@ function isContextLengthError(error: unknown): boolean {
  *
  * // Use Codex CLI (no API key needed, requires ChatGPT Plus/Pro subscription)
  * const client = new LLMClient({ provider: 'codex', model: 'gpt-5.3-codex' })
+ *
+ * // Use Gemini CLI (no API key needed, uses OAuth from `gemini` CLI login)
+ * const client = new LLMClient({ provider: 'gemini-cli', model: 'gemini-2.5-flash' })
  * ```
  */
 export class LLMClient {
@@ -308,7 +323,7 @@ export class LLMClient {
         `'googleSettings' was provided for a non-Google provider ('${options.provider}'). These settings will be ignored.`,
       )
     }
-    this.providerInstance = createProvider(options.provider, options.apiKey, options.claudeCodeSettings, options.codexSettings)
+    this.providerInstance = createProvider(options.provider, options.apiKey, options.claudeCodeSettings, options.codexSettings, options.geminiCliSettings)
   }
 
   private buildProviderOptions(callOptions?: CallOptions): Parameters<typeof generateText>[0]['providerOptions'] {
