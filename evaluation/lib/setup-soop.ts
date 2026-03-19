@@ -1,10 +1,19 @@
 import type { Sandbox } from '@vercel/agent-eval'
+import { setupSweBench } from './setup-swe-bench.js'
+
+interface SetupSoopOptions {
+  embed: boolean
+}
 
 /**
  * Setup function that configures the soop MCP server in the sandbox.
+ * Chains after setupSweBench to ensure the repo is cloned first.
  * Used by experiment configs to enable soop semantic code search for the agent.
  */
-export async function setupSoop(sandbox: Sandbox): Promise<void> {
+async function setupSoopInternal(sandbox: Sandbox, options: SetupSoopOptions): Promise<void> {
+  // Clone the SWE-bench repo first
+  await setupSweBench(sandbox)
+
   // Install soop globally in the sandbox
   const installResult = await sandbox.runCommand('npm', ['install', '-g', '@pleaseai/soop'])
   if (installResult.exitCode !== 0) {
@@ -38,8 +47,12 @@ Use \`soop_explore\` to traverse dependency and functional edges from a known en
     try {
       existing = await sandbox.readFile(file)
     }
-    catch {
-      // File doesn't exist yet — start empty
+    catch (error) {
+      // Only swallow "file not found" errors; rethrow unexpected failures
+      const msg = error instanceof Error ? error.message : String(error)
+      if (!msg.includes('ENOENT') && !msg.includes('no such file') && !msg.includes('not found')) {
+        throw error
+      }
     }
     hintFiles[file] = existing ? `${existing}\n\n${soopHint}` : soopHint
   }
@@ -52,15 +65,25 @@ Use \`soop_explore\` to traverse dependency and functional edges from a known en
     throw new Error(`soop init failed: ${initResult.stderr}`)
   }
 
-  const encodeResult = await sandbox.runCommand('soop', [
+  const encodeArgs = [
     'encode',
     '.',
     '-o',
     '.soop/graph.json',
-    '--embed-model',
-    'transformers/voyageai/voyage-4-nano',
-  ])
+    ...(options.embed ? ['--embed-model', 'transformers/voyageai/voyage-4-nano'] : []),
+  ]
+  const encodeResult = await sandbox.runCommand('soop', encodeArgs)
   if (encodeResult.exitCode !== 0) {
     throw new Error(`soop encode failed: ${encodeResult.stderr}`)
   }
 }
+
+function createSetupSoop(options: SetupSoopOptions) {
+  return (sandbox: Sandbox) => setupSoopInternal(sandbox, options)
+}
+
+/** Setup with vector embedding (hybrid search: FTS + vector) */
+export const setupSoop = createSetupSoop({ embed: true })
+
+/** Setup without embedding (text search only: FTS) */
+export const setupSoopText = createSetupSoop({ embed: false })
