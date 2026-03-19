@@ -6,7 +6,7 @@
     "github": {
       "owner": "",
       "repo": ".",
-      "commit": "61bdc480191f9da1ef688219a822764a4e1047c4"
+      "commit": "f89ae14d42b4940bdef1c066e9655ce473fcce10"
     }
   },
   "nodes": [
@@ -238,6 +238,625 @@
       "metadata": {
         "entityType": "file",
         "path": "eslint.config.js"
+      }
+    },
+    {
+      "id": "evaluation/evals/swe-bench/django-14170/EVAL.ts:file:evaluation/evals/swe-bench/django-14170/EVAL.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "validate agent performance on software engineering task",
+        "keywords": [
+          "evaluation",
+          "swe-bench",
+          "testing",
+          "metrics",
+          "observability"
+        ],
+        "subFeatures": [
+          "verify modified oracle files",
+          "confirm core fix implementation",
+          "check tool usage efficiency"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/evals/swe-bench/django-14170/EVAL.ts",
+        "qualifiedName": "evaluation/evals/swe-bench/django-14170/EVAL.ts",
+        "startLine": 1,
+        "endLine": 48
+      }
+    },
+    {
+      "id": "evaluation/evals/swe-bench/xarray-6938/EVAL.ts:file:evaluation/evals/swe-bench/xarray-6938/EVAL.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "validate agent performance on software engineering task",
+        "keywords": [
+          "evaluation",
+          "swe-bench",
+          "metrics",
+          "observability",
+          "testing"
+        ],
+        "subFeatures": [
+          "verify modified oracle files",
+          "confirm core fix implementation",
+          "check tool usage efficiency"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/evals/swe-bench/xarray-6938/EVAL.ts",
+        "qualifiedName": "evaluation/evals/swe-bench/xarray-6938/EVAL.ts",
+        "startLine": 1,
+        "endLine": 47
+      }
+    },
+    {
+      "id": "evaluation/experiments/baseline-claude-code.ts:file:evaluation/experiments/baseline-claude-code.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "define experiment configuration",
+        "keywords": [
+          "experiment",
+          "configuration",
+          "claude-code",
+          "evaluation",
+          "settings"
+        ],
+        "subFeatures": []
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/experiments/baseline-claude-code.ts",
+        "qualifiedName": "evaluation/experiments/baseline-claude-code.ts",
+        "startLine": 1,
+        "endLine": 11
+      }
+    },
+    {
+      "id": "evaluation/experiments/baseline-gemini.ts:file:evaluation/experiments/baseline-gemini.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "define experiment configuration",
+        "keywords": [
+          "experiment",
+          "configuration",
+          "baseline",
+          "gemini",
+          "evaluation"
+        ],
+        "subFeatures": [
+          "specify agent model",
+          "configure execution environment",
+          "set performance constraints",
+          "define execution parameters"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/experiments/baseline-gemini.ts",
+        "qualifiedName": "evaluation/experiments/baseline-gemini.ts",
+        "startLine": 1,
+        "endLine": 11
+      }
+    },
+    {
+      "id": "evaluation/experiments/soop-claude-code.ts:file:evaluation/experiments/soop-claude-code.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "configure experiment parameters",
+        "keywords": [
+          "experiment",
+          "configuration",
+          "evaluation",
+          "agent",
+          "sandbox"
+        ],
+        "subFeatures": [
+          "initialize experiment environment"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/experiments/soop-claude-code.ts",
+        "qualifiedName": "evaluation/experiments/soop-claude-code.ts",
+        "startLine": 1,
+        "endLine": 13
+      }
+    },
+    {
+      "id": "evaluation/experiments/soop-codex.ts:file:evaluation/experiments/soop-codex.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "configure experiment parameters",
+        "keywords": [
+          "experiment",
+          "configuration",
+          "evaluation",
+          "codex",
+          "setup"
+        ],
+        "subFeatures": [
+          "initialize experiment environment"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/experiments/soop-codex.ts",
+        "qualifiedName": "evaluation/experiments/soop-codex.ts",
+        "startLine": 1,
+        "endLine": 13
+      }
+    },
+    {
+      "id": "evaluation/experiments/soop-gemini.ts:file:evaluation/experiments/soop-gemini.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "configure experiment parameters",
+        "keywords": [
+          "experiment",
+          "configuration",
+          "gemini",
+          "evaluation",
+          "sandbox"
+        ],
+        "subFeatures": [
+          "initialize experiment environment"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/experiments/soop-gemini.ts",
+        "qualifiedName": "evaluation/experiments/soop-gemini.ts",
+        "startLine": 1,
+        "endLine": 13
+      }
+    },
+    {
+      "id": "evaluation/lib/metrics.ts:file:evaluation/lib/metrics.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "load agent evaluation results",
+        "keywords": [
+          "evaluation",
+          "metrics",
+          "results",
+          "patch",
+          "oracle"
+        ],
+        "subFeatures": [
+          "extract oracle file paths"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/lib/metrics.ts",
+        "qualifiedName": "evaluation/lib/metrics.ts",
+        "startLine": 1,
+        "endLine": 120
+      }
+    },
+    {
+      "id": "evaluation/lib/metrics.ts:function:calculateMetrics",
+      "type": "low_level",
+      "feature": {
+        "description": "compute evaluation metrics",
+        "keywords": [
+          "precision",
+          "recall",
+          "f1-score",
+          "evaluation",
+          "metrics"
+        ],
+        "subFeatures": [
+          "normalize input paths",
+          "calculate precision score",
+          "calculate recall score",
+          "calculate f1 score"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/metrics.ts",
+        "qualifiedName": "calculateMetrics",
+        "startLine": 92,
+        "endLine": 119
+      }
+    },
+    {
+      "id": "evaluation/lib/metrics.ts:function:extractOracleFiles",
+      "type": "low_level",
+      "feature": {
+        "description": "identify modified files from patch",
+        "keywords": [
+          "patch",
+          "diff",
+          "file extraction",
+          "metadata"
+        ],
+        "subFeatures": [
+          "parse patch file headers",
+          "collect unique file paths"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/metrics.ts",
+        "qualifiedName": "extractOracleFiles",
+        "startLine": 61,
+        "endLine": 75
+      }
+    },
+    {
+      "id": "evaluation/lib/metrics.ts:function:loadResults",
+      "type": "low_level",
+      "feature": {
+        "description": "load evaluation results",
+        "keywords": [
+          "evaluation",
+          "metrics",
+          "results",
+          "data",
+          "persistence"
+        ],
+        "subFeatures": [
+          "read results file",
+          "parse evaluation data"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/metrics.ts",
+        "qualifiedName": "loadResults",
+        "startLine": 27,
+        "endLine": 50
+      }
+    },
+    {
+      "id": "evaluation/lib/metrics.ts:function:normalizePath",
+      "type": "low_level",
+      "feature": {
+        "description": "remove leading slashes from path",
+        "keywords": [
+          "path",
+          "normalize",
+          "string",
+          "format"
+        ],
+        "subFeatures": []
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/metrics.ts",
+        "qualifiedName": "normalizePath",
+        "startLine": 80,
+        "endLine": 82
+      }
+    },
+    {
+      "id": "evaluation/lib/setup-soop.ts:file:evaluation/lib/setup-soop.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "configure semantic code search server",
+        "keywords": [
+          "soop",
+          "mcp",
+          "sandbox",
+          "code search",
+          "agent configuration"
+        ],
+        "subFeatures": [
+          "prepare repository environment",
+          "install search server globally",
+          "register search server configuration",
+          "append search instructions to documentation"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/lib/setup-soop.ts",
+        "qualifiedName": "evaluation/lib/setup-soop.ts",
+        "startLine": 1,
+        "endLine": 90
+      }
+    },
+    {
+      "id": "evaluation/lib/setup-soop.ts:function:createSetupSoop",
+      "type": "low_level",
+      "feature": {
+        "description": "configure sandbox environment",
+        "keywords": [
+          "sandbox",
+          "setup",
+          "initialization",
+          "configuration"
+        ],
+        "subFeatures": [
+          "initialize sandbox environment"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/setup-soop.ts",
+        "qualifiedName": "createSetupSoop",
+        "startLine": 81,
+        "endLine": 83
+      }
+    },
+    {
+      "id": "evaluation/lib/setup-soop.ts:function:setupSoopInternal",
+      "type": "low_level",
+      "feature": {
+        "description": "initialize semantic code search environment",
+        "keywords": [
+          "soop",
+          "sandbox",
+          "mcp",
+          "configuration",
+          "indexing"
+        ],
+        "subFeatures": [
+          "clone repository environment",
+          "install search server globally",
+          "configure agent search settings",
+          "append search instructions to documentation",
+          "initialize repository index"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/setup-soop.ts",
+        "qualifiedName": "setupSoopInternal",
+        "startLine": 13,
+        "endLine": 79
+      }
+    },
+    {
+      "id": "evaluation/lib/swe-bench-loader.ts:file:evaluation/lib/swe-bench-loader.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "load benchmark dataset",
+        "keywords": [
+          "swe-bench",
+          "dataset",
+          "evaluation",
+          "instance",
+          "oracle"
+        ],
+        "subFeatures": [
+          "retrieve specific instance",
+          "extract oracle files"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/lib/swe-bench-loader.ts",
+        "qualifiedName": "evaluation/lib/swe-bench-loader.ts",
+        "startLine": 1,
+        "endLine": 94
+      }
+    },
+    {
+      "id": "evaluation/lib/swe-bench-loader.ts:function:getInstance",
+      "type": "low_level",
+      "feature": {
+        "description": "retrieve benchmark instance",
+        "keywords": [
+          "dataset",
+          "lookup",
+          "benchmark",
+          "instance"
+        ],
+        "subFeatures": [
+          "load dataset file"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/swe-bench-loader.ts",
+        "qualifiedName": "getInstance",
+        "startLine": 70,
+        "endLine": 76
+      }
+    },
+    {
+      "id": "evaluation/lib/swe-bench-loader.ts:function:getOracleFiles",
+      "type": "low_level",
+      "feature": {
+        "description": "extract oracle file paths",
+        "keywords": [
+          "oracle",
+          "files",
+          "patch",
+          "evaluation",
+          "swe-bench"
+        ],
+        "subFeatures": []
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/swe-bench-loader.ts",
+        "qualifiedName": "getOracleFiles",
+        "startLine": 81,
+        "endLine": 83
+      }
+    },
+    {
+      "id": "evaluation/lib/swe-bench-loader.ts:function:instanceIdToEvalName",
+      "type": "low_level",
+      "feature": {
+        "description": "normalize evaluation instance identifier",
+        "keywords": [
+          "evaluation",
+          "identifier",
+          "normalization",
+          "formatting"
+        ],
+        "subFeatures": [
+          "remove repository prefix from identifier"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/swe-bench-loader.ts",
+        "qualifiedName": "instanceIdToEvalName",
+        "startLine": 89,
+        "endLine": 93
+      }
+    },
+    {
+      "id": "evaluation/lib/swe-bench-loader.ts:function:loadDataset",
+      "type": "low_level",
+      "feature": {
+        "description": "load benchmark dataset",
+        "keywords": [
+          "dataset",
+          "loader",
+          "benchmark",
+          "file",
+          "parse"
+        ],
+        "subFeatures": [
+          "read dataset file",
+          "parse dataset content"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/lib/swe-bench-loader.ts",
+        "qualifiedName": "loadDataset",
+        "startLine": 43,
+        "endLine": 65
+      }
+    },
+    {
+      "id": "evaluation/scripts/generate-evals.ts:file:evaluation/scripts/generate-evals.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "generate evaluation fixtures from dataset",
+        "keywords": [
+          "evaluation",
+          "fixtures",
+          "swe-bench",
+          "dataset",
+          "automation"
+        ],
+        "subFeatures": [
+          "load evaluation dataset",
+          "create evaluation directories",
+          "generate prompt documentation",
+          "generate test configuration files",
+          "filter evaluation instances"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "evaluation/scripts/generate-evals.ts",
+        "qualifiedName": "evaluation/scripts/generate-evals.ts",
+        "startLine": 1,
+        "endLine": 138
+      }
+    },
+    {
+      "id": "evaluation/scripts/generate-evals.ts:function:generateEval",
+      "type": "low_level",
+      "feature": {
+        "description": "generate evaluation artifacts instance",
+        "keywords": [
+          "evaluation",
+          "generation",
+          "artifacts",
+          "oracle",
+          "prompt"
+        ],
+        "subFeatures": [
+          "check existing evaluation directory",
+          "identify oracle files from instance",
+          "create evaluation directory structure",
+          "generate evaluation prompt documentation",
+          "generate evaluation script",
+          "generate package configuration"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/scripts/generate-evals.ts",
+        "qualifiedName": "generateEval",
+        "startLine": 76,
+        "endLine": 97
+      }
+    },
+    {
+      "id": "evaluation/scripts/generate-evals.ts:function:generateEvalTs",
+      "type": "low_level",
+      "feature": {
+        "description": "generate evaluation test suite",
+        "keywords": [
+          "evaluation",
+          "testing",
+          "metrics",
+          "observability",
+          "code generation"
+        ],
+        "subFeatures": [
+          "define oracle file list",
+          "validate file modification recall",
+          "verify tool call constraints"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/scripts/generate-evals.ts",
+        "qualifiedName": "generateEvalTs",
+        "startLine": 37,
+        "endLine": 70
+      }
+    },
+    {
+      "id": "evaluation/scripts/generate-evals.ts:function:generatePackageJson",
+      "type": "low_level",
+      "feature": {
+        "description": "generate package configuration",
+        "keywords": [
+          "package",
+          "configuration",
+          "metadata",
+          "serialization"
+        ],
+        "subFeatures": []
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/scripts/generate-evals.ts",
+        "qualifiedName": "generatePackageJson",
+        "startLine": 72,
+        "endLine": 74
+      }
+    },
+    {
+      "id": "evaluation/scripts/generate-evals.ts:function:generatePromptMd",
+      "type": "low_level",
+      "feature": {
+        "description": "generate evaluation prompt markdown",
+        "keywords": [
+          "prompt",
+          "markdown",
+          "evaluation",
+          "swebench",
+          "task"
+        ],
+        "subFeatures": [
+          "extract repository name",
+          "format problem statement"
+        ]
+      },
+      "metadata": {
+        "entityType": "function",
+        "path": "evaluation/scripts/generate-evals.ts",
+        "qualifiedName": "generatePromptMd",
+        "startLine": 25,
+        "endLine": 35
       }
     },
     {
@@ -21661,30 +22280,31 @@
       }
     },
     {
-      "id": "packages/utils/src/llm.ts:class:LLMClient:294",
+      "id": "packages/utils/src/llm.ts:class:LLMClient",
       "type": "low_level",
       "feature": {
-        "description": "execute language model text generation",
+        "description": "coordinate llm provider communication",
         "keywords": [
           "llm",
-          "ai",
-          "text-generation",
+          "provider",
+          "generation",
           "token-usage",
-          "provider-management"
+          "client"
         ],
         "subFeatures": [
-          "initialize language model client",
-          "configure model generation parameters",
+          "initialize llm client",
+          "configure model parameters",
           "track token usage statistics",
-          "manage provider specific settings"
+          "generate text responses",
+          "resolve provider specific settings"
         ]
       },
       "metadata": {
         "entityType": "class",
         "path": "packages/utils/src/llm.ts",
         "qualifiedName": "LLMClient",
-        "startLine": 294,
-        "endLine": 669
+        "startLine": 309,
+        "endLine": 684
       }
     },
     {
@@ -21707,18 +22327,19 @@
       "id": "packages/utils/src/llm.ts:file:packages/utils/src/llm.ts",
       "type": "low_level",
       "feature": {
-        "description": "initialize language model client",
+        "description": "orchestrate language model interactions",
         "keywords": [
           "llm",
           "ai",
           "provider",
-          "generative",
+          "generation",
           "client"
         ],
         "subFeatures": [
-          "configure model parameters",
-          "select language model provider",
-          "define error handling callbacks"
+          "initialize language model providers",
+          "configure model generation parameters",
+          "execute text generation requests",
+          "manage provider specific settings"
         ]
       },
       "metadata": {
@@ -21726,14 +22347,14 @@
         "path": "packages/utils/src/llm.ts",
         "qualifiedName": "packages/utils/src/llm.ts",
         "startLine": 1,
-        "endLine": 670
+        "endLine": 685
       }
     },
     {
       "id": "packages/utils/src/llm.ts:function:createProvider:164",
       "type": "low_level",
       "feature": {
-        "description": "initialize llm provider instance",
+        "description": "initialize language model provider",
         "keywords": [
           "llm",
           "provider",
@@ -21746,15 +22367,17 @@
           "configure anthropic provider",
           "configure google generative ai provider",
           "configure claude code environment",
-          "configure codex cli settings",
+          "configure codex cli provider",
+          "configure gemini cli provider",
           "validate supported provider type"
         ]
       },
       "metadata": {
         "entityType": "function",
         "path": "packages/utils/src/llm.ts",
-        "startLine": 164,
-        "endLine": 205
+        "qualifiedName": "createProvider",
+        "startLine": 174,
+        "endLine": 217
       }
     },
     {
@@ -21947,8 +22570,9 @@
       "metadata": {
         "entityType": "method",
         "path": "packages/utils/src/llm.ts",
-        "startLine": 299,
-        "endLine": 312
+        "qualifiedName": "LLMClient.constructor",
+        "startLine": 314,
+        "endLine": 327
       }
     },
     {
@@ -22659,6 +23283,31 @@
       "metadata": {
         "entityType": "file",
         "path": "packages/utils/tests/llm.test.ts"
+      }
+    },
+    {
+      "id": "packages/utils/tests/llm.test.ts:file:packages/utils/tests/llm.test.ts",
+      "type": "low_level",
+      "feature": {
+        "description": "validate language model utility functions",
+        "keywords": [
+          "llm",
+          "testing",
+          "model-parsing",
+          "provider-mocking"
+        ],
+        "subFeatures": [
+          "parse model identifier strings",
+          "mock external language model providers",
+          "verify model provider configuration"
+        ]
+      },
+      "metadata": {
+        "entityType": "file",
+        "path": "packages/utils/tests/llm.test.ts",
+        "qualifiedName": "packages/utils/tests/llm.test.ts",
+        "startLine": 1,
+        "endLine": 1108
       }
     },
     {
@@ -23437,6 +24086,131 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "eslint.config.js:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/evals/swe-bench/django-14170/EVAL.ts:file:evaluation/evals/swe-bench/django-14170/EVAL.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/evals/swe-bench/xarray-6938/EVAL.ts:file:evaluation/evals/swe-bench/xarray-6938/EVAL.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/experiments/baseline-claude-code.ts:file:evaluation/experiments/baseline-claude-code.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/experiments/baseline-gemini.ts:file:evaluation/experiments/baseline-gemini.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/experiments/soop-claude-code.ts:file:evaluation/experiments/soop-claude-code.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/experiments/soop-codex.ts:file:evaluation/experiments/soop-codex.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/experiments/soop-gemini.ts:file:evaluation/experiments/soop-gemini.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/metrics.ts:file:evaluation/lib/metrics.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/metrics.ts:function:calculateMetrics",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/metrics.ts:function:extractOracleFiles",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/metrics.ts:function:loadResults",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/metrics.ts:function:normalizePath",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/setup-soop.ts:file:evaluation/lib/setup-soop.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/setup-soop.ts:function:createSetupSoop",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/setup-soop.ts:function:setupSoopInternal",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/swe-bench-loader.ts:file:evaluation/lib/swe-bench-loader.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/swe-bench-loader.ts:function:getInstance",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/swe-bench-loader.ts:function:getOracleFiles",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/swe-bench-loader.ts:function:instanceIdToEvalName",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/lib/swe-bench-loader.ts:function:loadDataset",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/scripts/generate-evals.ts:file:evaluation/scripts/generate-evals.ts",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/scripts/generate-evals.ts:function:generateEval",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/scripts/generate-evals.ts:function:generateEvalTs",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/scripts/generate-evals.ts:function:generatePackageJson",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "evaluation/scripts/generate-evals.ts:function:generatePromptMd",
       "type": "functional"
     },
     {
@@ -24631,6 +25405,11 @@
     },
     {
       "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/utils/src/llm.ts:class:LLMClient",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/utils/src/llm.ts:file",
       "type": "functional"
     },
@@ -24672,6 +25451,11 @@
     {
       "source": "domain:Uncategorized/miscellaneous",
       "target": "packages/utils/tests/llm.test.ts:file",
+      "type": "functional"
+    },
+    {
+      "source": "domain:Uncategorized/miscellaneous",
+      "target": "packages/utils/tests/llm.test.ts:file:packages/utils/tests/llm.test.ts",
       "type": "functional"
     },
     {
@@ -30284,11 +31068,6 @@
     },
     {
       "source": "packages/utils/src/llm.ts:file",
-      "target": "packages/utils/src/llm.ts:class:LLMClient:294",
-      "type": "functional"
-    },
-    {
-      "source": "packages/utils/src/llm.ts:file",
       "target": "packages/utils/src/llm.ts:function:createProvider:164",
       "type": "functional"
     },
@@ -30381,6 +31160,12 @@
     {
       "source": "packages/utils/src/llm.ts:file",
       "target": "packages/utils/src/memory.ts:file",
+      "type": "dependency",
+      "dependencyType": "import"
+    },
+    {
+      "source": "packages/utils/src/llm.ts:file:packages/utils/src/llm.ts",
+      "target": "packages/utils/src/memory.ts:file:packages/utils/src/memory.ts",
       "type": "dependency",
       "dependencyType": "import"
     },
