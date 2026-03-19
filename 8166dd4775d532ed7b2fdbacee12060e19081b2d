@@ -1,0 +1,23 @@
+evaluation/lib/metrics.ts
+  40b7060a9c852f8b 54-57,64-65,68-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "8166dd4775d532ed7b2fdbacee12060e19081b2d",
+  "prompts": {
+    "40b7060a9c852f8b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81726d42-e7a1-4721-906c-0f3113ba1c3d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 10,
+      "total_deletions": 4,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}
