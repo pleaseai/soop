@@ -20,6 +20,7 @@
     "ai": "^6.0.116",
     "ai-sdk-provider-claude-code": "^3.4.0",
     "ai-sdk-provider-codex-cli": "^1.1.0",
+    "ai-sdk-provider-gemini-cli": "^2.0.1",
     "consola": "^3.4.2"
   },
   "peerDependencies": {

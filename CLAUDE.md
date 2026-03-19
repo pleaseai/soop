@@ -169,7 +169,7 @@ import { DataFlowDetector } from './data-flow'
 
 | Package | Purpose |
 |---------|---------|
-| `@pleaseai/soop-utils` | AST parser (tree-sitter), LLM interface (OpenAI/Anthropic/Google), git helpers, logger |
+| `@pleaseai/soop-utils` | AST parser (tree-sitter), LLM interface (OpenAI/Anthropic/Google/Gemini CLI), git helpers, logger |
 | `@pleaseai/soop-store` | Storage interfaces (GraphStore, VectorStore, TextSearchStore) & implementations (SQLite, SurrealDB, LanceDB) |
 | `@pleaseai/soop-graph` | RPG data structures (Node, Edge, RPG class) |
 | `@pleaseai/soop-encoder` | Code → RPG extraction (semantic lifting, structural reorganization, artifact grounding, evolution) |
@@ -457,6 +457,7 @@ RPG encoding uses LLM for semantic feature extraction. Options:
 | `useLLM: true` + GPT-4o | High (70% SWE-bench) | $3/$10 per 1M | Paper baseline |
 | `useLLM: true` + Claude Code (sonnet) | High | Pro/Max sub | No API key needed |
 | `useLLM: true` + Codex CLI (gpt-5.3-codex) | High | Plus/Pro sub | No API key needed |
+| `useLLM: true` + Gemini CLI (`gemini-cli`) | High | Free (OAuth) | Local dev with `gemini` CLI login |
 | `useLLM: false` (heuristic) | ~15% lower | Free | Offline/testing |
 
 ## Embedding Options

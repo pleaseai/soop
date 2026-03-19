@@ -19,6 +19,10 @@ vi.mock('ai-sdk-provider-claude-code', () => ({
   createClaudeCode: vi.fn(() => vi.fn(() => 'mock-claude-code-model')),
 }))
 
+vi.mock('ai-sdk-provider-gemini-cli', () => ({
+  createGeminiProvider: vi.fn(() => vi.fn(() => 'mock-gemini-cli-model')),
+}))
+
 const { mockCreateCodexCli, MockNoObjectGeneratedError } = vi.hoisted(() => {
   class MockNoObjectGeneratedError extends Error {
     readonly text: string
@@ -64,6 +68,14 @@ describe('parseModelString', () => {
 
   it('should parse codex/gpt-5.3-codex', () => {
     expect(parseModelString('codex/gpt-5.3-codex')).toEqual({ provider: 'codex', model: 'gpt-5.3-codex' })
+  })
+
+  it('should parse gemini-cli', () => {
+    expect(parseModelString('gemini-cli')).toEqual({ provider: 'gemini-cli', model: undefined })
+  })
+
+  it('should parse gemini-cli/gemini-2.5-pro', () => {
+    expect(parseModelString('gemini-cli/gemini-2.5-pro')).toEqual({ provider: 'gemini-cli', model: 'gemini-2.5-pro' })
   })
 
   it('should parse provider-only string (no slash)', () => {
@@ -121,6 +133,17 @@ describe('LLMClient', () => {
     it('should accept custom model for codex provider', () => {
       const client = new LLMClient({ provider: 'codex', model: 'gpt-5.2-codex' })
       expect(client.getModel()).toBe('gpt-5.2-codex')
+    })
+
+    it('should use default model for gemini-cli provider', () => {
+      const client = new LLMClient({ provider: 'gemini-cli' })
+      expect(client.getModel()).toBe('gemini-2.5-flash')
+      expect(client.getProvider()).toBe('gemini-cli')
+    })
+
+    it('should accept custom model for gemini-cli provider', () => {
+      const client = new LLMClient({ provider: 'gemini-cli', model: 'gemini-2.5-pro' })
+      expect(client.getModel()).toBe('gemini-2.5-pro')
     })
 
     it('should accept custom model', () => {
@@ -261,6 +284,52 @@ describe('LLMClient', () => {
 
       expect(client).toBeDefined()
       expect(mockCreateCodexCli).toHaveBeenCalledWith({ defaultSettings: settings })
+    })
+
+    it('should call generateText with gemini-cli provider', async () => {
+      const { generateText } = await import('ai')
+
+      vi.mocked(generateText).mockResolvedValueOnce({
+        text: 'gemini-cli response',
+        usage: { inputTokens: 8, outputTokens: 4 },
+      } as any)
+
+      const client = new LLMClient({ provider: 'gemini-cli' })
+      const result = await client.complete('test prompt')
+
+      expect(result.content).toBe('gemini-cli response')
+      expect(result.model).toBe('gemini-2.5-flash')
+    })
+
+    it('should pass geminiCliSettings to createGeminiProvider', async () => {
+      const { createGeminiProvider } = await import('ai-sdk-provider-gemini-cli')
+      vi.mocked(createGeminiProvider).mockClear()
+
+      const settings = { authType: 'api-key' as const, apiKey: 'test-key' }
+      const _client = new LLMClient({ provider: 'gemini-cli', geminiCliSettings: settings })
+      expect(_client).toBeDefined()
+
+      expect(vi.mocked(createGeminiProvider)).toHaveBeenCalledWith(settings)
+    })
+
+    it('should call createGeminiProvider with empty object when no settings provided', async () => {
+      const { createGeminiProvider } = await import('ai-sdk-provider-gemini-cli')
+      vi.mocked(createGeminiProvider).mockClear()
+
+      const _client = new LLMClient({ provider: 'gemini-cli' })
+      expect(_client).toBeDefined()
+
+      expect(vi.mocked(createGeminiProvider)).toHaveBeenCalledWith({})
+    })
+
+    it('should not pass apiKey to createGeminiProvider', async () => {
+      const { createGeminiProvider } = await import('ai-sdk-provider-gemini-cli')
+      vi.mocked(createGeminiProvider).mockClear()
+
+      const _client = new LLMClient({ provider: 'gemini-cli', apiKey: 'should-be-ignored' })
+      expect(_client).toBeDefined()
+
+      expect(vi.mocked(createGeminiProvider)).toHaveBeenCalledWith({})
     })
 
     it('should call createCodexCli with undefined when no settings provided', () => {
@@ -998,6 +1067,20 @@ describe('LLMClient', () => {
       expect(cost.inputCost).toBe(1.25)
       expect(cost.outputCost).toBe(10.00)
       expect(cost.totalCost).toBe(11.25)
+    })
+
+    it('should estimate cost for gemini-cli gemini-2.5-flash model', () => {
+      const client = new LLMClient({ provider: 'gemini-cli', model: 'gemini-2.5-flash' })
+      const cost = client.estimateCost({
+        totalPromptTokens: 1_000_000,
+        totalCompletionTokens: 1_000_000,
+        totalTokens: 2_000_000,
+        requestCount: 1,
+      })
+
+      expect(cost.inputCost).toBe(0.15)
+      expect(cost.outputCost).toBe(0.60)
+      expect(cost.totalCost).toBe(0.75)
     })
 
     it('should return zero cost for unknown model', () => {
