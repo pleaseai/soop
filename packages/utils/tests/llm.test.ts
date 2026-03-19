@@ -322,6 +322,16 @@ describe('LLMClient', () => {
       expect(vi.mocked(createGeminiProvider)).toHaveBeenCalledWith({})
     })
 
+    it('should not pass apiKey to createGeminiProvider', async () => {
+      const { createGeminiProvider } = await import('ai-sdk-provider-gemini-cli')
+      vi.mocked(createGeminiProvider).mockClear()
+
+      const _client = new LLMClient({ provider: 'gemini-cli', apiKey: 'should-be-ignored' })
+      expect(_client).toBeDefined()
+
+      expect(vi.mocked(createGeminiProvider)).toHaveBeenCalledWith({})
+    })
+
     it('should call createCodexCli with undefined when no settings provided', () => {
       mockCreateCodexCli.mockClear()
 

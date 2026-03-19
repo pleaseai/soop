@@ -26,7 +26,7 @@ export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'claude-code' | 'c
  * LLM client options
  */
 export interface LLMOptions {
-  /** Provider (openai, anthropic, google, or claude-code) */
+  /** Provider (openai, anthropic, google, claude-code, codex, or gemini-cli) */
   provider: LLMProvider
   /** API key (defaults to environment variable) */
   apiKey?: string
