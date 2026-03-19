@@ -1,0 +1,29 @@
+packages/utils/src/llm.ts
+  a84923d018b885d6 5,15,23,47-48,57,132,165-168,174,212-213,286,304-306,326
+packages/utils/package.json
+  a84923d018b885d6 23
+packages/utils/tests/llm.test.ts
+  a84923d018b885d6 22-25,73-80,138-148,289-324,1062-1075
+CLAUDE.md
+  a84923d018b885d6 172,460
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "650f8ca60acdebe39ebe566835f2109981ac43a0",
+  "prompts": {
+    "a84923d018b885d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0c975822-3843-4d8e-a64d-e660b78efd1e",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 96,
+      "total_deletions": 6,
+      "accepted_lines": 95,
+      "overriden_lines": 0
+    }
+  }
+}
