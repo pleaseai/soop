@@ -1,0 +1,27 @@
+packages/encoder/src/reorganization/domain-discovery.ts
+  7933dcc224298348 136
+packages/encoder/src/semantic.ts
+  7933dcc224298348 1233
+packages/mcp/src/interactive/state.ts
+  7933dcc224298348 93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "4d208f0cdb2aa98b5f8623646e610996b3ad5447",
+  "prompts": {
+    "7933dcc224298348": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bfd8123b-a41f-4ff2-98f5-a4629f57ed84",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
