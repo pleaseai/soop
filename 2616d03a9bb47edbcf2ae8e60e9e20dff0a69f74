@@ -1,0 +1,27 @@
+packages/soop/package.json
+  d5598ebd22eb98bb 36
+.github/workflows/release-please.yml
+  d5598ebd22eb98bb 138-139,154-155,169-170
+CLAUDE.md
+  d5598ebd22eb98bb 438
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "2616d03a9bb47edbcf2ae8e60e9e20dff0a69f74",
+  "prompts": {
+    "d5598ebd22eb98bb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fa76abb0-1a1e-46d5-969b-b1a4837f62d1",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 11,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
