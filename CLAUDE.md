@@ -435,7 +435,7 @@ If `better-sqlite3` native bindings are compiled for a different Node.js version
 ### packages/soop workspace dependencies
 - Always declare `@pleaseai/soop-*` workspace packages in `devDependencies` of `packages/soop/package.json`, **not** `dependencies` — they are `private: true` and not published to npm, so listing them in `dependencies` causes `npm install -g @pleaseai/soop` to fail with 404 errors
 - The `release-please` `node-workspace` plugin detects both `dependencies` **and** `devDependencies` for cascade version bumps, so `devDependencies` is sufficient
-- `prepack`/`postpack` lifecycle scripts in `packages/soop/package.json` strip `devDependencies` (which contain `workspace:*`) from the published tarball; `postpack` restores the file via `git checkout package.json`
+- Publishing uses `bun pm pack` + `npm publish <tarball>` — `bun pm pack` automatically resolves `workspace:*` to real versions in the tarball, so no `prepack`/`postpack` hacks are needed
 
 ### Husky hook warnings
 - Switching branches or committing may produce non-blocking warnings: `eval: [[: not found` and `soop sync failed (exit 1)` — these come from `.husky/_/` scripts and can be ignored; the git operation completes successfully
