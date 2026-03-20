@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.9](https://github.com/pleaseai/soop/compare/soop-utils-v0.1.8...soop-utils-v0.1.9) (2026-03-20)
+
+
+### Features
+
+* **utils:** add gemini-cli LLM provider ([#252](https://github.com/pleaseai/soop/issues/252)) ([776b07e](https://github.com/pleaseai/soop/commit/776b07e7d384205c35463892a80e079ee80b8dfe))
+
+
+### Bug Fixes
+
+* **encoder:** spread Map.entries() to array before calling toSorted ([#251](https://github.com/pleaseai/soop/issues/251)) ([8a49ae5](https://github.com/pleaseai/soop/commit/8a49ae5dc0f21f9e684d509382289557e8347889))
+
 ## [0.1.8](https://github.com/pleaseai/soop/compare/soop-utils-v0.1.7...soop-utils-v0.1.8) (2026-03-14)
 
 

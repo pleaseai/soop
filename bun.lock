@@ -45,7 +45,7 @@
     },
     "packages/cli": {
       "name": "@pleaseai/soop-cli",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "dependencies": {
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
@@ -60,7 +60,7 @@
     },
     "packages/encoder": {
       "name": "@pleaseai/soop-encoder",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@ai-sdk/openai": "^3.0.41",
         "@huggingface/transformers": "^3.8.1",
@@ -78,7 +78,7 @@
     },
     "packages/graph": {
       "name": "@pleaseai/soop-graph",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "dependencies": {
         "@pleaseai/soop-store": "workspace:*",
         "@pleaseai/soop-utils": "workspace:*",
@@ -91,7 +91,7 @@
     },
     "packages/mcp": {
       "name": "@pleaseai/soop-mcp",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.27.1",
         "@pleaseai/soop-ast": "workspace:*",
@@ -128,7 +128,7 @@
     },
     "packages/soop": {
       "name": "@pleaseai/soop",
-      "version": "0.1.28-alpha.1",
+      "version": "0.1.29-alpha.1",
       "bin": {
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
@@ -160,24 +160,24 @@
     },
     "packages/soop-native": {
       "name": "@pleaseai/soop-native",
-      "version": "0.1.21",
+      "version": "0.1.22",
       "bin": {
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
       },
       "optionalDependencies": {
-        "@pleaseai/soop-darwin-arm64": "0.1.21",
-        "@pleaseai/soop-darwin-x64": "0.1.21",
-        "@pleaseai/soop-linux-arm64-glibc": "0.1.21",
-        "@pleaseai/soop-linux-arm64-musl": "0.1.21",
-        "@pleaseai/soop-linux-x64-glibc": "0.1.21",
-        "@pleaseai/soop-linux-x64-musl": "0.1.21",
-        "@pleaseai/soop-win32-x64": "0.1.21",
+        "@pleaseai/soop-darwin-arm64": "0.1.22",
+        "@pleaseai/soop-darwin-x64": "0.1.22",
+        "@pleaseai/soop-linux-arm64-glibc": "0.1.22",
+        "@pleaseai/soop-linux-arm64-musl": "0.1.22",
+        "@pleaseai/soop-linux-x64-glibc": "0.1.22",
+        "@pleaseai/soop-linux-x64-musl": "0.1.22",
+        "@pleaseai/soop-win32-x64": "0.1.22",
       },
     },
     "packages/store": {
       "name": "@pleaseai/soop-store",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@surrealdb/node": "^2.6.0",
         "surrealdb": "^2.0.0",
@@ -189,7 +189,7 @@
     },
     "packages/tools": {
       "name": "@pleaseai/soop-tools",
-      "version": "0.1.12",
+      "version": "0.1.13",
       "dependencies": {
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
@@ -197,7 +197,7 @@
     },
     "packages/utils": {
       "name": "@pleaseai/soop-utils",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.58",
         "@ai-sdk/google": "^3.0.43",
@@ -214,7 +214,7 @@
     },
     "packages/zerorepo": {
       "name": "@pleaseai/soop-zerorepo",
-      "version": "0.1.10",
+      "version": "0.1.11",
       "dependencies": {
         "@pleaseai/soop-graph": "workspace:*",
         "@pleaseai/soop-utils": "workspace:*",

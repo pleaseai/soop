@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.13](https://github.com/pleaseai/soop/compare/soop-tools-v0.1.12...soop-tools-v0.1.13) (2026-03-20)
+
+
+### Bug Fixes
+
+* **encoder:** spread Map.entries() to array before calling toSorted ([#251](https://github.com/pleaseai/soop/issues/251)) ([8a49ae5](https://github.com/pleaseai/soop/commit/8a49ae5dc0f21f9e684d509382289557e8347889))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.11
+    * @pleaseai/soop-encoder bumped to 0.3.1
+
 ## [0.1.12](https://github.com/pleaseai/soop/compare/soop-tools-v0.1.11...soop-tools-v0.1.12) (2026-03-16)
 
 
