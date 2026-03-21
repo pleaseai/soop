@@ -1,0 +1,25 @@
+packages/soop/package.json
+  d1815f87d103186a 53,57-58
+tsdown.config.ts
+  d1815f87d103186a 21-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "4ebc20224685eaed08198b1690d3cbabf88efcb4",
+  "prompts": {
+    "d1815f87d103186a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f9e118a7-6d47-44ee-9648-67f5e8253edc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 3,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
