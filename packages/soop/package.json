@@ -50,10 +50,12 @@
     "web-tree-sitter": "^0.26.0"
   },
   "optionalDependencies": {
+    "@google/gemini-cli-core": ">=0.22.4",
     "@huggingface/transformers": "^3.8.1",
     "@lancedb/lancedb": "^0.13.0",
     "@surrealdb/node": "^2.6.0",
-    "better-sqlite3": "^12.6.2"
+    "better-sqlite3": "^12.6.2",
+    "tree-sitter-bash": "^0.25.0"
   },
   "peerDependencies": {
     "zod": "^3.25.0 || ^4.0.0"

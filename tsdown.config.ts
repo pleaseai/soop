@@ -18,6 +18,10 @@ const external = [
   'sharp',
   /^@img\//,
   'detect-libc',
+  // Externalize packages using dynamic wasm imports (`import('*.wasm?binary')`)
+  // that rolldown cannot resolve at build time.
+  '@google/gemini-cli-core',
+  'tree-sitter-bash',
 ]
 
 export default defineConfig([
