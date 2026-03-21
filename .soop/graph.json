@@ -6,7 +6,7 @@
     "github": {
       "owner": "",
       "repo": ".",
-      "commit": "f89ae14d42b4940bdef1c066e9655ce473fcce10"
+      "commit": "b14c5b8bc42ad9a32eac99261888f1689df38838"
     }
   },
   "nodes": [
@@ -23997,15 +23997,15 @@
           "bundling",
           "configuration",
           "build",
-          "typescript",
-          "external-dependencies"
+          "external",
+          "typescript"
         ],
         "subFeatures": [
-          "define library bundle configuration",
-          "define cli binary configuration",
-          "define launcher script configuration",
-          "exclude native dependencies from bundle",
-          "include internal workspace packages in bundle"
+          "define external dependencies",
+          "bundle library source code",
+          "generate cli binary executable",
+          "configure output directory structure",
+          "enable typescript declaration generation"
         ]
       },
       "metadata": {
@@ -24013,7 +24013,7 @@
         "path": "tsdown.config.ts",
         "qualifiedName": "tsdown.config.ts",
         "startLine": 1,
-        "endLine": 65
+        "endLine": 69
       }
     },
     {
