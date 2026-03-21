@@ -18,6 +18,10 @@ const external = [
   'sharp',
   /^@img\//,
   'detect-libc',
+  // Gemini CLI core: uses dynamic import('*.wasm?binary') for tree-sitter,
+  // which rolldown cannot resolve at build time
+  '@google/gemini-cli-core',
+  'tree-sitter-bash',
 ]
 
 export default defineConfig([

@@ -108,7 +108,6 @@ jobs:
         run: |
           for f in \
             packages/soop/dist/packages/cli/src/cli.mjs \
-            packages/soop/dist/packages/mcp/src/server.mjs \
             packages/soop/dist/src/index.mjs \
             packages/soop/dist/src/index.d.mts; do
             if [ ! -f "$f" ]; then
