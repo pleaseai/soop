@@ -1,0 +1,27 @@
+README.md
+  9051268b152d490a 276-277
+docs/implementation-status.md
+  9051268b152d490a 88,93,101-107,196-197,226
+CLAUDE.md
+  9051268b152d490a 121,125-136,145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.22",
+  "base_commit_sha": "d7ca3d7fff413be45bb47aa4e4d06e36d3dce6d8",
+  "prompts": {
+    "9051268b152d490a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0fbf73d2-ab87-4466-9584-60cc1713bd51",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 116,
+      "total_deletions": 23,
+      "accepted_lines": 116,
+      "overriden_lines": 0
+    }
+  }
+}
