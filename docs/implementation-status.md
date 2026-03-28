@@ -85,12 +85,12 @@ LLM-based semantic reorganization replacing directory-mirroring hierarchy — `p
 
 ### 1.9 MCP Server
 
-- 5 tools (rpg_search, rpg_fetch, rpg_explore, rpg_encode, rpg_stats) — `src/mcp/`
+- 6 tools (soop_search, soop_fetch, soop_explore, soop_encode, soop_evolve, soop_stats) — `packages/mcp/src/`
 - Zod-based input validation, error factory pattern
 
 ### 1.10 CLI
 
-- `encode`, `search`, `fetch` commands — `src/cli.ts`
+- `encode`, `evolve`, `search`, `fetch`, `explore`, `embed`, `init`, `sync`, `stamp`, `last-commit`, `mcp` commands — `packages/cli/src/cli.ts`
 
 ### 1.11 RPG-Encoder: Evolution (Incremental Updates)
 
@@ -98,13 +98,13 @@ Commit-level incremental maintenance — a key differentiator of the paper — i
 
 | Paper Component | Module | Status |
 |-----------------|--------|--------|
-| **ParseUnitDiff** (Delta-Level Feature Extraction) | `src/encoder/evolution/diff-parser.ts` | ✅ Complete |
-| **DeleteNode + PruneOrphans** (Algorithm 1) | `src/encoder/evolution/operations.ts` | ✅ Complete |
-| **ProcessModification** with semantic drift (Algorithm 2) | `src/encoder/evolution/operations.ts` | ✅ Complete |
-| **InsertNode** with semantic routing (Algorithm 3) | `src/encoder/evolution/operations.ts` | ✅ Complete |
-| **FindBestParent** LLM/embedding routing | `src/encoder/evolution/semantic-router.ts` | ✅ Complete |
-| **RPGEvolver** orchestrator (Delete → Modify → Insert) | `src/encoder/evolution/evolve.ts` | ✅ Complete |
-| **RPGEncoder.evolve()** public API | `src/encoder/encoder.ts` | ✅ Complete |
+| **ParseUnitDiff** (Delta-Level Feature Extraction) | `packages/encoder/src/evolution/diff-parser.ts` | ✅ Complete |
+| **DeleteNode + PruneOrphans** (Algorithm 1) | `packages/encoder/src/evolution/operations.ts` | ✅ Complete |
+| **ProcessModification** with semantic drift (Algorithm 2) | `packages/encoder/src/evolution/operations.ts` | ✅ Complete |
+| **InsertNode** with semantic routing (Algorithm 3) | `packages/encoder/src/evolution/operations.ts` | ✅ Complete |
+| **FindBestParent** LLM/embedding routing | `packages/encoder/src/evolution/semantic-router.ts` | ✅ Complete |
+| **RPGEvolver** orchestrator (Delete → Modify → Insert) | `packages/encoder/src/evolution/evolve.ts` | ✅ Complete |
+| **RPGEncoder.evolve()** public API | `packages/encoder/src/encoder.ts` | ✅ Complete |
 
 ### 1.12 Tests
 
@@ -193,8 +193,8 @@ Currently only a skeleton exists at `src/zerorepo/zerorepo.ts`; core logic is no
 
 | Item | Current | Needed |
 |------|---------|--------|
-| rpg_evolve | Does not exist | MCP wrapper for `RPGEvolver` (backend implemented) |
-| rpg_generate | Does not exist | ZeroRepo generation pipeline tool |
+| soop_evolve | ✅ Implemented | MCP wrapper for `RPGEvolver` |
+| soop_generate | Does not exist | ZeroRepo generation pipeline tool |
 | Tool orchestration | Independent calls | Paper's Search → Fetch → Explore workflow guide |
 
 ### 3.6 DataFlowEdge Usage
@@ -223,7 +223,7 @@ P0 (Core)
 P1 (Important)
 ├── Artifact Grounding — LCA-based metadata propagation
 ├── SearchNode search_scopes support
-├── MCP rpg_evolve tool
+├── MCP soop_evolve tool ✅ (implemented)
 └── DataFlowEdge usage
 
 P2 (Generation Pipeline)

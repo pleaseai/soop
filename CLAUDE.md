@@ -118,19 +118,22 @@ soop sync                      # Copy to local + evolve
 
 ### Workspace Structure
 
-The project uses **Bun workspaces** with a private monorepo root (`version: 0.0.0`) and 9 packages under `packages/`. The published package is `packages/soop` (`@pleaseai/soop`); all other packages are `private: true` and bundled inline.
+The project uses **Bun workspaces** with a private monorepo root (`version: 0.0.0`) and 12 packages under `packages/`. The published package is `packages/soop` (`@pleaseai/soop`); all other packages are `private: true` and bundled inline.
 
 ```
 packages/
-├── soop/      # Published: @pleaseai/soop (umbrella package, bin/soop)
-├── utils/     # Layer 0: AST parser, LLM interface, git helpers, logger (independent)
-├── store/     # Layer 0: Storage interfaces & implementations (independent)
-├── graph/     # Layer 1: RPG data structures (→ store)
-├── encoder/   # Layer 2: Code → RPG extraction (→ graph, utils)
-├── tools/     # Layer 2: Agentic tools for graph navigation (→ graph, encoder)
-├── zerorepo/  # Layer 2: Intent → Code generation (→ graph, utils)
-├── mcp/       # Layer 3: MCP server (→ graph, encoder, tools, utils)
-└── cli/       # Layer 4: CLI entry point (→ encoder, graph, tools, zerorepo)
+├── soop/        # Published: @pleaseai/soop (umbrella package, bin/soop)
+├── soop-native/ # Published: native binary distribution (bun compiled)
+├── ast/         # Layer 0: WASM tree-sitter parser — @pleaseai/soop-ast
+├── utils/       # Layer 0: LLM interface, git helpers, logger (independent)
+├── store/       # Layer 0: Storage interfaces & implementations (independent)
+├── graph/       # Layer 1: RPG data structures (→ store)
+├── encoder/     # Layer 2: Code → RPG extraction (→ graph, utils, ast)
+├── tools/       # Layer 2: Agentic tools for graph navigation (→ graph, encoder)
+├── zerorepo/    # Layer 2: Intent → Code generation (→ graph, utils)
+├── namu/        # Layer 2: WASM asset management for tree-sitter grammars
+├── mcp/         # Layer 3: MCP server (→ graph, encoder, tools, utils)
+└── cli/         # Layer 4: CLI entry point (→ encoder, graph, tools, zerorepo)
 ```
 
 ### Import Pattern
@@ -139,7 +142,7 @@ Cross-package imports use workspace package names:
 ```typescript
 // Correct: workspace package imports
 import { RepositoryPlanningGraph } from '@pleaseai/soop-graph'
-import { ASTParser } from '@pleaseai/soop-utils/ast'
+import { ASTParser } from '@pleaseai/soop-ast'
 import { RPGEncoder } from '@pleaseai/soop-encoder'
 
 // Sub-path exports are available for fine-grained imports:
