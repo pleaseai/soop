@@ -7,13 +7,13 @@
 - `DataFlowEdge` was previously a standalone schema NOT extending `BaseEdgeSchema` (used `from`/`to`)
 - PR #155 migrated `DataFlowEdge` to extend `BaseEdgeSchema` (`source`/`target`) and join the discriminated union
 - `LegacyDataFlowEdgeSchema` exists for backward compat deserialization only (not in the `Edge` union)
-- `DependencyEdge` has `symbol`/`targetSymbol` fields that are NOT serialized in `edgeToAttrs` (silent data loss bug)
+- `DependencyEdge` has `symbol`/`targetSymbol` fields that ARE serialized in `edgeToAttrs` as `dep_symbol`/`dep_target_symbol` (adapters.ts lines 136-139)
 
 ### Evolution Types Pattern
 - `driftThreshold` has a `DEFAULT_DRIFT_THRESHOLD = 0.3` constant exported from types.ts
 - `forceRegenerateThreshold` has `DEFAULT_FORCE_REGENERATE_THRESHOLD = 0.5` constant
-- `confidenceThreshold` (added PR #155) does NOT have a `DEFAULT_CONFIDENCE_THRESHOLD` constant — inconsistency
-- Default value 0.3 is duplicated in `SemanticRouter` constructor and in JSDoc comment only
+- `confidenceThreshold` (added PR #155) DOES have a `DEFAULT_CONFIDENCE_THRESHOLD = 0.3` constant — defined in `packages/encoder/src/evolution/types.ts` line 92
+- Default value 0.3 is duplicated in JSDoc for `EvolutionOptions` only — the `SemanticRouter` constructor uses the constant, not a hardcoded value
 - `newAreasCreated` is `required` (not optional) in `EvolutionResult` — correct, metrics should not be optional
 
 ### Adapter Pattern

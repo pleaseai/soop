@@ -118,7 +118,7 @@ soop sync                      # Copy to local + evolve
 
 ### Workspace Structure
 
-The project uses **Bun workspaces** with a private monorepo root (`version: 0.0.0`) and 12 packages under `packages/`. The published package is `packages/soop` (`@pleaseai/soop`); all other packages are `private: true` and bundled inline.
+The project uses **Bun workspaces** with a private monorepo root (`version: 0.0.0`) and 12 packages under `packages/`. Published outputs are `packages/soop` (`@pleaseai/soop`) and `packages/soop-native`; other workspace packages are `private: true` and bundled inline.
 
 ```
 packages/
