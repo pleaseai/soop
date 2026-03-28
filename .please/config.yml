@@ -1,4 +1,12 @@
+schema_version: 2          # Config schema version (do not edit manually)
+
 language: en   # Output language (ko | en)
+
+# GitHub integration (optional)
+# github:
+#   project: 5              # GitHub Project number (from URL: /orgs/{org}/projects/5)
+#   owner: pleaseai          # GitHub org or user owning the project
+#   issue_required: true     # Create GitHub Issue for every track (default: false)
 
 # Document path overrides (optional — defaults shown)
 docs:
