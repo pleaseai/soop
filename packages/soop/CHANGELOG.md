@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.30-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.29-alpha.1...soop-v0.1.30-alpha.1) (2026-03-28)
+
+
+### Bug Fixes
+
+* **build:** fix release build failures from wasm imports and stale artifact check ([#256](https://github.com/pleaseai/soop/issues/256)) ([b14c5b8](https://github.com/pleaseai/soop/commit/b14c5b8bc42ad9a32eac99261888f1689df38838))
+
 ## [0.1.29-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.28-alpha.1...soop-v0.1.29-alpha.1) (2026-03-20)
 
 
