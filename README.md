@@ -273,6 +273,8 @@ MIT License
 ## Documentation
 
 - [Implementation Status](docs/implementation-status.md) — Paper vs implementation gap analysis (implemented / not implemented / needs modification)
+- [RPG Operation](docs/rpg-operation.md) — SearchNode, FetchNode, ExploreRPG tools reference and canonical orchestration patterns
+- [Vendor Comparison](docs/vendor-comparison.md) — Microsoft Python reference vs TypeScript implementation technical differences
 
 ## Related Projects
 

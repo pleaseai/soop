@@ -1,0 +1,7 @@
+{
+  "setup": [
+    "git submodule update --init --recursive && bun install"
+  ],
+  "teardown": [],
+  "run": []
+}

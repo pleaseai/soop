@@ -21,6 +21,7 @@ The core data structure is `G = (V, E)` where nodes carry `{ feature, metadata }
 | Library API | `packages/soop/src/index.ts` | Published npm package (`@pleaseai/soop`) — re-exports all public APIs |
 | Build | `tsdown.config.ts` | Produces library bundle + CLI binary into `packages/soop/dist/` |
 | Tests | `vitest.config.ts` | Unit (`*.test.ts`) and integration (`*.integration.test.ts`) projects |
+| Agent Evals | `evaluation/` | Agent evaluation framework using `@vercel/agent-eval` (soop vs baseline benchmarks) |
 
 ## Module Structure
 
@@ -40,12 +41,22 @@ packages/
 └── soop-native/ Publish  Native binary distribution (bun compiled)
 ```
 
+### Top-Level Directories (outside `packages/`)
+
+| Directory | Purpose |
+|---|---|
+| `evaluation/` | Agent evaluation framework (`@vercel/agent-eval`) — benchmarks soop-assisted vs baseline coding agents |
+| `agent-evals/` | Evaluation experiment definitions and fixtures |
+| `vendor/` | Read-only git submodule with Python reference implementation (`RPG-ZeroRepo`) |
+| `docs/` | Research paper source files and implementation status |
+| `tests/fixtures/` | Shared test fixtures (e.g., `superjson` submodule for evolution tests) |
+
 ### Layer 0: Foundation
 
 **`@pleaseai/soop-ast`** — WASM-based tree-sitter parser supporting TypeScript, JavaScript, Python, Rust, Go, Java, Kotlin, Ruby, C, C++, C#. Extracts `CodeEntity` objects (classes, functions, interfaces) from source files.
 
 **`@pleaseai/soop-utils`** — Shared utilities with sub-path exports:
-- `@pleaseai/soop-utils/llm` — Multi-provider LLM client (Anthropic, OpenAI, Google via AI SDK; Claude Code and Codex CLI as local providers)
+- `@pleaseai/soop-utils/llm` — Multi-provider LLM client (Anthropic, OpenAI, Google via AI SDK; Claude Code, Codex CLI, and Gemini CLI as local providers)
 - `@pleaseai/soop-utils/git-helpers` — Git operations (diff parsing, commit SHA, file listing)
 - `@pleaseai/soop-utils/logger` — `consola`-based structured logging with tagged output
 - `@pleaseai/soop-utils/memory` — Token-aware context management
@@ -146,7 +157,7 @@ The project uses **tsdown** (Rolldown-based) for bundling:
 2. **CLI binary** → `packages/soop/dist/packages/cli/src/cli.mjs` — standalone CLI with all pure-JS deps bundled
 3. **Native binary** → `packages/soop-native/` — Bun-compiled native binary distribution
 
-Workspace packages are all `private: true` and never published individually — only `@pleaseai/soop` is published to npm.
+Workspace packages are all `private: true` and never published individually — only `@pleaseai/soop` is published to npm. Publishing uses `bun pm pack` (auto-resolves `workspace:*` to real versions) + `npm publish <tarball>`.
 
 ## Architecture Invariants
 
@@ -170,7 +181,7 @@ Workspace packages are all `private: true` and never published individually — 
 
 **Logging**: All packages use `consola` via `@pleaseai/soop-utils/logger`. Library packages call `createLogger('Tag')`, MCP server uses `createStderrLogger('Tag')` (stdout reserved for JSON-RPC). The `--verbose` CLI flag sets global log level to debug.
 
-**LLM Integration**: Multi-provider support via AI SDK (`@ai-sdk/anthropic`, `@ai-sdk/openai`, `@ai-sdk/google`) plus local providers (`claude-code`, `codex-cli`). Semantic cache (SQLite WAL) avoids redundant LLM calls.
+**LLM Integration**: Multi-provider support via AI SDK (`@ai-sdk/anthropic`, `@ai-sdk/openai`, `@ai-sdk/google`) plus local providers (`claude-code`, `codex-cli`, `gemini-cli`). Semantic cache (SQLite WAL) avoids redundant LLM calls.
 
 **Error Handling**: MCP server uses typed `RPGError` classes. Encoder operations are designed to be resumable — semantic cache preserves progress across interrupted runs.
 

@@ -13,8 +13,8 @@ This document compares the current implementation against the papers, categorizi
 
 ### 1.1 Core Graph Data Structures
 
-- **Node types**: `HighLevelNode`, `LowLevelNode` + Zod schemas — `src/graph/node.ts`
-- **Edge types**: `FunctionalEdge`, `DependencyEdge`, `DataFlowEdge` — `src/graph/edge.ts`
+- **Node types**: `HighLevelNode`, `LowLevelNode` + Zod schemas — `packages/graph/src/node.ts`
+- **Edge types**: `FunctionalEdge`, `DependencyEdge`, `DataFlowEdge` — `packages/graph/src/edge.ts`
 - **SemanticFeature / StructuralMetadata**: Faithful implementation of the paper's `v = (f, m)` structure
 - **EntityType**: file, class, function, method, module
 - **DependencyType**: import, call, inherit, implement, use
@@ -22,7 +22,7 @@ This document compares the current implementation against the papers, categorizi
 
 ### 1.2 RepositoryPlanningGraph Class
 
-- Node/Edge CRUD — `src/graph/rpg.ts`
+- Node/Edge CRUD — `packages/graph/src/rpg.ts`
 - Graph traversal: `getChildren()`, `getParent()`, `getDependencies()`, `getDependents()`
 - **Topological sort**: Kahn's algorithm (`getTopologicalOrder()`) — corresponds to the paper's topological traversal
 - Search: `searchByFeature()`, `searchByPath()`
@@ -33,23 +33,23 @@ This document compares the current implementation against the papers, categorizi
 
 | Implementation | Module | Status |
 |----------------|--------|--------|
-| SQLiteGraphStore + FTS5 | `src/store/sqlite/` | ✅ Complete |
-| SurrealGraphStore + BM25 | `src/store/surreal/` | ✅ Complete |
-| LanceDBVectorStore | `src/store/lancedb/` | ✅ Complete |
-| ContextStore (composite) | `src/store/context-store.ts` | ✅ Complete |
+| SQLiteGraphStore + FTS5 | `packages/store/src/sqlite/` | ✅ Complete |
+| SurrealGraphStore + BM25 | `packages/store/src/surreal/` | ✅ Complete |
+| LanceDBVectorStore | `packages/store/src/lancedb/` | ✅ Complete |
+| DefaultContextStore (composite) | `packages/store/src/default-context-store.ts` | ✅ Complete |
 
 ### 1.4 Encoder — Phase 1: Semantic Lifting
 
-- **SemanticExtractor**: LLM-based feature extraction + heuristic fallback — `src/encoder/semantic.ts`
+- **SemanticExtractor**: LLM-based feature extraction + heuristic fallback — `packages/encoder/src/semantic.ts`
 - **LLM provider auto-detection**: Google > Anthropic > OpenAI priority
-- **SemanticCache**: 7-day TTL, content hash-based cache — `src/encoder/cache.ts`
-- **ASTParser**: TypeScript, JavaScript, Python support — `src/utils/ast.ts`
+- **SemanticCache**: 7-day TTL, content hash-based cache — `packages/encoder/src/cache.ts`
+- **ASTParser**: TypeScript, JavaScript, Python, Rust, Go, Java, Kotlin, Ruby, C, C++, C# support — `packages/ast/src/parser.ts` (`@pleaseai/soop-ast`)
   - Entity extraction (function, class, method, variable, import)
   - Docstring, parameter, return type, parent entity parsing
 
 ### 1.5 Encoder — Phase 2: Structural Reorganization
 
-- **RPGEncoder.encode()**: 3-phase orchestration — `src/encoder/encoder.ts`
+- **RPGEncoder.encode()**: 3-phase orchestration — `packages/encoder/src/encoder.ts`
   - `discoverFiles()`: Pattern-based source file discovery
   - `extractEntities()`: AST-based entity extraction
   - `buildFunctionalHierarchy()`: LLM-based semantic reorganization (Domain Discovery + 3-Level Path)
@@ -57,40 +57,40 @@ This document compares the current implementation against the papers, categorizi
 
 ### 1.6 Encoder — Phase 2: Semantic Reorganization (Paper §3.2)
 
-LLM-based semantic reorganization replacing directory-mirroring hierarchy — `src/encoder/reorganization/`
+LLM-based semantic reorganization replacing directory-mirroring hierarchy — `packages/encoder/src/reorganization/`
 
 | Paper Component | Module | Status |
 |-----------------|--------|--------|
-| **Domain Discovery** | `src/encoder/reorganization/domain-discovery.ts` | ✅ Complete |
-| **Three-Level Path Construction** | `src/encoder/reorganization/hierarchy-builder.ts` | ✅ Complete |
-| **Granularity-based input compression** | `src/encoder/reorganization/prompts.ts` | ✅ Complete |
+| **Domain Discovery** | `packages/encoder/src/reorganization/domain-discovery.ts` | ✅ Complete |
+| **Three-Level Path Construction** | `packages/encoder/src/reorganization/hierarchy-builder.ts` | ✅ Complete |
+| **Granularity-based input compression** | `packages/encoder/src/reorganization/prompts.ts` | ✅ Complete |
 | **PascalCase functional area naming** | `domain-discovery.ts` | ✅ Complete |
 | **Uncategorized fallback** | `hierarchy-builder.ts` | ✅ Complete |
 | **Backward compatibility** | `encoder.ts` | ✅ Skips silently without LLM |
 
 ### 1.7 Embedding & Semantic Search
 
-- **OpenAIEmbedding**: text-embedding-3-small/large — `src/encoder/embedding.ts`
+- **OpenAIEmbedding**: text-embedding-3-small/large — `packages/encoder/src/embedding.ts`
 - **HuggingFaceEmbedding**: MongoDB LEAF local models (768/1024 dim)
-- **SemanticSearch**: Hybrid search (vector + BM25) — `src/encoder/semantic-search.ts`
-- **cosineSimilarity()** — `src/utils/vector.ts`
+- **SemanticSearch**: Hybrid search (vector + BM25) — `packages/encoder/src/semantic-search.ts`
+- **cosineSimilarity()** — embedded in embedding utilities
 
 ### 1.8 Agentic Tools
 
 | Tool | Module | Paper Correspondence |
 |------|--------|---------------------|
-| SearchNode | `src/tools/search.ts` | RPG-Encoder SearchNode (features/snippets/auto) |
-| FetchNode | `src/tools/fetch.ts` | RPG-Encoder FetchNode (metadata + source) |
-| ExploreRPG | `src/tools/explore.ts` | RPG-Encoder ExploreRPG (BFS/DFS traversal) |
+| SearchNode | `packages/tools/src/search.ts` | RPG-Encoder SearchNode (features/snippets/auto) |
+| FetchNode | `packages/tools/src/fetch.ts` | RPG-Encoder FetchNode (metadata + source) |
+| ExploreRPG | `packages/tools/src/explore.ts` | RPG-Encoder ExploreRPG (BFS/DFS traversal) |
 
 ### 1.9 MCP Server
 
-- 5 tools (rpg_search, rpg_fetch, rpg_explore, rpg_encode, rpg_stats) — `src/mcp/`
+- 6 tools (soop_search, soop_fetch, soop_explore, soop_encode, soop_evolve, soop_stats) — `packages/mcp/src/`
 - Zod-based input validation, error factory pattern
 
 ### 1.10 CLI
 
-- `encode`, `search`, `fetch` commands — `src/cli.ts`
+- `encode`, `evolve`, `search`, `fetch`, `explore`, `embed`, `init`, `sync`, `stamp`, `last-commit`, `mcp` commands — `packages/cli/src/cli.ts`
 
 ### 1.11 RPG-Encoder: Evolution (Incremental Updates)
 
@@ -98,13 +98,13 @@ Commit-level incremental maintenance — a key differentiator of the paper — i
 
 | Paper Component | Module | Status |
 |-----------------|--------|--------|
-| **ParseUnitDiff** (Delta-Level Feature Extraction) | `src/encoder/evolution/diff-parser.ts` | ✅ Complete |
-| **DeleteNode + PruneOrphans** (Algorithm 1) | `src/encoder/evolution/operations.ts` | ✅ Complete |
-| **ProcessModification** with semantic drift (Algorithm 2) | `src/encoder/evolution/operations.ts` | ✅ Complete |
-| **InsertNode** with semantic routing (Algorithm 3) | `src/encoder/evolution/operations.ts` | ✅ Complete |
-| **FindBestParent** LLM/embedding routing | `src/encoder/evolution/semantic-router.ts` | ✅ Complete |
-| **RPGEvolver** orchestrator (Delete → Modify → Insert) | `src/encoder/evolution/evolve.ts` | ✅ Complete |
-| **RPGEncoder.evolve()** public API | `src/encoder/encoder.ts` | ✅ Complete |
+| **ParseUnitDiff** (Delta-Level Feature Extraction) | `packages/encoder/src/evolution/diff-parser.ts` | ✅ Complete |
+| **DeleteNode + PruneOrphans** (Algorithm 1) | `packages/encoder/src/evolution/operations.ts` | ✅ Complete |
+| **ProcessModification** with semantic drift (Algorithm 2) | `packages/encoder/src/evolution/operations.ts` | ✅ Complete |
+| **InsertNode** with semantic routing (Algorithm 3) | `packages/encoder/src/evolution/operations.ts` | ✅ Complete |
+| **FindBestParent** LLM/embedding routing | `packages/encoder/src/evolution/semantic-router.ts` | ✅ Complete |
+| **RPGEvolver** orchestrator (Delete → Modify → Insert) | `packages/encoder/src/evolution/evolve.ts` | ✅ Complete |
+| **RPGEncoder.evolve()** public API | `packages/encoder/src/encoder.ts` | ✅ Complete |
 
 ### 1.12 Tests
 
@@ -193,8 +193,8 @@ Currently only a skeleton exists at `src/zerorepo/zerorepo.ts`; core logic is no
 
 | Item | Current | Needed |
 |------|---------|--------|
-| rpg_evolve | Does not exist | MCP wrapper for `RPGEvolver` (backend implemented) |
-| rpg_generate | Does not exist | ZeroRepo generation pipeline tool |
+| soop_evolve | ✅ Implemented | MCP wrapper for `RPGEvolver` |
+| soop_generate | Does not exist | ZeroRepo generation pipeline tool |
 | Tool orchestration | Independent calls | Paper's Search → Fetch → Explore workflow guide |
 
 ### 3.6 DataFlowEdge Usage
@@ -223,7 +223,7 @@ P0 (Core)
 P1 (Important)
 ├── Artifact Grounding — LCA-based metadata propagation
 ├── SearchNode search_scopes support
-├── MCP rpg_evolve tool
+├── MCP soop_evolve tool ✅ (implemented)
 └── DataFlowEdge usage
 
 P2 (Generation Pipeline)
