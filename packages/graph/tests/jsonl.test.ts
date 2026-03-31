@@ -1,6 +1,8 @@
 import type { PythonRPG } from '../src/python-format'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { parseGraphJsonl, serializeGraphJsonl } from '../src/jsonl'
+import { metaPathFor } from '../src/meta'
+import { RepositoryPlanningGraph } from '../src/rpg'
 
 const sampleGraph: PythonRPG = {
   repo_name: 'test-repo',
@@ -144,5 +146,55 @@ describe('graph JSONL serialization', () => {
     for (const line of lines) {
       expect(() => JSON.parse(line)).not.toThrow()
     }
+  })
+})
+
+describe('metaPathFor with JSONL', () => {
+  it('maps .jsonl to .meta.json', () => {
+    expect(metaPathFor('graph.jsonl')).toBe('graph.meta.json')
+    expect(metaPathFor('/path/to/graph.jsonl')).toBe('/path/to/graph.meta.json')
+    expect(metaPathFor('.soop/graph.jsonl')).toBe('.soop/graph.meta.json')
+  })
+
+  it('maps .json to .meta.json (unchanged behavior)', () => {
+    expect(metaPathFor('rpg.json')).toBe('rpg.meta.json')
+    expect(metaPathFor('/path/to/rpg.json')).toBe('/path/to/rpg.meta.json')
+  })
+})
+
+describe('RepositoryPlanningGraph JSONL methods', () => {
+  let rpg: RepositoryPlanningGraph | undefined
+
+  afterEach(async () => {
+    await rpg?.close()
+    rpg = undefined
+  })
+
+  it('toJSONL produces valid JSONL', async () => {
+    rpg = await RepositoryPlanningGraph.deserialize(sampleGraph)
+    const jsonl = await rpg.toJSONL()
+
+    const lines = jsonl.split('\n').filter(l => l.trim())
+    const header = JSON.parse(lines[0]!)
+    expect(header.type).toBe('header')
+    expect(header.repo_name).toBe('test-repo')
+  })
+
+  it('fromJSONL round-trips through toJSONL', async () => {
+    rpg = await RepositoryPlanningGraph.deserialize(sampleGraph)
+    const jsonl = await rpg.toJSONL()
+    await rpg.close()
+
+    rpg = await RepositoryPlanningGraph.fromJSONL(jsonl)
+    const nodes = await rpg.getNodes()
+    expect(nodes.length).toBe(2)
+  })
+
+  it('toJSONLWithMeta returns both graphJsonl and metaJson', async () => {
+    rpg = await RepositoryPlanningGraph.deserialize(sampleGraph)
+    const { graphJsonl, metaJson } = await rpg.toJSONLWithMeta()
+
+    expect(graphJsonl).toContain('"type":"header"')
+    expect(metaJson).toContain('"version"')
   })
 })
