@@ -32,7 +32,7 @@ export function registerSyncCommand(program: Command): void {
         const canonicalPath = existsSync(canonicalPathJsonl) ? canonicalPathJsonl : canonicalPathJson
         const isJsonl = canonicalPath.endsWith('.jsonl')
         const localDir = path.join(repoDir, 'local')
-        const localGraphPath = path.join(localDir, 'graph.json')
+        const localGraphPath = path.join(localDir, isJsonl ? 'graph.jsonl' : 'graph.json')
         const localStatePath = path.join(localDir, 'state.json')
 
         // 1. Validate canonical graph exists

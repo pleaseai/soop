@@ -87,6 +87,11 @@ program
 
       validateSearchStrategy(options.search)
 
+      if (options.format && !['json', 'jsonl'].includes(options.format)) {
+        log.error(`Invalid format "${options.format}". Must be "json" or "jsonl".`)
+        process.exit(1)
+      }
+
       const semantic = buildSemanticOptions(options.model, options.llm, options.minBatchTokens, options.maxBatchTokens)
 
       log.info(`Encoding repository: ${repoPath}`)
@@ -300,9 +305,23 @@ program
 
     validateSearchStrategy(options.search)
 
-    const outputPath = options.output ?? (options.format
-      ? (options.format === 'json' ? options.loadPath.replace(/\.jsonl$/, '.json') : options.loadPath.replace(/\.json$/, '.jsonl'))
-      : options.loadPath)
+    if (options.format && !['json', 'jsonl'].includes(options.format)) {
+      log.error(`Invalid format "${options.format}". Must be "json" or "jsonl".`)
+      process.exit(1)
+    }
+
+    let outputPath: string
+    if (options.output) {
+      outputPath = options.output
+    }
+    else if (options.format) {
+      const ext = path.extname(options.loadPath)
+      const base = options.loadPath.slice(0, -ext.length || undefined)
+      outputPath = `${base}.${options.format}`
+    }
+    else {
+      outputPath = options.loadPath
+    }
 
     log.info(`Evolving RPG with commits: ${options.commits}`)
 
