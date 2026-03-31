@@ -1,0 +1,29 @@
+packages/cli/src/cli.ts
+  2ac73fd360f6672e 45-46,67-68,112-113,286,296,303-305
+packages/encoder/src/encoder.ts
+  2ac73fd360f6672e 565-575
+packages/mcp/src/server.ts
+  2ac73fd360f6672e 192-197
+packages/cli/src/commands/sync.ts
+  2ac73fd360f6672e 30-33,40,64,74-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "27e6feed6c2188452a1f1f4851a8559687c17594",
+  "prompts": {
+    "2ac73fd360f6672e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "21e51b46-01c6-437c-8c40-ba903f359b3c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 17,
+      "accepted_lines": 46,
+      "overriden_lines": 0
+    }
+  }
+}
