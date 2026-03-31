@@ -580,9 +580,11 @@ export class RPGEncoder {
   }
 
   /**
-   * Save the current RPG to a JSON file.
-   * Writes graph.json (Python-compatible) and graph.meta.json (TS metadata).
+   * Save the current RPG to disk.
+   * Writes graph file (JSON or JSONL) and companion .meta.json.
    * Automatically stamps the HEAD commit SHA into the meta file.
+   *
+   * Format is auto-detected from file extension: `.jsonl` → JSONL, otherwise JSON.
    */
   async save(savePath: string): Promise<void> {
     if (!this._rpg) {
@@ -611,9 +613,18 @@ export class RPGEncoder {
     }
 
     const { metaPathFor } = await import('@pleaseai/soop-graph/meta')
-    const { graphJson, metaJson } = await this._rpg.toJSONWithMeta()
-    await writeFile(savePath, graphJson)
-    await writeFile(metaPathFor(savePath), metaJson)
+    const useJsonl = savePath.endsWith('.jsonl')
+
+    if (useJsonl) {
+      const { graphJsonl, metaJson } = await this._rpg.toJSONLWithMeta()
+      await writeFile(savePath, graphJsonl)
+      await writeFile(metaPathFor(savePath), metaJson)
+    }
+    else {
+      const { graphJson, metaJson } = await this._rpg.toJSONWithMeta()
+      await writeFile(savePath, graphJson)
+      await writeFile(metaPathFor(savePath), metaJson)
+    }
     log.info(`Saved RPG to ${savePath}`)
   }
 
