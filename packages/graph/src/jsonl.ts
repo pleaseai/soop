@@ -44,7 +44,7 @@ export function serializeGraphJsonl(data: PythonRPG): string {
     lines.push(JSON.stringify({ type: 'edge', ...edge } satisfies EdgeLine))
   }
 
-  const sortedDataFlow = data_flow.toSorted((a: unknown, b: unknown) => {
+  const sortedDataFlow = data_flow.toSorted((a, b) => {
     const ra = a as Record<string, unknown>
     const rb = b as Record<string, unknown>
     return String(ra?.source ?? '').localeCompare(String(rb?.source ?? ''), 'en')
