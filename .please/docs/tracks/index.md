@@ -6,6 +6,7 @@
 
 | Track | Feature | Type | Issue | Started | Status |
 |-------|---------|------|-------|---------|--------|
+| [jsonl-graph-format-20260331](active/jsonl-graph-format-20260331/) | JSONL graph format for git-friendly storage | feature | #261 | 2026-03-31 | planned |
 
 ## Recently Completed
 
