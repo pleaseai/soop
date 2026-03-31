@@ -39,15 +39,15 @@ Dual-format support: auto-detect by file extension on load (`.jsonl` preferred o
 
 ## Tasks
 
-- [ ] T001 Add JSONL serialization/deserialization functions for PythonRPG (file: packages/graph/src/jsonl.ts)
-- [ ] T002 Add toJSONL/fromJSONL methods to RepositoryPlanningGraph (file: packages/graph/src/rpg.ts) (depends on T001)
-- [ ] T003 Update metaPathFor to produce .meta.json for .jsonl inputs (file: packages/graph/src/meta.ts)
-- [ ] T004 [P] Update encoder save to support JSONL format option (file: packages/encoder/src/encoder.ts) (depends on T002, T003)
-- [ ] T005 [P] Add --format flag to CLI encode command (file: packages/cli/src/cli.ts) (depends on T004)
-- [ ] T006 [P] Add --format flag to CLI evolve command (file: packages/cli/src/cli.ts) (depends on T004)
-- [ ] T007 [P] Update sync command to auto-detect graph.jsonl (file: packages/cli/src/commands/sync.ts) (depends on T002)
-- [ ] T008 [P] Update MCP server to auto-detect and load JSONL graphs (file: packages/mcp/src/server.ts) (depends on T002)
-- [ ] T009 Export JSONL functions from graph package barrel (file: packages/graph/src/index.ts) (depends on T001)
+- [x] T001 Add JSONL serialization/deserialization functions for PythonRPG (file: packages/graph/src/jsonl.ts)
+- [x] T002 Add toJSONL/fromJSONL methods to RepositoryPlanningGraph (file: packages/graph/src/rpg.ts) (depends on T001)
+- [x] T003 Update metaPathFor to produce .meta.json for .jsonl inputs (file: packages/graph/src/meta.ts)
+- [x] T004 [P] Update encoder save to support JSONL format option (file: packages/encoder/src/encoder.ts) (depends on T002, T003)
+- [x] T005 [P] Add --format flag to CLI encode command (file: packages/cli/src/cli.ts) (depends on T004)
+- [x] T006 [P] Add --format flag to CLI evolve command (file: packages/cli/src/cli.ts) (depends on T004)
+- [x] T007 [P] Update sync command to auto-detect graph.jsonl (file: packages/cli/src/commands/sync.ts) (depends on T002)
+- [x] T008 [P] Update MCP server to auto-detect and load JSONL graphs (file: packages/mcp/src/server.ts) (depends on T002)
+- [x] T009 Export JSONL functions from graph package barrel (file: packages/graph/src/index.ts) (depends on T001)
 
 ## Key Files
 
@@ -106,3 +106,24 @@ Dual-format support: auto-detect by file extension on load (`.jsonl` preferred o
 - Decision: Meta companion file always uses `.meta.json` extension regardless of graph format
   Rationale: Meta is small JSON, not JSONL; using `.meta.jsonl` would be misleading
   Date/Author: 2026-03-31 / Claude
+
+## Outcomes & Retrospective
+
+### What Was Shipped
+- JSONL serialize/parse for PythonRPG with type-discriminated lines and deterministic sorting
+- toJSONL/fromJSONL methods on RepositoryPlanningGraph
+- Dual-format support (JSON/JSONL) with auto-detection across CLI, encoder, sync, and MCP
+- `--format jsonl|json` CLI flag for encode/evolve (default: jsonl)
+- metaPathFor handles .jsonl → .meta.json
+
+### What Went Well
+- Reusing the existing embeddings.jsonl pattern made design straightforward
+- The existing serialize() method already sorted nodes/edges deterministically
+- Code review caught a critical bug (sync localGraphPath mismatch) before merge
+
+### What Could Improve
+- The sync command needed more careful consideration of the local copy path — this should have been caught during planning
+
+### Tech Debt Created
+- No performance benchmark for JSONL vs JSON (NFR-1 from spec)
+- No explicit git merge test (AC-2 from spec) — sorting inherently provides this
