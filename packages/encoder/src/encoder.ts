@@ -562,9 +562,17 @@ export class RPGEncoder {
 
     let rpg: RepositoryPlanningGraph
     try {
-      rpg = metaJson
-        ? await RepositoryPlanningGraph.fromJSONWithMeta(graphJson, metaJson)
-        : await RepositoryPlanningGraph.fromJSON(graphJson)
+      const isJsonl = savePath.endsWith('.jsonl')
+      if (isJsonl) {
+        rpg = metaJson
+          ? await RepositoryPlanningGraph.fromJSONLWithMeta(graphJson, metaJson)
+          : await RepositoryPlanningGraph.fromJSONL(graphJson)
+      }
+      else {
+        rpg = metaJson
+          ? await RepositoryPlanningGraph.fromJSONWithMeta(graphJson, metaJson)
+          : await RepositoryPlanningGraph.fromJSON(graphJson)
+      }
     }
     catch (error) {
       throw new Error(`Could not parse RPG file "${savePath}": ${error instanceof Error ? error.message : error}`)
