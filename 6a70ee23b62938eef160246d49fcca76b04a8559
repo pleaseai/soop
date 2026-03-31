@@ -1,0 +1,23 @@
+packages/encoder/src/encoder.ts
+  2ac73fd360f6672e 583-584,586-587,616-627
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "6a70ee23b62938eef160246d49fcca76b04a8559",
+  "prompts": {
+    "2ac73fd360f6672e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "21e51b46-01c6-437c-8c40-ba903f359b3c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 20,
+      "total_deletions": 9,
+      "accepted_lines": 21,
+      "overriden_lines": 0
+    }
+  }
+}
