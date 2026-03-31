@@ -1,0 +1,29 @@
+packages/graph/tests/jsonl.test.ts
+  2ac73fd360f6672e 2,4-5,151-200
+packages/graph/src/meta.ts
+  2ac73fd360f6672e 22-24
+packages/graph/src/rpg.ts
+  2ac73fd360f6672e 531-545,708-723
+packages/graph/src/index.ts
+  2ac73fd360f6672e 29-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "9ded90619759ea386b02aeb932192ecc8e01f971",
+  "prompts": {
+    "2ac73fd360f6672e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "21e51b46-01c6-437c-8c40-ba903f359b3c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 103,
+      "total_deletions": 6,
+      "accepted_lines": 103,
+      "overriden_lines": 0
+    }
+  }
+}
