@@ -1,0 +1,25 @@
+packages/cli/src/cli.ts
+  2ac73fd360f6672e 90-94,308-324
+packages/cli/src/commands/sync.ts
+  2ac73fd360f6672e 35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.23",
+  "base_commit_sha": "08af96d4cef8b55a738cb182cb7cacf71b3aa90c",
+  "prompts": {
+    "2ac73fd360f6672e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "21e51b46-01c6-437c-8c40-ba903f359b3c",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee <amond@amond.net>",
+      "messages": [],
+      "total_additions": 31,
+      "total_deletions": 12,
+      "accepted_lines": 34,
+      "overriden_lines": 0
+    }
+  }
+}
