@@ -134,7 +134,7 @@ program
       console.log(`  Files processed: ${result.filesProcessed}`)
       console.log(`  Entities extracted: ${result.entitiesExtracted}`)
       console.log(`  Duration: ${result.duration}ms`)
-      console.log(`  Output: ${options.output}`)
+      console.log(`  Output: ${outputPath}`)
 
       if (options.verbose) {
         console.log('\nGraph statistics:')

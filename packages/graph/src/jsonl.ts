@@ -31,23 +31,26 @@ export function serializeGraphJsonl(data: PythonRPG): string {
   const header: HeaderLine = { type: 'header', ...rest }
   const lines: string[] = [JSON.stringify(header)]
 
-  const sortedNodes = nodes.toSorted((a: PythonNode, b: PythonNode) => a.id.localeCompare(b.id))
+  const sortedNodes = nodes.toSorted((a: PythonNode, b: PythonNode) => a.id.localeCompare(b.id, 'en'))
   for (const node of sortedNodes) {
     lines.push(JSON.stringify({ type: 'node', ...node } satisfies NodeLine))
   }
 
   const sortedEdges = edges.toSorted((a: PythonEdge, b: PythonEdge) =>
-    a.src.localeCompare(b.src)
-    || a.dst.localeCompare(b.dst)
-    || a.relation.localeCompare(b.relation))
+    a.src.localeCompare(b.src, 'en')
+    || a.dst.localeCompare(b.dst, 'en')
+    || a.relation.localeCompare(b.relation, 'en'))
   for (const edge of sortedEdges) {
     lines.push(JSON.stringify({ type: 'edge', ...edge } satisfies EdgeLine))
   }
 
-  const sortedDataFlow = data_flow.toSorted((a: any, b: any) =>
-    String(a?.source ?? '').localeCompare(String(b?.source ?? ''))
-    || String(a?.target ?? '').localeCompare(String(b?.target ?? ''))
-    || String(a?.dataId ?? '').localeCompare(String(b?.dataId ?? '')))
+  const sortedDataFlow = data_flow.toSorted((a: unknown, b: unknown) => {
+    const ra = a as Record<string, unknown>
+    const rb = b as Record<string, unknown>
+    return String(ra?.source ?? '').localeCompare(String(rb?.source ?? ''), 'en')
+      || String(ra?.target ?? '').localeCompare(String(rb?.target ?? ''), 'en')
+      || String(ra?.dataId ?? '').localeCompare(String(rb?.dataId ?? ''), 'en')
+  })
   for (const df of sortedDataFlow) {
     lines.push(JSON.stringify({ type: 'data_flow', ...(df as Record<string, unknown>) }))
   }

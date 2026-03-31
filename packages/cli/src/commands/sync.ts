@@ -194,7 +194,9 @@ export function registerSyncCommand(program: Command): void {
               let localRpg: InstanceType<typeof RepositoryPlanningGraph> | undefined
               try {
                 const localJson = await readFile(localGraphPath, 'utf-8')
-                localRpg = await RepositoryPlanningGraph.fromJSON(localJson)
+                localRpg = isJsonl
+                  ? await RepositoryPlanningGraph.fromJSONL(localJson)
+                  : await RepositoryPlanningGraph.fromJSON(localJson)
                 const nodes = await localRpg.getNodes()
                 const nodeMap = new Map(nodes.map(n => [n.id, n]))
 
