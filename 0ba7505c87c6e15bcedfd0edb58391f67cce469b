@@ -1,0 +1,31 @@
+.claude/agent-memory/gardening-gardening-doc-gardener/recurring-issues.md
+  b98a60636e7f5451 12,32-45
+.claude/agent-memory/gardening-gardening-doc-gardener/MEMORY.md
+  b98a60636e7f5451 13
+docs/implementation-status.md
+  b98a60636e7f5451 121
+docs/vendor-comparison.md
+  b98a60636e7f5451 11,65-72,76,334,337,343-344,346,382,417,457
+README.md
+  b98a60636e7f5451 209-210,216,218-219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.4",
+  "base_commit_sha": "0ba7505c87c6e15bcedfd0edb58391f67cce469b",
+  "prompts": {
+    "b98a60636e7f5451": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "388d742e-a3ac-485c-a048-c206946a23d8",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 22,
+      "accepted_lines": 42,
+      "overriden_lines": 0
+    }
+  }
+}
