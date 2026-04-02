@@ -216,7 +216,7 @@ soop/                              # Private monorepo root (not published)
 │   ├── namu/     # @pleaseai/soop-namu   — WASM grammar asset management
 │   ├── mcp/      # @pleaseai/soop-mcp    — MCP server
 │   ├── cli/      # @pleaseai/soop-cli    — CLI entry point
-│   └── soop-native/ # native binary distribution (bun compiled)
+│   └── soop-native/ # @pleaseai/soop-native — native binary distribution (bun compiled)
 │
 ├── tests/
 │   └── fixtures/                  # Shared test fixtures (sample-rpg.json, superjson)
