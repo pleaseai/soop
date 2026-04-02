@@ -9,6 +9,7 @@ type: project
 ### 1. docs/implementation-status.md — High staleness risk
 This file uses concrete file paths that change as the codebase evolves.
 All `src/` paths were wrong (should be `packages/*/src/`). Fixed in first scan.
+Stale `src/zerorepo/zerorepo.ts` path fixed in 2026-04-02 scan → `packages/zerorepo/src/zerorepo.ts`.
 Watch for: package renames, file moves, new packages being added.
 
 ### 2. CLAUDE.md Package Count
@@ -27,6 +28,21 @@ This is expected behavior (index is "auto-maintained by /please:plan").
 
 ### 5. docs/rpg-operation.md — Was orphaned
 Not linked from any document. Fixed by adding to README.md Documentation section.
+
+### 6. docs/vendor-comparison.md — Brand/naming drift (HIGH recurrence risk)
+This file was written before the brand rename from `rpg-*` → `soop-*` and `.rpg/` → `.soop/`.
+Fixed in 2026-04-02 scan:
+- `@pleaseai/rpg-graph` → `@pleaseai/soop-graph` (and all other rpg-* packages)
+- `.rpg/` directory → `.soop/` directory (5 occurrences)
+- `rpg sync` / `rpg init` CLI commands → `soop sync` / `soop init`
+- `@pleaseai/rpg-utils (ast)` → `@pleaseai/soop-ast` (reflects package extraction)
+- Package count "8 packages" → "12 packages"
+Watch for: new sections added to this file without updating to current brand names.
+
+### 7. README.md project structure — Missing packages
+The project structure section was missing `ast/`, `namu/`, `soop-native/` packages.
+Fixed in 2026-04-02 scan. Also fixed `utils/` description (was claiming AST parsing, moved to `soop-ast`).
+Watch for: new packages added without updating README structure listing.
 
 ## Structural Notes
 

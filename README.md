@@ -206,14 +206,17 @@ soop/                              # Private monorepo root (not published)
 │   │   ├── bin/soop-mcp           # MCP server shim (deprecated, use `soop mcp`)
 │   │   └── package.json
 │   │
-│   ├── utils/    # @pleaseai/soop-utils   — AST parser, LLM, git helpers, logger
+│   ├── ast/      # @pleaseai/soop-ast     — WASM tree-sitter parser (multi-language)
+│   ├── utils/    # @pleaseai/soop-utils   — LLM, git helpers, logger
 │   ├── store/    # @pleaseai/soop-store   — Storage interfaces & implementations
 │   ├── graph/    # @pleaseai/soop-graph   — RPG data structures
 │   ├── encoder/  # @pleaseai/soop-encoder — Code → RPG extraction
 │   ├── tools/    # @pleaseai/soop-tools   — Agentic navigation tools
 │   ├── zerorepo/ # @pleaseai/soop-zerorepo — Intent → Code generation
+│   ├── namu/     # @pleaseai/soop-namu   — WASM grammar asset management
 │   ├── mcp/      # @pleaseai/soop-mcp    — MCP server
-│   └── cli/      # @pleaseai/soop-cli    — CLI entry point
+│   ├── cli/      # @pleaseai/soop-cli    — CLI entry point
+│   └── soop-native/ # @pleaseai/soop-native — native binary distribution (bun compiled)
 │
 ├── tests/
 │   └── fixtures/                  # Shared test fixtures (sample-rpg.json, superjson)

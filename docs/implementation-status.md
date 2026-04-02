@@ -118,7 +118,7 @@ Commit-level incremental maintenance — a key differentiator of the paper — i
 
 ### 2.1 RPG-ZeroRepo: Full Generation Pipeline (skeleton only)
 
-Currently only a skeleton exists at `src/zerorepo/zerorepo.ts`; core logic is not implemented:
+Currently only a skeleton exists at `packages/zerorepo/src/zerorepo.ts`; core logic is not implemented:
 
 | Paper Component | Description | Status |
 |-----------------|-------------|--------|
