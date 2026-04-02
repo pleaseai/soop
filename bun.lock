@@ -45,7 +45,7 @@
     },
     "packages/cli": {
       "name": "@pleaseai/soop-cli",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "dependencies": {
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
@@ -60,7 +60,7 @@
     },
     "packages/encoder": {
       "name": "@pleaseai/soop-encoder",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@ai-sdk/openai": "^3.0.41",
         "@huggingface/transformers": "^3.8.1",
@@ -78,7 +78,7 @@
     },
     "packages/graph": {
       "name": "@pleaseai/soop-graph",
-      "version": "0.1.11",
+      "version": "0.1.12",
       "dependencies": {
         "@pleaseai/soop-store": "workspace:*",
         "@pleaseai/soop-utils": "workspace:*",
@@ -91,7 +91,7 @@
     },
     "packages/mcp": {
       "name": "@pleaseai/soop-mcp",
-      "version": "0.4.1",
+      "version": "0.4.2",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.27.1",
         "@pleaseai/soop-ast": "workspace:*",
@@ -128,7 +128,7 @@
     },
     "packages/soop": {
       "name": "@pleaseai/soop",
-      "version": "0.1.29-alpha.1",
+      "version": "0.1.31-alpha.1",
       "bin": {
         "soop": "bin/soop",
         "soop-mcp": "bin/soop-mcp",
@@ -191,7 +191,7 @@
     },
     "packages/tools": {
       "name": "@pleaseai/soop-tools",
-      "version": "0.1.13",
+      "version": "0.1.14",
       "dependencies": {
         "@pleaseai/soop-encoder": "workspace:*",
         "@pleaseai/soop-graph": "workspace:*",
@@ -216,7 +216,7 @@
     },
     "packages/zerorepo": {
       "name": "@pleaseai/soop-zerorepo",
-      "version": "0.1.11",
+      "version": "0.1.12",
       "dependencies": {
         "@pleaseai/soop-graph": "workspace:*",
         "@pleaseai/soop-utils": "workspace:*",
@@ -225,6 +225,7 @@
   },
   "trustedDependencies": [
     "better-sqlite3",
+    "tree-sitter-cli",
   ],
   "packages": {
     "@ai-sdk/anthropic": ["@ai-sdk/anthropic@3.0.58", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-/53SACgmVukO4bkms4dpxpRlYhW8Ct6QZRe6sj1Pi5H00hYhxIrqfiLbZBGxkdRvjsBQeP/4TVGsXgH5rQeb8Q=="],
