@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.31-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.30-alpha.1...soop-v0.1.31-alpha.1) (2026-04-02)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @pleaseai/soop-cli bumped to 0.2.4
+    * @pleaseai/soop-encoder bumped to 0.3.2
+    * @pleaseai/soop-graph bumped to 0.1.12
+    * @pleaseai/soop-mcp bumped to 0.4.2
+    * @pleaseai/soop-tools bumped to 0.1.14
+    * @pleaseai/soop-zerorepo bumped to 0.1.12
+
 ## [0.1.30-alpha.1](https://github.com/pleaseai/soop/compare/soop-v0.1.29-alpha.1...soop-v0.1.30-alpha.1) (2026-03-28)
 
 

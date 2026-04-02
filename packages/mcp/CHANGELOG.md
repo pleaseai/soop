@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.2](https://github.com/pleaseai/soop/compare/soop-mcp-v0.4.1...soop-mcp-v0.4.2) (2026-04-02)
+
+
+### Features
+
+* JSONL graph format for git-friendly storage ([#262](https://github.com/pleaseai/soop/issues/262)) ([467ef23](https://github.com/pleaseai/soop/commit/467ef23ea0574056c07be5058bbc39112aa45a9e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @pleaseai/soop-graph bumped to 0.1.12
+    * @pleaseai/soop-encoder bumped to 0.3.2
+    * @pleaseai/soop-tools bumped to 0.1.14
+
 ## [0.4.1](https://github.com/pleaseai/soop/compare/soop-mcp-v0.4.0...soop-mcp-v0.4.1) (2026-03-20)
 
 

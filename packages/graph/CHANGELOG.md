@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.11...soop-graph-v0.1.12) (2026-04-02)
+
+
+### Features
+
+* JSONL graph format for git-friendly storage ([#262](https://github.com/pleaseai/soop/issues/262)) ([467ef23](https://github.com/pleaseai/soop/commit/467ef23ea0574056c07be5058bbc39112aa45a9e))
+
 ## [0.1.11](https://github.com/pleaseai/soop/compare/soop-graph-v0.1.10...soop-graph-v0.1.11) (2026-03-20)
 
 
