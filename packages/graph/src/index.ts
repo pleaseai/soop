@@ -26,6 +26,9 @@ export {
 
 export type { BaseEdge, DataFlowEdge, DependencyEdge, Edge, FunctionalEdge } from './edge'
 
+// JSONL format (git-friendly graph serialization)
+export { parseGraphJsonl, serializeGraphJsonl } from './jsonl'
+
 // Meta (companion .meta.json file)
 export { deserializeMeta, metaPathFor, RPGMetaSchema, serializeMeta } from './meta'
 

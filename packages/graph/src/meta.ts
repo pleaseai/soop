@@ -19,7 +19,9 @@ export function metaPathFor(graphPath: string): string {
   const dir = path.dirname(graphPath)
   const ext = path.extname(graphPath)
   const base = path.basename(graphPath, ext)
-  return path.join(dir, `${base}.meta${ext}`)
+  // Meta companion is always JSON regardless of graph format
+  const metaExt = ext === '.jsonl' ? '.json' : ext
+  return path.join(dir, `${base}.meta${metaExt}`)
 }
 
 export function serializeMeta(config: RPGConfig): RPGMeta {

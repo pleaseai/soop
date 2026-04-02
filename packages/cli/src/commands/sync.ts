@@ -27,14 +27,17 @@ export function registerSyncCommand(program: Command): void {
       async (options: { force?: boolean }) => {
         const repoPath = process.cwd()
         const repoDir = path.join(repoPath, '.soop')
-        const canonicalPath = path.join(repoDir, 'graph.json')
+        const canonicalPathJsonl = path.join(repoDir, 'graph.jsonl')
+        const canonicalPathJson = path.join(repoDir, 'graph.json')
+        const canonicalPath = existsSync(canonicalPathJsonl) ? canonicalPathJsonl : canonicalPathJson
+        const isJsonl = canonicalPath.endsWith('.jsonl')
         const localDir = path.join(repoDir, 'local')
-        const localGraphPath = path.join(localDir, 'graph.json')
+        const localGraphPath = path.join(localDir, isJsonl ? 'graph.jsonl' : 'graph.json')
         const localStatePath = path.join(localDir, 'state.json')
 
         // 1. Validate canonical graph exists
         if (!existsSync(canonicalPath)) {
-          log.error('.soop/graph.json not found. Run "repo init --encode" first.')
+          log.error('.soop/graph.json (or graph.jsonl) not found. Run "repo init --encode" first.')
           process.exit(1)
         }
 
@@ -58,7 +61,7 @@ export function registerSyncCommand(program: Command): void {
         // 4. Read canonical graph + meta to get base commit
         const { RepositoryPlanningGraph } = await import('@pleaseai/soop-graph')
         const { metaPathFor, deserializeMeta } = await import('@pleaseai/soop-graph/meta')
-        const canonicalJson = await readFile(canonicalPath, 'utf-8')
+        const canonicalContent = await readFile(canonicalPath, 'utf-8')
         let canonicalCommit: string | undefined
         try {
           const metaJson = await readFile(metaPathFor(canonicalPath), 'utf-8')
@@ -68,7 +71,9 @@ export function registerSyncCommand(program: Command): void {
         catch (metaReadError) {
           log.debug(`Could not read canonical meta file, falling back to graph: ${metaReadError instanceof Error ? metaReadError.message : String(metaReadError)}`)
           // Fallback: load from graph (backward compat)
-          const canonicalRpg = await RepositoryPlanningGraph.fromJSON(canonicalJson)
+          const canonicalRpg = isJsonl
+            ? await RepositoryPlanningGraph.fromJSONL(canonicalContent)
+            : await RepositoryPlanningGraph.fromJSON(canonicalContent)
           canonicalCommit = canonicalRpg.getConfig().github?.commit
         }
 
@@ -189,7 +194,9 @@ export function registerSyncCommand(program: Command): void {
               let localRpg: InstanceType<typeof RepositoryPlanningGraph> | undefined
               try {
                 const localJson = await readFile(localGraphPath, 'utf-8')
-                localRpg = await RepositoryPlanningGraph.fromJSON(localJson)
+                localRpg = isJsonl
+                  ? await RepositoryPlanningGraph.fromJSONL(localJson)
+                  : await RepositoryPlanningGraph.fromJSON(localJson)
                 const nodes = await localRpg.getNodes()
                 const nodeMap = new Map(nodes.map(n => [n.id, n]))
 

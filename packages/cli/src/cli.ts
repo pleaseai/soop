@@ -42,7 +42,8 @@ program
   .command('encode')
   .description('Encode a repository into an RPG')
   .argument('<path>', 'Repository path')
-  .option('-o, --output <file>', 'Output file path', 'rpg.json')
+  .option('-o, --output <file>', 'Output file path (default: rpg.json or rpg.jsonl based on --format)')
+  .option('-f, --format <format>', 'Output format: json or jsonl', 'jsonl')
   .option('--include-source', 'Include source code in nodes')
   .option('-i, --include <patterns...>', 'Include file patterns (default: **/*.ts,**/*.js,**/*.py)')
   .option(
@@ -63,7 +64,8 @@ program
     async (
       repoPath: string,
       options: {
-        output: string
+        output?: string
+        format: string
         includeSource?: boolean
         include?: string[]
         exclude?: string[]
@@ -84,6 +86,11 @@ program
       }
 
       validateSearchStrategy(options.search)
+
+      if (options.format && !['json', 'jsonl'].includes(options.format)) {
+        log.error(`Invalid format "${options.format}". Must be "json" or "jsonl".`)
+        process.exit(1)
+      }
 
       const semantic = buildSemanticOptions(options.model, options.llm, options.minBatchTokens, options.maxBatchTokens)
 
@@ -107,7 +114,8 @@ program
 
       const result = await encoder.encode()
 
-      await encoder.save(options.output)
+      const outputPath = options.output ?? (options.format === 'json' ? 'rpg.json' : 'rpg.jsonl')
+      await encoder.save(outputPath)
 
       // Generate embeddings for vector/hybrid search
       if (options.search === 'vector' || options.search === 'hybrid') {
@@ -126,7 +134,7 @@ program
       console.log(`  Files processed: ${result.filesProcessed}`)
       console.log(`  Entities extracted: ${result.entitiesExtracted}`)
       console.log(`  Duration: ${result.duration}ms`)
-      console.log(`  Output: ${options.output}`)
+      console.log(`  Output: ${outputPath}`)
 
       if (options.verbose) {
         console.log('\nGraph statistics:')
@@ -280,6 +288,7 @@ program
   .argument('<path>', 'Repository path')
   .requiredOption('-l, --load-path <file>', 'RPG file to update')
   .option('-o, --output <file>', 'Output file path (defaults to load-path)')
+  .option('-f, --format <format>', 'Output format: json or jsonl (auto-detected from load-path if omitted)')
   .option('-c, --commits <range>', 'Commit range', 'HEAD~1..HEAD')
   .option('-m, --model <provider/model>', 'LLM provider/model (e.g., codex/gpt-5.3-codex, claude-code/haiku, openai/gpt-5.2, google)')
   .option('--no-llm', 'Disable LLM (use heuristic extraction)')
@@ -289,14 +298,30 @@ program
   .option('--verbose', 'Show detailed progress')
   .option('--min-batch-tokens <tokens>', 'Minimum tokens per batch (default: 10000)')
   .option('--max-batch-tokens <tokens>', 'Maximum tokens per batch (default: 50000)')
-  .action(async (repoPath: string, options: { loadPath: string, output?: string, commits: string, model?: string, llm?: boolean, search: string, embedModel?: string, embedOutput: string, verbose?: boolean, minBatchTokens?: string, maxBatchTokens?: string }) => {
+  .action(async (repoPath: string, options: { loadPath: string, output?: string, format?: string, commits: string, model?: string, llm?: boolean, search: string, embedModel?: string, embedOutput: string, verbose?: boolean, minBatchTokens?: string, maxBatchTokens?: string }) => {
     if (options.verbose) {
       setLogLevel(LogLevels.debug)
     }
 
     validateSearchStrategy(options.search)
 
-    const outputPath = options.output ?? options.loadPath
+    if (options.format && !['json', 'jsonl'].includes(options.format)) {
+      log.error(`Invalid format "${options.format}". Must be "json" or "jsonl".`)
+      process.exit(1)
+    }
+
+    let outputPath: string
+    if (options.output) {
+      outputPath = options.output
+    }
+    else if (options.format) {
+      const ext = path.extname(options.loadPath)
+      const base = options.loadPath.slice(0, -ext.length || undefined)
+      outputPath = `${base}.${options.format}`
+    }
+    else {
+      outputPath = options.loadPath
+    }
 
     log.info(`Evolving RPG with commits: ${options.commits}`)
 

@@ -189,6 +189,12 @@ export async function loadRPG(filePath: string): Promise<RepositoryPlanningGraph
     // meta file is optional
   }
 
+  const isJsonl = filePath.endsWith('.jsonl')
+  if (isJsonl) {
+    return metaJson
+      ? await RepositoryPlanningGraph.fromJSONLWithMeta(graphJson, metaJson)
+      : await RepositoryPlanningGraph.fromJSONL(graphJson)
+  }
   return metaJson
     ? await RepositoryPlanningGraph.fromJSONWithMeta(graphJson, metaJson)
     : await RepositoryPlanningGraph.fromJSON(graphJson)

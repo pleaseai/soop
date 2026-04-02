@@ -528,6 +528,21 @@ export class RepositoryPlanningGraph {
     }
   }
 
+  async toJSONL(): Promise<string> {
+    const { serializeGraphJsonl } = await import('./jsonl')
+    const data = await this.serialize()
+    return serializeGraphJsonl(data)
+  }
+
+  async toJSONLWithMeta(): Promise<{ graphJsonl: string, metaJson: string }> {
+    const { serializeGraphJsonl } = await import('./jsonl')
+    const data = await this.serialize()
+    return {
+      graphJsonl: serializeGraphJsonl(data),
+      metaJson: JSON.stringify(this.serializeMeta(), null, 2),
+    }
+  }
+
   static async deserialize(
     data: PythonRPG | Record<string, unknown>,
     context?: ContextStore,
@@ -679,6 +694,31 @@ export class RepositoryPlanningGraph {
     context?: ContextStore,
   ): Promise<RepositoryPlanningGraph> {
     const rpg = await RepositoryPlanningGraph.fromJSON(graphJson, context)
+    if (metaJson) {
+      const { deserializeMeta } = await import('./meta')
+      const meta = deserializeMeta(JSON.parse(metaJson))
+      rpg.updateConfig({
+        rootPath: meta.rootPath,
+        github: meta.github,
+      })
+    }
+    return rpg
+  }
+
+  static async fromJSONL(
+    jsonl: string,
+    context?: ContextStore,
+  ): Promise<RepositoryPlanningGraph> {
+    const { parseGraphJsonl } = await import('./jsonl')
+    return RepositoryPlanningGraph.deserialize(parseGraphJsonl(jsonl), context)
+  }
+
+  static async fromJSONLWithMeta(
+    graphJsonl: string,
+    metaJson?: string,
+    context?: ContextStore,
+  ): Promise<RepositoryPlanningGraph> {
+    const rpg = await RepositoryPlanningGraph.fromJSONL(graphJsonl, context)
     if (metaJson) {
       const { deserializeMeta } = await import('./meta')
       const meta = deserializeMeta(JSON.parse(metaJson))
