@@ -1,0 +1,23 @@
+README.md
+  b98a60636e7f5451 219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.4",
+  "base_commit_sha": "3c4a2651505b4bcef96fd97c6b26e99b30a3757c",
+  "prompts": {
+    "b98a60636e7f5451": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "388d742e-a3ac-485c-a048-c206946a23d8",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
