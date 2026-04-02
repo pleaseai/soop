@@ -8,7 +8,7 @@ This document compares the Microsoft RPG-ZeroRepo reference implementation (Pyth
 
 | Dimension | Vendor (Python) | Ours (TypeScript) |
 |-----------|----------------|-------------------|
-| **Language** | Python 3.10+ monolithic package | TypeScript 5.x, Bun workspaces (8 packages) |
+| **Language** | Python 3.10+ monolithic package | TypeScript 5.x, Bun workspaces (12 packages) |
 | **Source lines** | ~60,600 lines (.py) | ~13,200 lines (.ts, excluding tests) |
 | **Encoder pipeline** | Fully implemented (rebuild, parse, refactor, evolve) | Fully implemented (3-phase encode, evolution, dependency graph, token-aware batching, type-aware call resolution) |
 | **ZeroRepo pipeline** | Fully implemented (prop → impl → code gen) | Skeleton only (97 lines, all TODO) |
@@ -62,18 +62,18 @@ graph LR
 
 | Vendor Module | Lines | Our Package | Lines | Coverage |
 |---------------|-------|-------------|-------|----------|
-| `rpg_gen/base/rpg/` | 3,046 | `@pleaseai/rpg-graph` | 1,106 | Equivalent (different design) |
-| `rpg_encoder/` | 12,016 | `@pleaseai/rpg-encoder` | 5,174 | Functionally equivalent |
-| `rpg_gen/base/llm_client/` | 2,064 | `@pleaseai/rpg-utils` (llm) | ~400 | Ours is leaner |
-| `rpg_gen/base/unit/` + `rpg_gen/base/node/` | 2,131 | `@pleaseai/rpg-utils` (ast) | ~500 | Different approach |
-| `utils/` | 8,653 | `@pleaseai/rpg-utils` | 1,580 | Ours is more focused |
-| — | — | `@pleaseai/rpg-store` | 1,415 | No vendor equivalent |
-| `rpg_encoder/rpg_agent/` | ~2,700 | `@pleaseai/rpg-tools` | 590 | Equivalent |
-| — | — | `@pleaseai/rpg-mcp` | 2,497 | No vendor equivalent |
+| `rpg_gen/base/rpg/` | 3,046 | `@pleaseai/soop-graph` | 1,106 | Equivalent (different design) |
+| `rpg_encoder/` | 12,016 | `@pleaseai/soop-encoder` | 5,174 | Functionally equivalent |
+| `rpg_gen/base/llm_client/` | 2,064 | `@pleaseai/soop-utils` (llm) | ~400 | Ours is leaner |
+| `rpg_gen/base/unit/` + `rpg_gen/base/node/` | 2,131 | `@pleaseai/soop-ast` | ~500 | Different approach |
+| `utils/` | 8,653 | `@pleaseai/soop-utils` | 1,580 | Ours is more focused |
+| — | — | `@pleaseai/soop-store` | 1,415 | No vendor equivalent |
+| `rpg_encoder/rpg_agent/` | ~2,700 | `@pleaseai/soop-tools` | 590 | Equivalent |
+| — | — | `@pleaseai/soop-mcp` | 2,497 | No vendor equivalent |
 | `rpg_gen/prop_level/` | 3,137 | — | 0 | **Gap** |
 | `rpg_gen/impl_level/` | 7,763 | — | 0 | **Gap** |
 | `code_gen/` | 19,877 | — | 0 | **Gap** |
-| `config/` | 223 | `.rpg/` directory | — | Different approach |
+| `config/` | 223 | `.soop/` directory | — | Different approach |
 
 ---
 
@@ -331,19 +331,19 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | **Vector search** | FAISS (in-memory) | LanceDB (disk-based, Bun-native) |
 | **Text search** | None | FTS5 (SQLite) / BM25 (SurrealDB) |
 | **Caching** | None | SemanticCache (SQLite, 7-day TTL, MD5 hash) |
-| **Checkpoints** | `CheckpointManager` with named file slots | `.rpg/` directory structure |
+| **Checkpoints** | `CheckpointManager` with named file slots | `.soop/` directory structure |
 | **Serialization** | `to_dict()`/`from_dict()` + JSON | `serialize()`/`deserialize()` + JSON |
 
-**Analysis**: Our storage layer is significantly more robust — persistent databases vs JSON files, full-text search capabilities, and semantic caching. The vendor's `CheckpointManager` provides structured checkpoint/resume for long-running pipelines, which our simpler `.rpg/` directory doesn't replicate.
+**Analysis**: Our storage layer is significantly more robust — persistent databases vs JSON files, full-text search capabilities, and semantic caching. The vendor's `CheckpointManager` provides structured checkpoint/resume for long-running pipelines, which our simpler `.soop/` directory doesn't replicate.
 
 ### 6.4 Configuration
 
 | Aspect | Vendor | Ours |
 |--------|--------|------|
-| **Format** | YAML config files | `.rpg/config.json` |
-| **Checkpoint** | `CheckpointManager` + `CheckpointFiles` dataclass | `.rpg/local/state.json` |
+| **Format** | YAML config files | `.soop/config.json` |
+| **Checkpoint** | `CheckpointManager` + `CheckpointFiles` dataclass | `.soop/local/state.json` |
 | **Pipeline state** | `pipeline_state` dict with stage completion flags | `config.github.commit` SHA tracking |
-| **Resume** | Stage-level resume (skip completed stages) | `rpg sync --force` for full rebuild |
+| **Resume** | Stage-level resume (skip completed stages) | `soop sync --force` for full rebuild |
 
 ---
 
@@ -379,7 +379,7 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | **Type safety** | Zod schemas + TypeScript strict mode provide compile-time guarantees |
 | **Cost tracking** | Per-model pricing estimation with `estimateCost()` — absent in vendor |
 | **Two-tier data management** | CI-committed canonical graph + local-only evolved copy — vendor has flat JSON |
-| **CLI integration** | `rpg init`, `rpg sync`, `rpg stamp`, `rpg last-commit` for CI workflows |
+| **CLI integration** | `soop init`, `soop sync`, `soop stamp`, `soop last-commit` for CI workflows |
 
 ---
 
@@ -414,7 +414,7 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | `code_gen/ct_builder.py` | 451 | — | **Gap**: Docker sandbox |
 | `code_gen/runner.py` | 385 | — | **Gap**: Execution runner |
 | `code_gen/trae-agent/` | ~15,000 | — | **Gap**: Agent framework |
-| `config/checkpoint_config.py` | 223 | `.rpg/config.json` + CLI commands | Different approach |
+| `config/checkpoint_config.py` | 223 | `.soop/config.json` + CLI commands | Different approach |
 | `utils/tree.py` | 722 | — | Feature tree utilities |
 | `utils/repo_index/index/code_index.py` | 832 | `packages/utils/src/ast/parser.ts` | Code indexing |
 | — | — | `packages/store/src/sqlite/` | **Our addition**: Persistent graph store |
@@ -454,7 +454,7 @@ The entire generation pipeline (~30,777 lines) exists in the vendor but is absen
 | `ImplBuilder` | Not implemented | Generation pipeline |
 | `IterativeCodeGenerator` | Not implemented | Generation pipeline |
 | `TaskBatch` | Not implemented | Generation pipeline |
-| `CheckpointManager` | `.rpg/` directory | Different design |
+| `CheckpointManager` | `.soop/` directory | Different design |
 | `Memory` (LLM conversation) | No equivalent | **Gap** |
 | `LLMConfig` | `SemanticOptions` | LLM configuration |
 | `ParseFeatures` (semantic parsing) | `SemanticExtractor` | Feature extraction |
