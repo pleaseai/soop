@@ -128,6 +128,10 @@ async function buildBinary(
       'better-sqlite3',
       'web-tree-sitter',
       'detect-libc',
+      // Externalize packages using dynamic wasm imports (`import('*.wasm?binary')`)
+      // that Bun's bundler cannot resolve at compile time.
+      '@google/gemini-cli-core',
+      'tree-sitter-bash',
     ],
   })
 
