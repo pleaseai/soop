@@ -1,0 +1,25 @@
+packages/soop/package.json
+  1f0e7b56418a9571 3
+.release-please-manifest.json
+  1f0e7b56418a9571 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.4",
+  "base_commit_sha": "d7e7df92bb1c2d11d1ebddb1a8afdcbfcc16ea6d",
+  "prompts": {
+    "1f0e7b56418a9571": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c7fec57f-c1c4-4a17-bbad-d2a07b73aafc",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Minsu Lee",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
