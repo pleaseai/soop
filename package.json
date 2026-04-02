@@ -60,7 +60,8 @@
     "zod": "^4.0.0"
   },
   "trustedDependencies": [
-    "better-sqlite3"
+    "better-sqlite3",
+    "tree-sitter-cli"
   ],
   "repository": {
     "type": "git",

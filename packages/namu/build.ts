@@ -18,8 +18,27 @@ const execFile = promisify(execFileCallback)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const outDir = path.join(__dirname, 'wasm')
-// Use the native binary directly (downloaded by tree-sitter-cli's install.js)
-const treeSitterBin = path.join(__dirname, 'node_modules', 'tree-sitter-cli', 'tree-sitter')
+
+// Resolve tree-sitter binary, running install.js if the binary hasn't been downloaded yet
+async function findTreeSitterBin(): Promise<string> {
+  const cliPkgPath = fileURLToPath(import.meta.resolve('tree-sitter-cli/package.json'))
+  const cliDir = path.dirname(cliPkgPath)
+  const binName = process.platform === 'win32' ? 'tree-sitter.exe' : 'tree-sitter'
+  const binPath = path.join(cliDir, binName)
+
+  if (!fs.existsSync(binPath)) {
+    process.stdout.write('⏳ Downloading tree-sitter binary...\n')
+    await execFile(process.execPath, [path.join(cliDir, 'install.js')], { cwd: cliDir })
+  }
+
+  if (!fs.existsSync(binPath)) {
+    throw new Error(
+      `tree-sitter binary not found at ${binPath} even after running install.js`,
+    )
+  }
+
+  return binPath
+}
 
 // All grammars to build: [packageName, subPath?]
 const ALL_GRAMMARS: Array<[string, string?]> = [
@@ -50,7 +69,7 @@ function findPackageRoot(startPath: string): string {
   throw new Error(`Could not find package root from ${startPath}`)
 }
 
-async function buildGrammar(packageName: string, subPath?: string): Promise<void> {
+async function buildGrammar(bin: string, packageName: string, subPath?: string): Promise<void> {
   const label = subPath ? `${packageName}/${subPath}` : packageName
   process.stdout.write(`⏳ Building ${label}\n`)
 
@@ -68,13 +87,15 @@ async function buildGrammar(packageName: string, subPath?: string): Promise<void
 
   const args = ['build', '--wasm', cwd]
 
-  await execFile(treeSitterBin, args, { cwd: outDir })
+  await execFile(bin, args, { cwd: outDir })
   process.stdout.write(`✅ ${label}\n`)
 }
 
 async function main(): Promise<void> {
   // Ensure output directory exists
   fs.mkdirSync(outDir, { recursive: true })
+
+  const treeSitterBin = await findTreeSitterBin()
 
   // Determine which grammars to build
   const langArg = process.argv[2]
@@ -88,7 +109,7 @@ async function main(): Promise<void> {
   }
 
   for (const [packageName, subPath] of grammars) {
-    await buildGrammar(packageName, subPath)
+    await buildGrammar(treeSitterBin, packageName, subPath)
   }
 
   process.stdout.write(`\n✨ Done. WASMs in ${outDir}\n`)
